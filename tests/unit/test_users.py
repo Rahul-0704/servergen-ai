@@ -26,11 +26,17 @@ from src.services.audit_service import AuditEventType, AuditService
 
 
 async def _seed_test_roles(db: AsyncSession) -> dict[str, Role]:
+    from sqlalchemy import select
     roles = {}
     for name in ("administrator", "it_operator", "general_employee"):
-        r = Role(id=uuid.uuid4(), name=name, description=f"{name} role")
-        db.add(r)
-        roles[name] = r
+        res = await db.execute(select(Role).where(Role.name == name))
+        existing = res.scalar_one_or_none()
+        if existing is not None:
+            roles[name] = existing
+        else:
+            r = Role(id=uuid.uuid4(), name=name, description=f"{name} role")
+            db.add(r)
+            roles[name] = r
     await db.flush()
     return roles
 

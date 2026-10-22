@@ -33,7 +33,12 @@ from src.services.auth_service import AuthService
 
 
 async def _seed_role(db: AsyncSession, name: str = "administrator") -> Role:
-    """Create a test role."""
+    """Create a test role or return existing."""
+    from sqlalchemy import select
+    res = await db.execute(select(Role).where(Role.name == name))
+    existing = res.scalar_one_or_none()
+    if existing is not None:
+        return existing
     role = Role(id=uuid.uuid4(), name=name, description=f"Test {name} role")
     db.add(role)
     await db.flush()
@@ -298,3 +303,49 @@ async def test_auth_actions_recorded_in_audit(db_session: AsyncSession) -> None:
     )
     assert len(logout_events) >= 1
     assert logout_events[0].decision == "allow"
+
+
+@pytest.mark.asyncio
+async def test_register_user_success(db_session: AsyncSession) -> None:
+    """Test public user self-registration creates account and returns valid token pair."""
+    await _seed_role(db_session, "general_employee")
+    svc = AuthService(db_session)
+
+    tokens = await svc.register(
+        username="newuser",
+        email="newuser@example.com",
+        password="ValidPassword123!",
+        full_name="New Registered User",
+    )
+
+    assert tokens.access_token is not None
+    assert tokens.refresh_token is not None
+
+    # Verify profile can be fetched with access token
+    payload = decode_token(tokens.access_token, expected_type="access")
+    profile = await svc.get_profile(payload["sub"])
+    assert profile.username == "newuser"
+    assert profile.email == "newuser@example.com"
+    assert profile.role == "general_employee"
+
+
+@pytest.mark.asyncio
+async def test_register_duplicate_fails(db_session: AsyncSession) -> None:
+    """Test duplicate username registration raises ConflictError."""
+    await _seed_role(db_session, "general_employee")
+    svc = AuthService(db_session)
+
+    await svc.register(
+        username="dupuser",
+        email="dupuser@example.com",
+        password="ValidPassword123!",
+    )
+
+    from src.core.exceptions import ConflictError
+
+    with pytest.raises(ConflictError):
+        await svc.register(
+            username="dupuser",
+            email="another@example.com",
+            password="ValidPassword123!",
+        )
