@@ -73,6 +73,11 @@ async def list_task_categories() -> list[str]:
 
 
 @router.post(
+    "",
+    response_model=TaskResponse,
+    dependencies=[Depends(_ai_execute)],
+)
+@router.post(
     "/execute",
     response_model=TaskResponse,
     dependencies=[Depends(_ai_execute)],
@@ -134,3 +139,20 @@ async def execute_task(
             success=False,
             error=exc.message,
         )
+
+
+orchestrator_alias_router = APIRouter(prefix="/api/v1/orchestrator", tags=["orchestrator"])
+orchestrator_alias_router.add_api_route(
+    "",
+    execute_task,
+    methods=["POST"],
+    response_model=TaskResponse,
+    dependencies=[Depends(_ai_execute)],
+)
+orchestrator_alias_router.add_api_route(
+    "/",
+    execute_task,
+    methods=["POST"],
+    response_model=TaskResponse,
+    dependencies=[Depends(_ai_execute)],
+)

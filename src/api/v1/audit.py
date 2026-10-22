@@ -29,6 +29,11 @@ DbDep = Annotated[AsyncSession, Depends(get_db)]
 
 
 @router.get(
+    "",
+    response_model=AuditEventPage,
+    dependencies=[Depends(_audit_read)],
+)
+@router.get(
     "/events",
     response_model=AuditEventPage,
     dependencies=[Depends(_audit_read)],
@@ -63,23 +68,12 @@ async def list_events(
 
 
 @router.get(
-    "/events/{event_id}",
-    response_model=AuditEventResponse,
+    "/verify",
+    response_model=AuditChainVerification,
     dependencies=[Depends(_audit_read)],
 )
-async def get_event(event_id: uuid.UUID, db: DbDep) -> AuditEventResponse:
-    """Get a single audit event by ID."""
-    from src.core.exceptions import NotFoundError
-
-    svc = AuditService(db)
-    event = await svc.repo.get_by_id(event_id)
-    if event is None:
-        raise NotFoundError(f"Audit event {event_id} not found")
-    return AuditEventResponse.model_validate(event)
-
-
-@router.get(
-    "/verify",
+@router.post(
+    "/verify-integrity",
     response_model=AuditChainVerification,
     dependencies=[Depends(_audit_read)],
 )
@@ -97,3 +91,24 @@ async def verify_chain(db: DbDep) -> AuditChainVerification:
         broken_at_sequence=report.broken_at_sequence,
         reason=report.reason,
     )
+
+
+@router.get(
+    "/{event_id}",
+    response_model=AuditEventResponse,
+    dependencies=[Depends(_audit_read)],
+)
+@router.get(
+    "/events/{event_id}",
+    response_model=AuditEventResponse,
+    dependencies=[Depends(_audit_read)],
+)
+async def get_event(event_id: uuid.UUID, db: DbDep) -> AuditEventResponse:
+    """Get a single audit event by ID."""
+    from src.core.exceptions import NotFoundError
+
+    svc = AuditService(db)
+    event = await svc.repo.get_by_id(event_id)
+    if event is None:
+        raise NotFoundError(f"Audit event {event_id} not found")
+    return AuditEventResponse.model_validate(event)

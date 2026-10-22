@@ -79,7 +79,10 @@ def create_app() -> FastAPI:
     from src.api.v1.approvals import router as approvals_router
     from src.api.v1.audit import router as audit_router
     from src.api.v1.auth import router as auth_router
-    from src.api.v1.orchestrator import router as orchestrator_router
+    from src.api.v1.orchestrator import (
+        orchestrator_alias_router,
+        router as orchestrator_router,
+    )
     from src.api.v1.rag import router as rag_router
     from src.api.v1.users import router as users_router
 
@@ -87,6 +90,7 @@ def create_app() -> FastAPI:
     app.include_router(approvals_router)
     app.include_router(audit_router)
     app.include_router(orchestrator_router)
+    app.include_router(orchestrator_alias_router)
     app.include_router(rag_router)
     app.include_router(users_router)
 

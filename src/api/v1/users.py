@@ -67,6 +67,16 @@ async def list_users(
     )
 
 
+@router.get("/me", response_model=UserResponse)
+async def get_my_user(
+    auth: Annotated[AuthContext, Depends(get_auth_context)],
+    svc: Annotated[UserService, Depends(_svc)],
+) -> UserResponse:
+    """Get current authenticated user profile."""
+    user = await svc.get_user(uuid.UUID(auth.user_id))
+    return _user_to_response(user)
+
+
 @router.get("/{user_id}", response_model=UserResponse, dependencies=[Depends(_user_read)])
 async def get_user(
     user_id: uuid.UUID,
