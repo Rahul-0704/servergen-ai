@@ -22,6 +22,15 @@ class LoginRequest(BaseModel):
     password: str = Field(..., min_length=1, max_length=128)
 
 
+class RegisterRequest(BaseModel):
+    """User self-registration request."""
+
+    username: str = Field(..., min_length=3, max_length=50, pattern=r"^[a-zA-Z0-9_\-]+$")
+    email: str = Field(..., min_length=5, max_length=255)
+    password: str = Field(..., min_length=8, max_length=128)
+    full_name: str = Field(default="", max_length=255)
+
+
 class RefreshRequest(BaseModel):
     """Refresh token submission for rotation."""
 

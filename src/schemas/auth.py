@@ -7,6 +7,7 @@ from src.schemas import (
     LoginRequest,
     LogoutRequest,
     RefreshRequest,
+    RegisterRequest,
     TokenResponse,
     UserProfile,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "LoginRequest",
     "LogoutRequest",
     "RefreshRequest",
+    "RegisterRequest",
     "TokenResponse",
     "UserProfile",
 ]

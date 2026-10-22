@@ -126,13 +126,38 @@ def create_app() -> FastAPI:
 
     @app.get("/api/v1/health", tags=["system"])
     async def api_health_check() -> dict:
-        """API-versioned health check with database readiness probe."""
+        """API-versioned health check with database readiness probe and local LLM runtime status."""
+        import httpx
+
         db_ok = await check_database()
+
+        ollama_status = "unavailable"
+        ollama_models: list[str] = []
+        try:
+            async with httpx.AsyncClient(base_url=settings.OLLAMA_BASE_URL, timeout=3.0) as client:
+                res = await client.get("/api/tags")
+                if res.status_code == 200:
+                    ollama_status = "connected"
+                    data = res.json()
+                    ollama_models = [
+                        m.get("name")
+                        for m in data.get("models", [])
+                        if isinstance(m, dict) and m.get("name")
+                    ]
+        except Exception:
+            ollama_status = "unavailable"
+
         return {
             "status": "healthy" if db_ok else "degraded",
             "service": settings.APP_NAME,
             "version": "0.1.0",
             "database": "connected" if db_ok else "unavailable",
+            "ollama": {
+                "status": ollama_status,
+                "url": settings.OLLAMA_BASE_URL,
+                "default_model": settings.DEFAULT_MODEL,
+                "available_models": ollama_models,
+            },
         }
 
     logger.info(

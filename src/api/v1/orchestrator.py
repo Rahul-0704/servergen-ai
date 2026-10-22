@@ -110,6 +110,7 @@ async def execute_task(
             data_sensitivity=body.data_sensitivity,
             tool_request=tool_request,
             structured=body.structured,
+            requested_model=body.model,
         )
         return orchestrator_result_to_task_response(result)
 

@@ -88,6 +88,7 @@ class OrchestratorEngine:
         tool_request: ToolRequest | None = None,
         request_id: str | None = None,
         structured: bool = False,
+        requested_model: str | None = None,
     ) -> OrchestratorResult:
         """
         Execute a user task through the full security pipeline.
@@ -263,7 +264,10 @@ class OrchestratorEngine:
             )
 
         # ── Step 10: Model Selection ─────────────────────────────────
-        model_meta = self.model_router.select_model(task_category)
+        if requested_model and self.model_router.registry.get_model(requested_model):
+            model_meta = self.model_router.registry.get_model(requested_model)
+        else:
+            model_meta = self.model_router.select_model(task_category)
         provider = self.model_router.get_provider_for_model(model_meta)
 
         await self.audit.record(

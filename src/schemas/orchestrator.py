@@ -17,6 +17,7 @@ class TaskRequest(BaseModel):
 
     input: str = Field(..., min_length=1, max_length=4000)
     data_sensitivity: DataSensitivity = DataSensitivity.INTERNAL
+    model: str | None = Field(default=None, description="Optional target model name")
     tool: str | None = Field(default=None, description="Optional tool name to invoke")
     tool_parameters: dict = Field(default_factory=dict)
     structured: bool = Field(

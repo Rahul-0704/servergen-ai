@@ -13,19 +13,28 @@ from datetime import UTC, datetime, timedelta
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from src.auth.permissions import SystemRole
 from src.core.config import get_settings
-from src.core.exceptions import AccountLockedError, AuthenticationError, InvalidTokenError
+from src.core.exceptions import (
+    AccountLockedError,
+    AuthenticationError,
+    ConflictError,
+    InvalidTokenError,
+    ValidationError,
+)
 from src.core.middleware import get_request_id
 from src.core.security import (
     create_access_token,
     create_refresh_token,
     decode_token,
+    hash_password,
     hash_token,
     verify_password,
     verify_password_dummy,
 )
 from src.models.session import RefreshSession
 from src.models.user import User
+from src.repositories.role_repository import RoleRepository
 from src.repositories.session_repository import SessionRepository
 from src.repositories.user_repository import UserRepository
 from src.schemas import TokenResponse, UserProfile
@@ -41,6 +50,92 @@ class AuthService:
         self.session_repo = SessionRepository(db)
         self.audit = AuditService(db)
         self.settings = get_settings()
+
+    async def register(
+        self,
+        username: str,
+        email: str,
+        password: str,
+        full_name: str = "",
+        user_agent: str | None = None,
+        ip_address: str | None = None,
+        request_id: str | None = None,
+    ) -> TokenResponse:
+        """
+        Self-register a new user account with default general_employee role.
+        Issues access and refresh tokens immediately upon registration.
+        """
+        req_id = request_id or get_request_id() or str(uuid.uuid4())
+
+        # 1. Uniqueness check
+        if await self.user_repo.get_by_username(username):
+            raise ConflictError(f"Username '{username}' is already taken")
+        if await self.user_repo.get_by_email(email):
+            raise ConflictError(f"Email '{email}' is already registered")
+
+        # 2. Password length validation
+        if len(password) < 8:
+            raise ValidationError("Password must be at least 8 characters")
+
+        # 3. Retrieve default role
+        role_repo = RoleRepository(self.db)
+        role = await role_repo.get_by_name(SystemRole.GENERAL_EMPLOYEE.value)
+        if role is None:
+            role = await role_repo.get_by_name("general_employee")
+            if role is None:
+                raise ValidationError("Default user role 'general_employee' is not configured")
+
+        # 4. Create user
+        now = datetime.now(UTC)
+        user = User(
+            id=uuid.uuid4(),
+            username=username,
+            email=email,
+            hashed_password=hash_password(password),
+            full_name=full_name or username,
+            role_id=role.id,
+            is_active=True,
+            created_at=now,
+            updated_at=now,
+        )
+        await self.user_repo.create(user)
+        user.role = role
+
+        # 5. Issue token pair with family tracking
+        role_name = role.name
+        access_token = create_access_token(str(user.id), role_name)
+        refresh_token, family_id = create_refresh_token(str(user.id))
+
+        session = RefreshSession(
+            user_id=user.id,
+            refresh_token_hash=hash_token(refresh_token),
+            family_id=family_id,
+            issued_at=now,
+            expires_at=now + timedelta(minutes=self.settings.REFRESH_TOKEN_EXPIRE_MINUTES),
+            user_agent=user_agent,
+            ip_address=ip_address,
+        )
+        await self.session_repo.create(session)
+
+        # 6. Audit recording
+        await self.audit.record(
+            event_type=AuditEventType.LOGIN_SUCCESS,
+            action="user_registered",
+            request_id=req_id,
+            decision="allow",
+            risk_level="low",
+            user_id=str(user.id),
+            role=role_name,
+            resource="auth:register",
+            metadata={"username": username, "email": email, "ip_address": ip_address, "user_agent": user_agent},
+        )
+        await self.db.commit()
+
+        return TokenResponse(
+            access_token=access_token,
+            refresh_token=refresh_token,
+            expires_in=self.settings.ACCESS_TOKEN_EXPIRE_MINUTES * 60,
+        )
 
     async def login(
         self,

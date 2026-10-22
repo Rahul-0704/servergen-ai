@@ -119,7 +119,8 @@ def build_default_registry() -> ModelRegistry:
     # Register Ollama provider
     registry.register_provider(OllamaProvider())
 
-    # Register default model (hardware figures are static documentation, not live monitoring)
+    # Register default model
+    registered_names = {settings.DEFAULT_MODEL}
     registry.register_model(
         ModelMetadata(
             name=settings.DEFAULT_MODEL,
@@ -140,5 +141,30 @@ def build_default_registry() -> ModelRegistry:
             priority=10,
         )
     )
+
+    # Also register secondary standard models if distinct
+    for alt_model in ("llama3.2:3b", "gemma3:4b"):
+        if alt_model not in registered_names:
+            registered_names.add(alt_model)
+            registry.register_model(
+                ModelMetadata(
+                    name=alt_model,
+                    provider="ollama",
+                    capabilities=[
+                        ModelCapability.GENERAL,
+                        ModelCapability.DOCUMENT,
+                        ModelCapability.REASONING,
+                        ModelCapability.CODING,
+                    ],
+                    context_length=8192,
+                    minimum_ram_gb=4.0,
+                    recommended_ram_gb=8.0,
+                    minimum_vram_gb=2.0,
+                    recommended_vram_gb=4.0,
+                    requires_gpu=False,
+                    enabled=True,
+                    priority=5,
+                )
+            )
 
     return registry
