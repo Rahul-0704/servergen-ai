@@ -32,8 +32,42 @@ _ai_read = require_permission(PermissionCode.AI_READ)
 
 @router.get("/models", dependencies=[Depends(_ai_read)])
 async def list_models() -> list[dict]:
-    """List all registered AI models."""
+    """List all registered AI models with active local Ollama presence detection."""
+    from src.ai.providers.base import ModelCapability, ModelMetadata
+
     registry = build_default_registry()
+    provider = registry.get_provider("ollama")
+    available_in_provider: set[str] = set()
+    if provider and hasattr(provider, "list_models"):
+        try:
+            available_in_provider = set(await provider.list_models())
+        except Exception:
+            pass
+
+    # Dynamically register any installed models found in Ollama
+    for installed_name in available_in_provider:
+        if not registry.get_model(installed_name):
+            registry.register_model(
+                ModelMetadata(
+                    name=installed_name,
+                    provider="ollama",
+                    capabilities=[
+                        ModelCapability.GENERAL,
+                        ModelCapability.DOCUMENT,
+                        ModelCapability.REASONING,
+                        ModelCapability.CODING,
+                    ],
+                    context_length=8192,
+                    minimum_ram_gb=4.0,
+                    recommended_ram_gb=8.0,
+                    minimum_vram_gb=2.0,
+                    recommended_vram_gb=4.0,
+                    requires_gpu=False,
+                    enabled=True,
+                    priority=8,
+                )
+            )
+
     return [
         {
             "name": m.name,
@@ -43,7 +77,8 @@ async def list_models() -> list[dict]:
             "requires_gpu": m.requires_gpu,
             "minimum_ram_gb": m.minimum_ram_gb,
             "minimum_vram_gb": m.minimum_vram_gb,
-            "enabled": m.enabled,
+            "enabled": m.enabled and (not available_in_provider or m.name in available_in_provider or any(m.name in a for a in available_in_provider)),
+            "installed": (m.name in available_in_provider) or any(m.name in a for a in available_in_provider),
         }
         for m in registry.list_models()
     ]

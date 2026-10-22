@@ -91,7 +91,7 @@ class Settings(BaseSettings):
     # ── Ollama / LLM ─────────────────────────────────────────────────────
     OLLAMA_BASE_URL: str = "http://localhost:11434"
     OLLAMA_TIMEOUT_SECONDS: float = Field(default=120.0, gt=0)
-    DEFAULT_MODEL: str = "gemma3:4b"
+    DEFAULT_MODEL: str = "llama3.2:3b"
     LLM_TASK_CLASSIFICATION: bool = Field(
         default=False,
         description="Let the LLM refine GENERAL tasks (advisory only; rules always win).",

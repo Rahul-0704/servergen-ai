@@ -172,6 +172,10 @@ class Agent(ABC):
             "latency_ms": round(response.latency_ms, 1),
         }
         warnings = [self.advisory_warning] if self.advisory_warning else []
+        if response.success and response.model != request.model:
+            warnings.append(
+                f"Requested model '{request.model}' was not found locally; automatically fell back to active local model '{response.model}'."
+            )
 
         if not response.success:
             user_msg = (

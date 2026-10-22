@@ -303,13 +303,15 @@ class OrchestratorEngine:
                 f"rag_unauthorized_records_withheld:{rag_result.denied_chunks_count}"
             )
 
+        actual_model = agent_result.execution_metadata.get("model") or model_meta.name
+
         await self.audit.record(
             event_type=AuditEventType.LLM_RESPONSE,
             action="llm_response",
             request_id=req_id,
             user_id=auth.user_id,
             role=auth.role,
-            model=model_meta.name,
+            model=actual_model,
             agent=agent_name,
             decision="allow" if agent_result.success else "error",
             metadata={
@@ -332,7 +334,7 @@ class OrchestratorEngine:
             request_id=req_id,
             user_id=auth.user_id,
             role=auth.role,
-            model=model_meta.name,
+            model=actual_model,
             agent=agent_name,
             decision="allow",
             risk_level=risk.risk_level,
@@ -349,7 +351,7 @@ class OrchestratorEngine:
             task_category=task_category,
             risk_level=risk.risk_level,
             policy_decision=PolicyDecision.ALLOW,
-            model_used=model_meta.name,
+            model_used=actual_model,
             content=agent_result.output,
             verification_status=verification.status,
             approval_id=None,

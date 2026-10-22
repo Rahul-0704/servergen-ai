@@ -84,8 +84,42 @@ class OllamaProvider(ModelProvider):
             logger.warning("Ollama request timed out for model %s", request.model)
             return self._failure(request, "Request timed out")
         except httpx.HTTPStatusError as exc:
-            logger.warning("Ollama HTTP error %s: %s", exc.response.status_code, exc)
-            return self._failure(request, f"HTTP {exc.response.status_code}")
+            error_detail = ""
+            try:
+                err_data = exc.response.json()
+                error_detail = err_data.get("error", "")
+            except Exception:
+                error_detail = exc.response.text
+
+            # Gracefully handle model not found/pulled by falling back to DEFAULT_MODEL
+            default_model = get_settings().DEFAULT_MODEL
+            if exc.response.status_code == 404 and request.model != default_model:
+                logger.warning(
+                    "Model '%s' not found in Ollama (%s). Gracefully falling back to default model '%s'.",
+                    request.model,
+                    error_detail or "not found",
+                    default_model,
+                )
+                fallback_req = LLMRequest(
+                    model=default_model,
+                    prompt=request.prompt,
+                    system_prompt=request.system_prompt,
+                    temperature=request.temperature,
+                    max_tokens=request.max_tokens,
+                    timeout_seconds=request.timeout_seconds,
+                )
+                fallback_resp = await self._call(fallback_req, response_format=response_format)
+                if fallback_resp.success:
+                    return fallback_resp
+
+            logger.warning("Ollama HTTP error %s: %s", exc.response.status_code, error_detail or exc)
+            err_msg = error_detail or f"HTTP {exc.response.status_code}"
+            if "not found" in err_msg.lower():
+                err_msg = (
+                    f"Model '{request.model}' is not pulled in local Ollama runtime. "
+                    f"Run 'ollama pull {request.model}' in terminal or switch to an installed model (e.g. {default_model})."
+                )
+            return self._failure(request, err_msg)
         except Exception as exc:
             logger.error("Unexpected Ollama error: %s", exc)
             return self._failure(request, "Unexpected provider error")
