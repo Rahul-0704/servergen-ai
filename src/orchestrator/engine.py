@@ -117,8 +117,19 @@ class OrchestratorEngine:
         # ── Step 3.5: Role-Filtered Knowledge Retrieval (RAG) ────────
         rag_result = self.rag_retriever.retrieve(query=user_input, auth=auth)
         rag_evidence: list[str] = []
+        grounded_sources: list[dict[str, Any]] = []
         if rag_result.chunks:
-            rag_evidence = [f"rag_doc:{c.doc_title}" for c in rag_result.chunks]
+            seen_titles: set[str] = set()
+            for c in rag_result.chunks:
+                if c.doc_title not in seen_titles:
+                    seen_titles.add(c.doc_title)
+                    rag_evidence.append(f"rag_doc:{c.doc_title}")
+                    grounded_sources.append({
+                        "title": c.doc_title,
+                        "classification": c.classification.value,
+                        "category": c.category.value if hasattr(c.category, "value") else str(c.category),
+                        "relevance": getattr(c, "relevance_score", 0.0),
+                    })
             from src.ai.schemas import _SENSITIVITY_ORDER
             from src.orchestrator.sensitivity import SensitivityResolution
             if _SENSITIVITY_ORDER[rag_result.highest_sensitivity] > _SENSITIVITY_ORDER[sensitivity.level]:
@@ -350,4 +361,5 @@ class OrchestratorEngine:
             evidence=agent_result.evidence,
             warnings=agent_result.warnings,
             artifacts=agent_result.artifacts,
+            grounded_sources=grounded_sources,
         )

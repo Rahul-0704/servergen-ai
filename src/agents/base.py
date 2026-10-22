@@ -93,10 +93,11 @@ class AgentExecutionResult(BaseModel):
 
 
 _BASE_SYSTEM_PROMPT = (
-    "You are a secure enterprise AI assistant running inside a private, audited system. "
-    "Give factual, concise answers. You cannot execute commands, access files, query "
-    "databases or call external systems; never claim to have done so. If a request would "
-    "require such an action, explain the steps a human operator should take instead."
+    "You are ServerGen AI, an enterprise-grade AI automation assistant running on local infrastructure. "
+    "Provide accurate, authoritative, well-structured, and factual answers in clean Markdown. "
+    "Use headers, bulleted points, and clear technical explanations. "
+    "You cannot execute unverified commands, mutate systems, or access unauthorized data; never claim to have done so. "
+    "When actions are required, explain the exact step-by-step procedure for an authorized human operator."
 )
 
 
@@ -117,15 +118,25 @@ class Agent(ABC):
         evidence: list[str] = []
         if request.rag_context:
             prompt = (
-                f"ORGANIZATIONAL KNOWLEDGE CONTEXT:\n{request.rag_context}\n\n"
-                f"USER QUESTION / TASK:\n{prompt}\n\n"
-                "INSTRUCTION: Answer using the organizational knowledge context above whenever relevant. "
-                "Be direct, factual, and clear."
+                f"=== AUTHORIZED ORGANIZATIONAL KNOWLEDGE ===\n"
+                f"{request.rag_context}\n"
+                f"===========================================\n\n"
+                f"USER REQUEST:\n{prompt}\n\n"
+                "RESPONSE INSTRUCTIONS:\n"
+                "1. Answer thoroughly, factually, and accurately using the authorized organizational knowledge context above.\n"
+                "2. Structure your response with clean Markdown: include an Executive Summary, Detailed Breakdown, and Operational Recommendations (if applicable).\n"
+                "3. Explicitly cite the source document title(s) for the facts you provide (e.g., '[Source: <Document Title>]').\n"
+                "4. If the context does not contain the required information, explicitly state that the internal documentation does not provide these details rather than speculating."
             )
             evidence.append("rag_knowledge_grounding")
 
         if request.tool_output:
-            prompt = f"{prompt}\n\nTool result (verified, read-only): {request.tool_output}"
+            prompt = (
+                f"{prompt}\n\n"
+                f"VERIFIED TOOL RESULT:\n"
+                f"```\n{request.tool_output}\n```\n"
+                "INSTRUCTION: Incorporate and interpret this verified tool result in your response."
+            )
             evidence.append("tool_output_included")
 
         system_prompt = f"{_BASE_SYSTEM_PROMPT} {self.system_prompt_suffix}".strip()
@@ -192,6 +203,8 @@ class Agent(ABC):
 class GeneralAgent(Agent):
     """Handles general-purpose queries via the local LLM."""
 
+    system_prompt_suffix = "Deliver direct, structured, and logically rigorous answers with executive summaries and itemized breakdowns."
+
     @property
     def metadata(self) -> AgentMetadata:
         return AgentMetadata(
@@ -203,17 +216,17 @@ class GeneralAgent(Agent):
 
 
 class KnowledgeAgent(Agent):
-    """Document/knowledge questions. RAG retrieval arrives with Module 3."""
+    """Document/knowledge questions. Synthesizes organizational knowledge."""
 
-    system_prompt_suffix = "Focus on analysing and summarising text the user supplies."
-    advisory_warning = "knowledge_retrieval_not_available: answers use only the supplied text"
+    system_prompt_suffix = "Synthesize organizational documents accurately. Cross-reference sections and cite specific source titles and classifications."
+    advisory_warning = "knowledge_retrieval_advisory: answer grounded in available organizational knowledge documents"
 
     @property
     def metadata(self) -> AgentMetadata:
         return AgentMetadata(
             name="knowledge_agent",
             capability=AgentCapability.KNOWLEDGE,
-            description="Document analysis (interface for Module 3 — RAG)",
+            description="Document analysis and organizational knowledge synthesis",
             required_permission="document.read",
         )
 
@@ -221,7 +234,7 @@ class KnowledgeAgent(Agent):
 class OperationsAgent(Agent):
     """Operational requests. ADVISORY ONLY — real execution arrives with Module 4."""
 
-    system_prompt_suffix = "Provide operational guidance as a checklist for a human operator."
+    system_prompt_suffix = "Structure operational guidance as an actionable runbook checklist with prerequisites, execution steps, and verification commands."
     advisory_warning = "advisory_only: no operational action was executed"
 
     @property
@@ -237,7 +250,7 @@ class OperationsAgent(Agent):
 class SecurityAgent(Agent):
     """Security requests. ADVISORY ONLY — real tooling arrives with Module 5."""
 
-    system_prompt_suffix = "Provide defensive security guidance only; never offensive instructions."
+    system_prompt_suffix = "Provide defensive security analysis, threat mitigation advice, and audit posture assessments adhering to zero-trust principles."
     advisory_warning = "advisory_only: no security action was executed"
 
     @property
@@ -253,7 +266,7 @@ class SecurityAgent(Agent):
 class ReportingAgent(Agent):
     """Report drafting. Data-backed reporting arrives with Module 6."""
 
-    system_prompt_suffix = "Draft a clear, structured report from the supplied information only."
+    system_prompt_suffix = "Draft structured executive reports with clear sections: Executive Summary, Key Findings, Metrics/KPIs, and Recommended Next Steps."
     advisory_warning = "draft_only: no enterprise data sources were queried"
 
     @property

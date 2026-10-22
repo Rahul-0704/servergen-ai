@@ -49,6 +49,7 @@ class TaskResponse(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    grounded_sources: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def orchestrator_result_to_task_response(result: OrchestratorResult) -> TaskResponse:
@@ -73,4 +74,5 @@ def orchestrator_result_to_task_response(result: OrchestratorResult) -> TaskResp
         evidence=result.evidence,
         warnings=result.warnings,
         artifacts=result.artifacts,
+        grounded_sources=getattr(result, "grounded_sources", []),
     )

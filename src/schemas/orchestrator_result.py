@@ -36,3 +36,4 @@ class OrchestratorResult(BaseModel):
     evidence: list[str] = Field(default_factory=list)
     warnings: list[str] = Field(default_factory=list)
     artifacts: list[dict[str, Any]] = Field(default_factory=list)
+    grounded_sources: list[dict[str, Any]] = Field(default_factory=list)
