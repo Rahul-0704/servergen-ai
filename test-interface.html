@@ -1,0 +1,1069 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ServerGen AI — Enterprise Security & Automation Console</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bg-base: #090d16;
+            --bg-surface: #111827;
+            --bg-card: #1f2937;
+            --border-color: #374151;
+            --primary: #38bdf8;
+            --primary-hover: #0284c7;
+            --accent: #6366f1;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: var(--bg-base); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Header */
+        header { background: var(--bg-surface); border-bottom: 1px solid var(--border-color); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; }
+        .logo-group { display: flex; align-items: center; gap: 12px; }
+        .logo-icon { width: 34px; height: 34px; border-radius: 8px; background: linear-gradient(135deg, var(--primary), var(--accent)); display: flex; align-items: center; justify-content: center; font-weight: bold; color: #fff; font-size: 1.1rem; }
+        .brand-title { font-size: 1.15rem; font-weight: 700; color: #fff; }
+        .brand-subtitle { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px; }
+        
+        .header-actions { display: flex; align-items: center; gap: 16px; }
+        .user-pill { display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 14px; border-radius: 20px; border: 1px solid var(--border-color); font-size: 0.8rem; }
+        .role-dot { width: 9px; height: 9px; border-radius: 50%; }
+        .role-admin { background: #f59e0b; }
+        .role-it_operator { background: #3b82f6; }
+        .role-security_analyst { background: #ef4444; }
+        .role-manager { background: #8b5cf6; }
+        .role-general_employee { background: #10b981; }
+
+        /* System Health Bar */
+        .system-bar { display: flex; align-items: center; gap: 20px; padding: 6px 24px; background: #0c121e; border-bottom: 1px solid var(--border-color); font-size: 0.75rem; flex-wrap: wrap; }
+        .sys-badge { display: flex; align-items: center; gap: 6px; }
+        .indicator { width: 8px; height: 8px; border-radius: 50%; }
+        .indicator.green { background: var(--success); box-shadow: 0 0 6px rgba(16, 185, 129, 0.5); }
+        .indicator.red { background: var(--danger); box-shadow: 0 0 6px rgba(239, 68, 68, 0.5); }
+        .indicator.yellow { background: var(--warning); box-shadow: 0 0 6px rgba(245, 158, 11, 0.5); }
+        .indicator.gray { background: #6b7280; }
+
+        /* Layout */
+        .app-body { display: flex; flex: 1; height: calc(100vh - 86px); }
+        
+        /* Sidebar */
+        aside { width: 240px; background: var(--bg-surface); border-right: 1px solid var(--border-color); overflow-y: auto; flex-shrink: 0; padding: 14px 0; }
+        .nav-category { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.2px; color: #6b7280; font-weight: 700; padding: 12px 18px 4px; }
+        .nav-item { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 18px; border: none; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 0.83rem; text-align: left; transition: all 0.15s; border-left: 3px solid transparent; }
+        .nav-item i { width: 18px; font-size: 0.9rem; text-align: center; }
+        .nav-item:hover { background: #1c2436; color: var(--text-main); }
+        .nav-item.active { background: #1c2436; color: var(--primary); border-left-color: var(--primary); font-weight: 600; }
+
+        /* Main Workspace */
+        main { flex: 1; overflow-y: auto; padding: 24px; background: var(--bg-base); }
+        .panel { display: none; }
+        .panel.active { display: block; animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Cards & Grid */
+        .card { background: var(--bg-surface); border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-bottom: 18px; }
+        .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .card-title { font-size: 0.98rem; font-weight: 600; color: #fff; display: flex; align-items: center; gap: 8px; }
+        .card-desc { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 14px; line-height: 1.4; }
+
+        /* Buttons & Forms */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 14px; margin-bottom: 14px; }
+        .form-group { display: flex; flex-direction: column; gap: 6px; }
+        label { font-size: 0.78rem; font-weight: 600; color: var(--text-muted); }
+        input, select, textarea { background: var(--bg-base); border: 1px solid var(--border-color); color: var(--text-main); border-radius: 6px; padding: 8px 12px; font-size: 0.83rem; font-family: inherit; transition: border-color 0.15s; width: 100%; }
+        input:focus, select:focus, textarea:focus { border-color: var(--primary); outline: none; }
+        textarea { min-height: 80px; resize: vertical; }
+
+        .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 16px; border-radius: 6px; border: none; font-size: 0.82rem; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+        .btn-primary { background: var(--primary); color: #000; }
+        .btn-primary:hover { background: #7dd3fc; }
+        .btn-danger { background: #dc2626; color: #fff; }
+        .btn-danger:hover { background: #ef4444; }
+        .btn-success { background: #059669; color: #fff; }
+        .btn-success:hover { background: #10b981; }
+        .btn-secondary { background: var(--bg-card); color: var(--text-main); border: 1px solid var(--border-color); }
+        .btn-secondary:hover { background: #374151; }
+        .btn-sm { padding: 4px 10px; font-size: 0.75rem; }
+
+        /* Tables */
+        .table-responsive { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 6px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.8rem; text-align: left; }
+        th { background: #1e293b; color: var(--text-muted); padding: 10px 14px; font-weight: 600; border-bottom: 1px solid var(--border-color); }
+        td { padding: 10px 14px; border-bottom: 1px solid #1f2937; color: var(--text-main); }
+        tr:hover td { background: #162032; }
+
+        /* Badges & Tags */
+        .badge { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: 600; }
+        .badge-success { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .badge-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+        .badge-warning { background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3); }
+        .badge-info { background: rgba(56, 189, 248, 0.15); color: #7dd3fc; border: 1px solid rgba(56, 189, 248, 0.3); }
+
+        /* JSON Output */
+        .json-viewer { background: #070b13; border: 1px solid #1f2937; border-radius: 6px; padding: 14px; font-family: 'Cascadia Code', 'Fira Code', monospace; font-size: 0.78rem; max-height: 380px; overflow-y: auto; white-space: pre-wrap; word-break: break-word; color: #a5f3fc; }
+
+        /* Preset Cards */
+        .preset-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 10px; margin-bottom: 16px; }
+        .preset-card { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; cursor: pointer; text-align: center; transition: all 0.15s; }
+        .preset-card:hover { border-color: var(--primary); transform: translateY(-2px); }
+        .preset-card.active { border-color: var(--primary); background: #132847; }
+        .preset-role { font-size: 0.68rem; color: var(--text-muted); margin-top: 3px; }
+        .preset-name { font-size: 0.85rem; font-weight: 600; }
+
+        .chips-container { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+        .chip { background: #1f2937; border: 1px solid var(--border-color); color: #94a3b8; font-size: 0.72rem; padding: 2px 8px; border-radius: 4px; }
+        .chip.granted { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.3); color: #34d399; }
+    </style>
+</head>
+<body>
+
+    <!-- Header -->
+    <header>
+        <div class="logo-group">
+            <div class="logo-icon"><i class="fa-solid fa-shield-halved"></i></div>
+            <div>
+                <div class="brand-title">ServerGen AI</div>
+                <div class="brand-subtitle">Enterprise Security & Local Automation Console</div>
+            </div>
+        </div>
+        <div class="header-actions">
+            <div id="user-badge" class="user-pill" style="display:none;">
+                <div id="badge-role-dot" class="role-dot"></div>
+                <span id="badge-name">Anonymous</span>
+                <span id="badge-role" class="badge badge-info">Role</span>
+            </div>
+            <button id="logout-btn" class="btn btn-secondary btn-sm" style="display:none;" onclick="appLogout()">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- System Status Bar -->
+    <div class="system-bar">
+        <div class="sys-badge">
+            <div id="dot-api" class="indicator red"></div>
+            <span>FastAPI Server: <strong id="lbl-api">Connecting...</strong></span>
+        </div>
+        <div class="sys-badge">
+            <div id="dot-db" class="indicator red"></div>
+            <span>Database: <strong id="lbl-db">Checking...</strong></span>
+        </div>
+        <div class="sys-badge">
+            <div id="dot-auth" class="indicator gray"></div>
+            <span>Session: <strong id="lbl-auth">Not Logged In</strong></span>
+        </div>
+        <div class="sys-badge">
+            <div id="dot-ollama" class="indicator yellow"></div>
+            <span>Ollama Local LLM: <strong id="lbl-ollama">Probing...</strong></span>
+        </div>
+    </div>
+
+    <!-- Application Body -->
+    <div class="app-body">
+        
+        <!-- Sidebar Navigation -->
+        <aside>
+            <div class="nav-category">Access Control</div>
+            <button class="nav-item active" onclick="switchNav('auth', this)"><i class="fa-solid fa-key"></i> Authentication</button>
+            <button class="nav-item" onclick="switchNav('users', this)"><i class="fa-solid fa-users-gear"></i> User Directory</button>
+            
+            <div class="nav-category">AI Orchestrator</div>
+            <button class="nav-item" onclick="switchNav('ai-run', this)"><i class="fa-solid fa-microchip"></i> AI Task Execution</button>
+            <button class="nav-item" onclick="switchNav('rag', this)"><i class="fa-solid fa-book-bookmark"></i> Knowledge Base (RAG)</button>
+            <button class="nav-item" onclick="switchNav('tools', this)"><i class="fa-solid fa-toolbox"></i> Tools & Diagnostics</button>
+            
+            <div class="nav-category">Governance</div>
+            <button class="nav-item" onclick="switchNav('approvals', this)"><i class="fa-solid fa-stamp"></i> Approvals Queue</button>
+            <button class="nav-item" onclick="switchNav('audit', this)"><i class="fa-solid fa-fingerprint"></i> Audit Ledger</button>
+            <button class="nav-item" onclick="switchNav('rbac-matrix', this)"><i class="fa-solid fa-table-list"></i> RBAC Policy Matrix</button>
+        </aside>
+
+        <!-- Main Workspace -->
+        <main>
+
+            <!-- TAB 1: AUTHENTICATION -->
+            <div id="panel-auth" class="panel active">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-user-lock"></i> Interactive Authentication</div>
+                        <span class="badge badge-info">Module 1</span>
+                    </div>
+                    <div class="card-desc">
+                        Authenticate against the live Argon2id password verification engine and obtain short-lived JWT access tokens with rotating refresh session family tracking.
+                    </div>
+
+                    <!-- Preset Quick-Select -->
+                    <label>Quick-Select Database Account:</label>
+                    <div class="preset-grid" id="preset-container"></div>
+
+                    <!-- Manual Login Form -->
+                    <div class="card" style="background:#131c2e; margin-top:14px;">
+                        <h4 style="margin-bottom:12px; font-size:0.88rem; color:#fff;">Manual Credentials Sign-In</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" id="login-user" placeholder="Enter username (e.g. admin)">
+                            </div>
+                            <div class="form-group">
+                                <label>Password</label>
+                                <input type="password" id="login-pass" placeholder="Enter password">
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-primary" onclick="submitLogin()"><i class="fa-solid fa-right-to-bracket"></i> Sign In</button>
+                            <button class="btn btn-secondary" onclick="rotateToken()"><i class="fa-solid fa-rotate"></i> Rotate Refresh Token</button>
+                            <button class="btn btn-secondary" onclick="fetchMyProfile()"><i class="fa-solid fa-id-card"></i> Inspect /me</button>
+                        </div>
+                    </div>
+
+                    <div id="auth-output" class="json-viewer" style="display:none; margin-top:14px;"></div>
+                </div>
+
+                <!-- Granted Permissions Preview -->
+                <div class="card" id="perms-card" style="display:none;">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-list-check"></i> Resolved Permissions (Live DB Lookup)</div>
+                    </div>
+                    <div class="chips-container" id="perms-chips"></div>
+                </div>
+            </div>
+
+            <!-- TAB 2: USER DIRECTORY -->
+            <div id="panel-users" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-users"></i> Enterprise User Directory</div>
+                        <button class="btn btn-primary btn-sm" onclick="toggleCreateUserForm()"><i class="fa-solid fa-user-plus"></i> Add New User</button>
+                    </div>
+                    <div class="card-desc">
+                        Manage active user accounts, assign roles, and test instant live-session deactivation. Requires <code>user.read</code> / <code>user.write</code> permission.
+                    </div>
+
+                    <!-- Create User Section -->
+                    <div id="create-user-section" style="display:none; background:#131c2e; padding:16px; border-radius:6px; margin-bottom:18px;">
+                        <h4 style="font-size:0.85rem; margin-bottom:12px; color:#fff;">Register New Enterprise User</h4>
+                        <div class="form-grid">
+                            <div class="form-group">
+                                <label>Username</label>
+                                <input type="text" id="new-user-name" placeholder="john_doe">
+                            </div>
+                            <div class="form-group">
+                                <label>Email</label>
+                                <input type="email" id="new-user-email" placeholder="john@company.local">
+                            </div>
+                            <div class="form-group">
+                                <label>Full Name</label>
+                                <input type="text" id="new-user-fullname" placeholder="John Doe">
+                            </div>
+                            <div class="form-group">
+                                <label>Assigned Role</label>
+                                <select id="new-user-role">
+                                    <option value="administrator">administrator</option>
+                                    <option value="it_operator">it_operator</option>
+                                    <option value="security_analyst">security_analyst</option>
+                                    <option value="manager">manager</option>
+                                    <option value="general_employee" selected>general_employee</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Initial Password</label>
+                                <input type="password" id="new-user-pass" placeholder="Min 12 characters">
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-sm" onclick="submitCreateUser()"><i class="fa-solid fa-floppy-disk"></i> Create User in Database</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                        <button class="btn btn-secondary btn-sm" onclick="loadUsers()"><i class="fa-solid fa-rotate-right"></i> Refresh List</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Role</th>
+                                    <th>Status</th>
+                                    <th>Last Login</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-tbody">
+                                <tr><td colspan="6" style="text-align:center; color:#6b7280;">Login as an administrator to load users.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3: AI TASK EXECUTION -->
+            <div id="panel-ai-run" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> AI Task Execution Engine</div>
+                        <span class="badge badge-info">Module 2</span>
+                    </div>
+                    <div class="card-desc">
+                        Full 8-stage pipeline: Caller RBAC &rarr; Task Classification &rarr; Sensitivity Rating &rarr; Composite Risk Scoring &rarr; Security Policy Check &rarr; Tool/Ollama Execution &rarr; Output Sanitization &rarr; Audit Ledger.
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label>Task Input / Natural Language Prompt</label>
+                            <textarea id="ai-prompt" placeholder="Type prompt or command...">Calculate 128 * 24 + 1024</textarea>
+                        </div>
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="form-group">
+                            <label>Data Sensitivity Level</label>
+                            <select id="ai-sensitivity">
+                                <option value="public" selected>PUBLIC (Safe for general output)</option>
+                                <option value="internal">INTERNAL (Standard organizational data)</option>
+                                <option value="confidential">CONFIDENTIAL (Requires elevated clearance)</option>
+                                <option value="restricted">RESTRICTED (Triggers Human Approval)</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Tool Invocation (Optional)</label>
+                            <select id="ai-tool">
+                                <option value="" selected>None (Local LLM Generation)</option>
+                                <option value="calculator">Calculator (Safe Math Execution)</option>
+                                <option value="system_info">System Info (Diagnostic Probe)</option>
+                                <option value="shell_execute">Shell Command (Blocked High-Risk Tool)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div style="display:flex; gap:10px; margin-top:8px;">
+                        <button class="btn btn-primary" onclick="executeAITask()"><i class="fa-solid fa-play"></i> Execute Pipeline</button>
+                    </div>
+
+                    <!-- Pipeline Diagnostic Visualizer -->
+                    <div id="ai-result-box" style="display:none; margin-top:18px;">
+                        <h4 style="font-size:0.85rem; margin-bottom:10px; color:#fff;">Pipeline Execution Result</h4>
+                        <div id="ai-summary-chips" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;"></div>
+                        <div id="ai-answer-card" style="display:none; background:#0d1527; border:1px solid #1e293b; border-left:4px solid #38bdf8; border-radius:6px; padding:14px; margin-bottom:14px;">
+                            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#38bdf8; font-weight:600; margin-bottom:6px;">
+                                <i class="fa-solid fa-robot"></i> Local Model Response
+                            </div>
+                            <div id="ai-answer-text" style="color:#e2e8f0; font-size:0.88rem; line-height:1.6; white-space:pre-wrap;"></div>
+                        </div>
+                        <div id="ai-output" class="json-viewer"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 3.5: RAG KNOWLEDGE BASE -->
+            <div id="panel-rag" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-book-bookmark"></i> Organizational Knowledge Base (RAG)</div>
+                        <button class="btn btn-primary btn-sm" onclick="toggleAddDocForm()"><i class="fa-solid fa-plus"></i> Add Document</button>
+                    </div>
+                    <div class="card-desc">
+                        Enterprise documents indexed with sensitivity classifications and role access limits. The local <code>llama3.2:3b</code> model retrieves and grounds answers in these records only when the caller's role is authorized.
+                    </div>
+
+                    <!-- Add Document Section -->
+                    <div id="add-doc-section" style="display:none; background:#131c2e; padding:16px; border-radius:6px; margin-bottom:18px;">
+                        <h4 style="font-size:0.85rem; margin-bottom:12px; color:#fff;">Register Organizational Document</h4>
+                        <div class="form-grid">
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Document Title</label>
+                                <input type="text" id="new-doc-title" placeholder="e.g. Server Maintenance Procedures">
+                            </div>
+                            <div class="form-group">
+                                <label>Category</label>
+                                <select id="new-doc-cat">
+                                    <option value="architecture">architecture</option>
+                                    <option value="operations">operations</option>
+                                    <option value="security">security</option>
+                                    <option value="policy">policy</option>
+                                    <option value="executive">executive</option>
+                                    <option value="general" selected>general</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Clearance Classification</label>
+                                <select id="new-doc-sens">
+                                    <option value="public">PUBLIC</option>
+                                    <option value="internal" selected>INTERNAL</option>
+                                    <option value="confidential">CONFIDENTIAL</option>
+                                    <option value="restricted">RESTRICTED</option>
+                                </select>
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label>Document Content / Knowledge</label>
+                                <textarea id="new-doc-content" placeholder="Enter organizational knowledge content..."></textarea>
+                            </div>
+                        </div>
+                        <button class="btn btn-success btn-sm" onclick="submitCreateDoc()"><i class="fa-solid fa-floppy-disk"></i> Save Document to Knowledge Base</button>
+                    </div>
+
+                    <div style="display:flex; justify-content:flex-end; margin-bottom:10px;">
+                        <button class="btn btn-secondary btn-sm" onclick="loadRAGDocs()"><i class="fa-solid fa-rotate-right"></i> Refresh Documents</button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Document Title</th>
+                                    <th>Category</th>
+                                    <th>Clearance Level</th>
+                                    <th>Allowed Roles</th>
+                                    <th>Content Preview</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rag-tbody">
+                                <tr><td colspan="5" style="text-align:center; color:#6b7280;">Sign in to view accessible organizational documents.</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 4: TOOLS & DIAGNOSTICS -->
+            <div id="panel-tools" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-screwdriver-wrench"></i> Registered Tool Sandboxes</div>
+                    </div>
+                    <div class="card-desc">
+                        Direct access to deterministic Python tools governed by security policy constraints.
+                    </div>
+
+                    <div class="form-grid">
+                        <div class="card" style="background:#131c2e;">
+                            <h4 style="font-size:0.85rem; color:#fff; margin-bottom:8px;"><i class="fa-solid fa-calculator"></i> Safe Calculator Tool</h4>
+                            <input type="text" id="calc-input" value="45 * 12 + 100" style="margin-bottom:10px;">
+                            <button class="btn btn-primary btn-sm" onclick="runDirectCalc()">Run Calculator</button>
+                        </div>
+                        <div class="card" style="background:#131c2e;">
+                            <h4 style="font-size:0.85rem; color:#fff; margin-bottom:8px;"><i class="fa-solid fa-circle-info"></i> System Environment Tool</h4>
+                            <p style="font-size:0.75rem; color:#9ca3af; margin-bottom:10px;">Retrieves operating system details and hardware architecture metrics.</p>
+                            <button class="btn btn-primary btn-sm" onclick="runDirectSysInfo()">Probe Environment</button>
+                        </div>
+                    </div>
+                    <div id="tools-output" class="json-viewer" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- TAB 5: APPROVALS QUEUE -->
+            <div id="panel-approvals" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-gavel"></i> Human-in-the-Loop Approval Queue</div>
+                        <button class="btn btn-secondary btn-sm" onclick="loadApprovals()"><i class="fa-solid fa-rotate-right"></i> Refresh Queue</button>
+                    </div>
+                    <div class="card-desc">
+                        High-risk operations and RESTRICTED data requests are intercepted by the Policy Engine and held in pending state until approved by a Manager or Administrator.
+                    </div>
+
+                    <div class="form-grid" style="background:#131c2e; padding:14px; border-radius:6px; margin-bottom:16px;">
+                        <div class="form-group">
+                            <label>Approval Request ID</label>
+                            <input type="text" id="appr-target-id" placeholder="Paste UUID here">
+                        </div>
+                        <div class="form-group">
+                            <label>Reviewer Notes / Justification</label>
+                            <input type="text" id="appr-notes" value="Approved via Security Console">
+                        </div>
+                        <div style="display:flex; align-items:flex-end; gap:8px;">
+                            <button class="btn btn-success btn-sm" onclick="resolveApproval('approve')"><i class="fa-solid fa-check"></i> Approve</button>
+                            <button class="btn btn-danger btn-sm" onclick="resolveApproval('reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                        </div>
+                    </div>
+
+                    <div id="appr-output" class="json-viewer" style="display:none;"></div>
+                </div>
+            </div>
+
+            <!-- TAB 6: AUDIT LEDGER -->
+            <div id="panel-audit" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-receipt"></i> Tamper-Evident Cryptographic Audit Ledger</div>
+                        <div style="display:flex; gap:10px;">
+                            <button class="btn btn-primary btn-sm" onclick="verifyAuditChain()"><i class="fa-solid fa-link"></i> Verify Hash Chain</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadAuditEvents()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                        </div>
+                    </div>
+                    <div class="card-desc">
+                        Every login, failure, token refresh, tool execution, and policy block is recorded with SHA-256 hash chaining: <code>event_hash = SHA256(prev_hash + seq + action + ...)</code>.
+                    </div>
+
+                    <div id="verify-banner" style="display:none; padding:10px 14px; border-radius:6px; margin-bottom:14px; font-size:0.83rem;"></div>
+
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Seq</th>
+                                    <th>Timestamp</th>
+                                    <th>Event Type</th>
+                                    <th>Actor / Role</th>
+                                    <th>Decision</th>
+                                    <th>Risk</th>
+                                    <th>Event Hash</th>
+                                </tr>
+                            </thead>
+                            <tbody id="audit-tbody">
+                                <tr><td colspan="7" style="text-align:center; color:#6b7280;">Loading audit events...</td></tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB 7: RBAC MATRIX -->
+            <div id="panel-rbac-matrix" class="panel">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title"><i class="fa-solid fa-shield-halved"></i> Role-Based Access Control Matrix</div>
+                    </div>
+                    <div class="card-desc">
+                        Centralized authorization policy mapping system roles to independent permission codenames.
+                    </div>
+                    <div class="table-responsive">
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>Permission</th>
+                                    <th>administrator</th>
+                                    <th>it_operator</th>
+                                    <th>security_analyst</th>
+                                    <th>manager</th>
+                                    <th>general_employee</th>
+                                </tr>
+                            </thead>
+                            <tbody id="rbac-matrix-tbody"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <!-- Script Application Logic -->
+    <script>
+        const PRESETS = [
+            { user: 'admin', pass: 'admin', role: 'administrator', name: 'System Admin' },
+            { user: 'operator', pass: 'Operator1!', role: 'it_operator', name: 'IT Operator' },
+            { user: 'analyst', pass: 'Analyst1!', role: 'security_analyst', name: 'Security Analyst' },
+            { user: 'manager', pass: 'Manager1!', role: 'manager', name: 'Dept Manager' },
+            { user: 'employee', pass: 'Employee1!', role: 'general_employee', name: 'General Employee' }
+        ];
+
+        const ALL_PERMS = [
+            'document.read', 'document.write', 'system.read', 'system.execute',
+            'security.read', 'security.execute', 'report.generate', 'approval.approve',
+            'admin.manage', 'user.read', 'user.write', 'ai.execute', 'ai.read', 'audit.read'
+        ];
+
+        const ROLE_PERMS = {
+            'administrator': ALL_PERMS,
+            'it_operator': ['document.read', 'document.write', 'system.read', 'system.execute', 'report.generate', 'user.read', 'ai.execute', 'ai.read', 'audit.read'],
+            'security_analyst': ['document.read', 'security.read', 'security.execute', 'report.generate', 'audit.read', 'ai.read'],
+            'manager': ['document.read', 'document.write', 'system.read', 'report.generate', 'approval.approve', 'user.read', 'ai.execute', 'ai.read'],
+            'general_employee': ['document.read', 'ai.execute', 'ai.read']
+        };
+
+        let state = {
+            token: '',
+            refresh: '',
+            currentUser: null,
+            userProfile: null
+        };
+
+        // Initialize UI
+        function init() {
+            renderPresets();
+            renderRBACMatrix();
+            checkSystemHealth();
+            checkOllama();
+        }
+
+        function renderPresets() {
+            const c = document.getElementById('preset-container');
+            c.innerHTML = '';
+            PRESETS.forEach(p => {
+                const el = document.createElement('div');
+                el.className = 'preset-card' + (state.currentUser && state.currentUser.user === p.user ? ' active' : '');
+                el.innerHTML = `
+                    <div class="preset-name">${p.user}</div>
+                    <div class="preset-role">${p.role}</div>
+                `;
+                el.onclick = () => {
+                    document.getElementById('login-user').value = p.user;
+                    document.getElementById('login-pass').value = p.pass;
+                    submitLogin();
+                };
+                c.appendChild(el);
+            });
+        }
+
+        function renderRBACMatrix() {
+            const tbody = document.getElementById('rbac-matrix-tbody');
+            tbody.innerHTML = '';
+            ALL_PERMS.forEach(perm => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><code>${perm}</code></td>
+                    ${['administrator', 'it_operator', 'security_analyst', 'manager', 'general_employee'].map(r => `
+                        <td style="text-align:center;">
+                            ${ROLE_PERMS[r].includes(perm) ? '<span class="badge badge-success"><i class="fa-solid fa-check"></i></span>' : '<span style="color:#4b5563;">-</span>'}
+                        </td>
+                    `).join('')}
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        function switchNav(panelId, btn) {
+            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+            document.getElementById('panel-' + panelId).classList.add('active');
+            if (btn) btn.classList.add('active');
+
+            if (panelId === 'users') loadUsers();
+            if (panelId === 'rag') loadRAGDocs();
+            if (panelId === 'audit') loadAuditEvents();
+            if (panelId === 'approvals') loadApprovals();
+        }
+
+        // Generic API Helper
+        async function api(method, url, body = null, requireAuth = true) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (requireAuth && state.token) {
+                headers['Authorization'] = 'Bearer ' + state.token;
+            }
+            const opts = { method, headers };
+            if (body) opts.body = JSON.stringify(body);
+            try {
+                const res = await fetch(url, opts);
+                if (res.status === 204) return { ok: true, status: 204, data: { success: true } };
+                const data = await res.json().catch(() => ({}));
+                return { ok: res.ok, status: res.status, data };
+            } catch (err) {
+                return { ok: false, status: 0, data: { error: err.message } };
+            }
+        }
+
+        // Authentication Handlers
+        async function submitLogin() {
+            const username = document.getElementById('login-user').value.trim();
+            const password = document.getElementById('login-pass').value;
+            if (!username || !password) return alert('Enter username and password');
+
+            const res = await api('POST', '/api/v1/auth/login', { username, password }, false);
+            const box = document.getElementById('auth-output');
+            box.style.display = 'block';
+            box.textContent = JSON.stringify(res.data, null, 2);
+
+            if (res.ok) {
+                state.token = res.data.access_token;
+                state.refresh = res.data.refresh_token;
+                const found = PRESETS.find(p => p.user === username);
+                state.currentUser = found || { user: username, role: 'custom' };
+                updateSessionBadge(true);
+                renderPresets();
+                fetchMyProfile();
+            } else {
+                updateSessionBadge(false);
+            }
+        }
+
+        async function rotateToken() {
+            if (!state.refresh) return alert('No active refresh token');
+            const res = await api('POST', '/api/v1/auth/refresh', { refresh_token: state.refresh }, false);
+            const box = document.getElementById('auth-output');
+            box.style.display = 'block';
+            box.textContent = JSON.stringify(res.data, null, 2);
+
+            if (res.ok) {
+                state.token = res.data.access_token;
+                state.refresh = res.data.refresh_token;
+                alert('Token successfully rotated with family verification!');
+            }
+        }
+
+        async function fetchMyProfile() {
+            if (!state.token) return;
+            const res = await api('GET', '/api/v1/auth/me');
+            if (res.ok) {
+                state.userProfile = res.data;
+                document.getElementById('badge-name').textContent = res.data.username;
+                document.getElementById('badge-role').textContent = res.data.role;
+                renderPermsChips(res.data.role);
+            }
+        }
+
+        async function appLogout() {
+            if (state.refresh) {
+                await api('POST', '/api/v1/auth/logout', { refresh_token: state.refresh }, false);
+            }
+            state.token = '';
+            state.refresh = '';
+            state.currentUser = null;
+            state.userProfile = null;
+            updateSessionBadge(false);
+            renderPresets();
+            document.getElementById('perms-card').style.display = 'none';
+            document.getElementById('auth-output').style.display = 'none';
+        }
+
+        function updateSessionBadge(isLoggedIn) {
+            const badge = document.getElementById('user-badge');
+            const logoutBtn = document.getElementById('logout-btn');
+            const lbl = document.getElementById('lbl-auth');
+            const dot = document.getElementById('dot-auth');
+
+            if (isLoggedIn && state.currentUser) {
+                badge.style.display = 'flex';
+                logoutBtn.style.display = 'inline-flex';
+                document.getElementById('badge-name').textContent = state.currentUser.user;
+                document.getElementById('badge-role').textContent = state.currentUser.role;
+                document.getElementById('badge-role-dot').className = 'role-dot role-' + state.currentUser.role;
+                lbl.textContent = state.currentUser.user + ' (' + state.currentUser.role + ')';
+                dot.className = 'indicator green';
+            } else {
+                badge.style.display = 'none';
+                logoutBtn.style.display = 'none';
+                lbl.textContent = 'Not Logged In';
+                dot.className = 'indicator gray';
+            }
+        }
+
+        function renderPermsChips(role) {
+            const card = document.getElementById('perms-card');
+            const container = document.getElementById('perms-chips');
+            card.style.display = 'block';
+            container.innerHTML = '';
+            const granted = ROLE_PERMS[role] || [];
+            ALL_PERMS.forEach(p => {
+                const span = document.createElement('span');
+                span.className = 'chip' + (granted.includes(p) ? ' granted' : '');
+                span.textContent = p;
+                container.appendChild(span);
+            });
+        }
+
+        // User Directory Handlers
+        function toggleCreateUserForm() {
+            const f = document.getElementById('create-user-section');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadUsers() {
+            const tbody = document.getElementById('users-tbody');
+            if (!state.token) {
+                tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#f87171;">Sign in to inspect user directory.</td></tr>';
+                return;
+            }
+            const res = await api('GET', '/api/v1/users');
+            if (!res.ok) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:#f87171;">HTTP ${res.status}: ${res.data.detail || 'Access Denied (user.read permission required)'}</td></tr>`;
+                return;
+            }
+            const items = res.data.items || [];
+            tbody.innerHTML = '';
+            items.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${u.username}</strong><br><span style="font-size:0.7rem; color:#6b7280;">${u.full_name || ''}</span></td>
+                    <td>${u.email}</td>
+                    <td><span class="badge badge-info">${u.role}</span></td>
+                    <td>${u.is_active ? '<span class="badge badge-success">Active</span>' : '<span class="badge badge-danger">Disabled</span>'}</td>
+                    <td style="font-size:0.75rem; color:#9ca3af;">${u.last_login ? new Date(u.last_login).toLocaleString() : 'Never'}</td>
+                    <td>
+                        ${u.is_active ? `
+                            <button class="btn btn-danger btn-sm" onclick="toggleUserStatus('${u.id}', false)">Disable</button>
+                        ` : `
+                            <button class="btn btn-success btn-sm" onclick="toggleUserStatus('${u.id}', true)">Enable</button>
+                        `}
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function submitCreateUser() {
+            const username = document.getElementById('new-user-name').value.trim();
+            const email = document.getElementById('new-user-email').value.trim();
+            const full_name = document.getElementById('new-user-fullname').value.trim();
+            const role = document.getElementById('new-user-role').value;
+            const password = document.getElementById('new-user-pass').value;
+
+            if (!username || !email || !password) return alert('Fill in all fields');
+            const res = await api('POST', '/api/v1/users', { username, email, full_name, role, password });
+            if (res.ok) {
+                alert('User created successfully in database!');
+                toggleCreateUserForm();
+                loadUsers();
+            } else {
+                alert('Error creating user: ' + JSON.stringify(res.data));
+            }
+        }
+
+        async function toggleUserStatus(userId, activate) {
+            const action = activate ? 'enable' : 'disable';
+            const res = await api('POST', `/api/v1/users/${userId}/${action}`);
+            if (res.ok) {
+                loadUsers();
+            } else {
+                alert('Action failed: ' + JSON.stringify(res.data));
+            }
+        }
+
+        // AI Orchestrator Handlers
+        async function executeAITask() {
+            const prompt = document.getElementById('ai-prompt').value.trim();
+            const sensitivity = document.getElementById('ai-sensitivity').value;
+            const tool = document.getElementById('ai-tool').value;
+
+            const payload = {
+                input: prompt,
+                data_sensitivity: sensitivity
+            };
+            if (tool) {
+                payload.tool = tool;
+                payload.tool_parameters = tool === 'calculator' ? { expression: prompt.replace(/[^0-9+\-*/().]/g, '') || '2+2' } : {};
+            }
+
+            const res = await api('POST', '/api/v1/ai/execute', payload);
+            const box = document.getElementById('ai-result-box');
+            const chips = document.getElementById('ai-summary-chips');
+            const out = document.getElementById('ai-output');
+
+            box.style.display = 'block';
+            chips.innerHTML = '';
+
+            const d = res.data;
+            chips.innerHTML += `<span class="badge ${d.policy_decision === 'allow' ? 'badge-success' : (d.policy_decision === 'require_approval' ? 'badge-warning' : 'badge-danger')}">Policy: ${d.policy_decision || 'N/A'}</span>`;
+            chips.innerHTML += `<span class="badge badge-info">Risk: ${d.risk_level || 'N/A'}</span>`;
+            chips.innerHTML += `<span class="badge badge-info">Category: ${d.task_category || 'N/A'}</span>`;
+            if (d.approval_id) {
+                chips.innerHTML += `<span class="badge badge-warning">Approval ID: ${d.approval_id}</span>`;
+                document.getElementById('appr-target-id').value = d.approval_id;
+            }
+            if (d.evidence && Array.isArray(d.evidence)) {
+                d.evidence.forEach(ev => {
+                    if (typeof ev === 'string' && ev.startsWith('rag_doc:')) {
+                        const docTitle = ev.replace('rag_doc:', '');
+                        chips.innerHTML += `<span class="badge badge-success"><i class="fa-solid fa-book"></i> Grounded in: ${docTitle}</span>`;
+                    }
+                });
+            }
+
+            const ansCard = document.getElementById('ai-answer-card');
+            const ansText = document.getElementById('ai-answer-text');
+            if (d.content) {
+                ansCard.style.display = 'block';
+                ansText.textContent = d.content;
+            } else if (d.tool_output) {
+                ansCard.style.display = 'block';
+                ansText.textContent = 'Tool Output: ' + JSON.stringify(d.tool_output, null, 2);
+            } else {
+                ansCard.style.display = 'none';
+            }
+
+            out.textContent = JSON.stringify(res.data, null, 2);
+        }
+
+        // RAG Knowledge Base Handlers
+        function toggleAddDocForm() {
+            const f = document.getElementById('add-doc-section');
+            f.style.display = f.style.display === 'none' ? 'block' : 'none';
+        }
+
+        async function loadRAGDocs() {
+            const tbody = document.getElementById('rag-tbody');
+            if (!state.token) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#f87171;">Sign in to inspect organizational knowledge documents.</td></tr>';
+                return;
+            }
+            const res = await api('GET', '/api/v1/rag/documents');
+            if (!res.ok) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:#f87171;">HTTP ${res.status}: ${res.data.detail || 'Access Denied (document.read permission required)'}</td></tr>`;
+                return;
+            }
+            const items = res.data || [];
+            tbody.innerHTML = '';
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#9ca3af;">No documents accessible to your current role.</td></tr>';
+                return;
+            }
+            items.forEach(doc => {
+                const tr = document.createElement('tr');
+                const badgeClass = doc.classification === 'public' ? 'badge-success' :
+                                   doc.classification === 'internal' ? 'badge-info' :
+                                   doc.classification === 'confidential' ? 'badge-warning' : 'badge-danger';
+                tr.innerHTML = `
+                    <td><strong>${doc.title}</strong></td>
+                    <td><code>${doc.category}</code></td>
+                    <td><span class="badge ${badgeClass}">${doc.classification.toUpperCase()}</span></td>
+                    <td style="font-size:0.75rem; color:#cbd5e1;">${(doc.allowed_roles || []).join(', ') || 'All Roles'}</td>
+                    <td style="font-size:0.75rem; color:#9ca3af; max-width:320px;">${doc.content_preview}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function submitCreateDoc() {
+            const title = document.getElementById('new-doc-title').value.trim();
+            const category = document.getElementById('new-doc-cat').value;
+            const classification = document.getElementById('new-doc-sens').value;
+            const content = document.getElementById('new-doc-content').value.trim();
+
+            if (!title || !content) return alert('Title and content are required.');
+
+            const res = await api('POST', '/api/v1/rag/documents', {
+                title,
+                content,
+                category,
+                classification
+            });
+            if (res.ok) {
+                alert('Document successfully added to Knowledge Base!');
+                document.getElementById('new-doc-title').value = '';
+                document.getElementById('new-doc-content').value = '';
+                toggleAddDocForm();
+                loadRAGDocs();
+            } else {
+                alert('Error registering document: ' + JSON.stringify(res.data));
+            }
+        }
+
+        // Direct Tool Handlers
+        async function runDirectCalc() {
+            const expr = document.getElementById('calc-input').value;
+            const res = await api('POST', '/api/v1/ai/execute', {
+                input: 'Calculate: ' + expr,
+                tool: 'calculator',
+                tool_parameters: { expression: expr },
+                data_sensitivity: 'public'
+            });
+            const out = document.getElementById('tools-output');
+            out.style.display = 'block';
+            out.textContent = JSON.stringify(res.data, null, 2);
+        }
+
+        async function runDirectSysInfo() {
+            const res = await api('POST', '/api/v1/ai/execute', {
+                input: 'System diagnostics',
+                tool: 'system_info',
+                tool_parameters: {},
+                data_sensitivity: 'public'
+            });
+            const out = document.getElementById('tools-output');
+            out.style.display = 'block';
+            out.textContent = JSON.stringify(res.data, null, 2);
+        }
+
+        // Approvals Handlers
+        async function loadApprovals() {
+            const out = document.getElementById('appr-output');
+            out.style.display = 'block';
+            out.textContent = 'Enter an Approval ID from a restricted task to inspect or review status.';
+        }
+
+        async function resolveApproval(action) {
+            const id = document.getElementById('appr-target-id').value.trim();
+            const notes = document.getElementById('appr-notes').value.trim();
+            if (!id) return alert('Enter Approval Request UUID');
+
+            const res = await api('POST', `/api/v1/approvals/${id}/${action}`, { notes });
+            const out = document.getElementById('appr-output');
+            out.style.display = 'block';
+            out.textContent = JSON.stringify(res.data, null, 2);
+        }
+
+        // Audit Handlers
+        async function loadAuditEvents() {
+            const tbody = document.getElementById('audit-tbody');
+            if (!state.token) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#f87171;">Sign in with audit.read privileges to view ledger.</td></tr>';
+                return;
+            }
+            const res = await api('GET', '/api/v1/audit/events?limit=25');
+            if (!res.ok) {
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#f87171;">HTTP ${res.status}: ${res.data.detail || 'Access Denied'}</td></tr>`;
+                return;
+            }
+            const items = res.data.items || [];
+            tbody.innerHTML = '';
+            items.forEach(ev => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>#${ev.sequence_number}</strong></td>
+                    <td style="font-size:0.72rem; color:#9ca3af;">${new Date(ev.timestamp).toLocaleTimeString()}</td>
+                    <td><code>${ev.event_type}</code></td>
+                    <td>${ev.role || 'system'}</td>
+                    <td><span class="badge ${ev.decision === 'allow' ? 'badge-success' : 'badge-danger'}">${ev.decision}</span></td>
+                    <td><span class="badge badge-info">${ev.risk_level}</span></td>
+                    <td><code style="font-size:0.7rem; color:#38bdf8;" title="${ev.event_hash}">${ev.event_hash.substring(0, 16)}...</code></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function verifyAuditChain() {
+            const banner = document.getElementById('verify-banner');
+            const res = await api('GET', '/api/v1/audit/verify');
+            banner.style.display = 'block';
+            if (res.ok && res.data.status === 'valid') {
+                banner.style.background = 'rgba(16, 185, 129, 0.15)';
+                banner.style.border = '1px solid #10b981';
+                banner.style.color = '#34d399';
+                banner.innerHTML = `<i class="fa-solid fa-circle-check"></i> <strong>Cryptographic Chain Verified:</strong> ${res.data.verified_events} events checked. All SHA-256 links intact!`;
+            } else {
+                banner.style.background = 'rgba(239, 68, 68, 0.15)';
+                banner.style.border = '1px solid #ef4444';
+                banner.style.color = '#f87171';
+                banner.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> <strong>Integrity Error:</strong> ${JSON.stringify(res.data)}`;
+            }
+        }
+
+        // Diagnostics
+        async function checkSystemHealth() {
+            try {
+                const res = await fetch('/api/v1/health');
+                const d = await res.json();
+                document.getElementById('lbl-api').textContent = 'Online (v0.1.0)';
+                document.getElementById('dot-api').className = 'indicator green';
+                document.getElementById('lbl-db').textContent = d.database;
+                document.getElementById('dot-db').className = d.database === 'connected' ? 'indicator green' : 'indicator red';
+            } catch (err) {
+                document.getElementById('lbl-api').textContent = 'Offline';
+                document.getElementById('dot-api').className = 'indicator red';
+            }
+        }
+
+        async function checkOllama() {
+            try {
+                const res = await fetch('http://localhost:11434/api/tags');
+                if (res.ok) {
+                    document.getElementById('lbl-ollama').textContent = 'Active (Local)';
+                    document.getElementById('dot-ollama').className = 'indicator green';
+                } else {
+                    throw new Error('Not running');
+                }
+            } catch (err) {
+                document.getElementById('lbl-ollama').textContent = 'Offline (Tools Available)';
+                document.getElementById('dot-ollama').className = 'indicator yellow';
+            }
+        }
+
+        window.onload = init;
+    </script>
+</body>
+</html>
