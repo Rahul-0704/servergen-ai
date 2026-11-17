@@ -198,12 +198,10 @@ async def generate_from_rag(
     except Exception:
         user_sens = DataSensitivity.INTERNAL
     rag_result = await retriever.retrieve(
-        db=db,
         query=body.query,
-        user_role=auth.role,
-        user_id=auth.user_id,
-        user_permissions=auth.permissions,
+        auth=auth,
         top_k=body.top_k,
+        db=db,
         max_sensitivity=user_sens,
     )
 
