@@ -13,6 +13,7 @@ from __future__ import annotations
 
 import logging
 import mimetypes
+import uuid
 from pathlib import Path
 from typing import Annotated, Any
 
@@ -104,6 +105,7 @@ async def generate_presentation(
         await audit.record(
             event_type="document:generate_pptx",
             action="generate_presentation",
+            request_id=str(uuid.uuid4()),
             user_id=auth.user_id,
             role=auth.role,
             resource=meta.filename,
@@ -153,6 +155,7 @@ async def generate_pdf(
         await audit.record(
             event_type="document:generate_pdf",
             action="generate_pdf",
+            request_id=str(uuid.uuid4()),
             user_id=auth.user_id,
             role=auth.role,
             resource=meta.filename,

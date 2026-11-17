@@ -9,6 +9,7 @@ binary files without any external cloud egress.
 
 from __future__ import annotations
 
+import asyncio
 import contextlib
 import datetime
 import json
@@ -262,10 +263,10 @@ Return ONLY valid JSON.
                 model=active_model,
                 prompt=user_content,
                 system_prompt=system_instruction,
-                max_tokens=2048,
+                max_tokens=900,
                 temperature=0.3,
             )
-            response = await provider.generate(req)
+            response = await asyncio.wait_for(provider.generate(req), timeout=30.0)
             deck_data = self._parse_deck_json(response.content)
         except Exception as exc:
             logger.warning("Local LLM presentation generation warning: %s. Using heuristic synthesizer.", exc)
@@ -696,10 +697,10 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                 model=active_model,
                 prompt=user_content,
                 system_prompt=system_instruction,
-                max_tokens=2500,
+                max_tokens=1100,
                 temperature=0.3,
             )
-            response = await provider.generate(req)
+            response = await asyncio.wait_for(provider.generate(req), timeout=30.0)
             doc_data = self._parse_report_json(response.content)
         except Exception as exc:
             logger.warning("Local LLM report generation warning: %s. Using heuristic synthesizer.", exc)
