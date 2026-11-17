@@ -272,7 +272,7 @@ Return ONLY valid JSON.
             logger.warning("Local LLM presentation generation warning: %s. Using heuristic synthesizer.", exc)
 
         if not deck_data or not deck_data.slides:
-            deck_data = self._heuristic_deck_fallback(prompt, num_slides, classification)
+            deck_data = self._heuristic_deck_fallback(prompt, num_slides, classification, context=context)
 
         file_id = str(uuid.uuid4())[:12]
         path, meta = self.render_presentation(deck_data, file_id=file_id)
@@ -294,81 +294,119 @@ Return ONLY valid JSON.
         # Find first '{' and last '}'
         start = cleaned.find("{")
         end = cleaned.rfind("}")
-        if start != -1 and end != -1:
+        if start != -1 and end != -1 and end > start:
             json_str = cleaned[start : end + 1]
             try:
                 parsed = json.loads(json_str)
                 return PresentationDeck(**parsed)
             except Exception:
-                pass
+                try:
+                    cleaned_commas = re.sub(r",\s*([}\]])", r"\1", json_str)
+                    parsed = json.loads(cleaned_commas)
+                    return PresentationDeck(**parsed)
+                except Exception:
+                    pass
         return None
 
+    def _extract_insights_from_context(self, context: str, min_items: int = 5) -> list[str]:
+        """Extract substantive factual points from reference context or RAG retrieval."""
+        if not context:
+            return []
+        lines = [line.strip() for line in context.splitlines() if line.strip()]
+        insights = []
+        for line in lines:
+            clean = re.sub(r"^[\*\-•#\d+\.]+\s*", "", line).strip()
+            clean = re.sub(r"[\*_`]", "", clean)
+            if len(clean) > 20 and not clean.lower().startswith(
+                ("here is", "sure,", "summary:", "overview:", "in summary", "to summarize")
+            ):
+                insights.append(clean)
+
+        if len(insights) < min_items:
+            sentences = [s.strip() for s in re.split(r"(?<=[.!?])\s+", context) if len(s.strip()) > 25]
+            for s in sentences:
+                clean_s = re.sub(r"^[\*\-•#\d+\.]+\s*", "", s).strip()
+                clean_s = re.sub(r"[\*_`]", "", clean_s)
+                if clean_s and clean_s not in insights:
+                    insights.append(clean_s)
+        return insights
+
     def _heuristic_deck_fallback(
-        self, prompt: str, num_slides: int, classification: str
+        self, prompt: str, num_slides: int, classification: str, context: str = ""
     ) -> PresentationDeck:
         """Constructs a clean, logically sound slide deck when LLM returns unstructured text."""
         clean_title = prompt.split("\n")[0][:60].strip() or "Executive Project Brief"
+        extracted = self._extract_insights_from_context(context)
+
+        s1_bullets = extracted[:3] if len(extracted) >= 3 else [
+            f"Core Objective: Address '{clean_title}' with structured operational precision.",
+            "Establish zero-trust boundaries and verified security postures across all workflows.",
+            "Maximize efficiency while maintaining rigorous governance and auditability.",
+        ]
+
+        s2_bullets = extracted[3:6] if len(extracted) >= 6 else [
+            "On-premise execution isolated from external public cloud egress.",
+            "Role-Based Access Control enforcing granular user clearances.",
+            "Vector retrieval combined with deterministic policy checks.",
+        ]
+
+        s3_bullets = extracted[6:9] if len(extracted) >= 9 else [
+            "Phase 1: Baseline deployment and automated role entitlement checks.",
+            "Phase 2: Full document ingestion, indexing, and vector synchronization.",
+            "Phase 3: Continuous audit verification with SHA-256 tamper-evident ledgers.",
+        ]
+
         slides = [
             SlideContent(
                 title="Executive Overview & Objectives",
                 category="STRATEGY",
-                bullets=[
-                    f"Core Objective: Address '{clean_title}' with structured operational precision.",
-                    "Establish zero-trust boundaries and verified security postures across all workflows.",
-                    "Maximize efficiency while maintaining rigorous governance and auditability.",
-                ],
+                bullets=s1_bullets,
                 key_takeaway="Align technical capabilities directly with verified enterprise compliance.",
                 notes="Introduce primary stakeholder objectives and scope.",
             ),
             SlideContent(
                 title="Current Architecture & Technical Analysis",
                 category="ARCHITECTURE",
-                bullets=[
-                    "On-premise execution isolated from external public cloud egress.",
-                    "Role-Based Access Control enforcing granular user clearances.",
-                    "Vector retrieval combined with deterministic policy checks.",
-                ],
+                bullets=s2_bullets,
                 key_takeaway="Zero data leakage guaranteed through verified localized boundaries.",
                 notes="Review architectural components and operational safety mechanisms.",
             ),
             SlideContent(
                 title="Implementation Roadmap & Best Practices",
                 category="OPERATIONS",
-                bullets=[
-                    "Phase 1: Baseline deployment and automated role entitlement checks.",
-                    "Phase 2: Full document ingestion, indexing, and vector synchronization.",
-                    "Phase 3: Continuous audit verification with SHA-256 tamper-evident ledgers.",
-                ],
+                bullets=s3_bullets,
                 key_takeaway="Predictable rollout supported by continuous automated verification.",
                 notes="Emphasize governance controls and incremental deployment milestones.",
             ),
         ]
 
         if num_slides >= 4:
+            s4_bullets = extracted[9:12] if len(extracted) >= 12 else [
+                "High-risk operational tasks require dual-custody managerial sign-off.",
+                "All queries and model responses logged to cryptographic audit ledger.",
+                "Clear separation between Viewer, Analyst, Operator, and Administrator roles.",
+            ]
             slides.append(
                 SlideContent(
                     title="Risk Management & Dual-Custody Controls",
                     category="GOVERNANCE",
-                    bullets=[
-                        "High-risk operational tasks require dual-custody managerial sign-off.",
-                        "All queries and model responses logged to cryptographic audit ledger.",
-                        "Clear separation between Viewer, Analyst, Operator, and Administrator roles.",
-                    ],
+                    bullets=s4_bullets,
                     key_takeaway="No critical mutation can occur without verified authorization.",
                     notes="Highlight regulatory adherence and managerial control.",
                 )
             )
 
         if num_slides >= 5:
+            s5_bullets = extracted[12:15] if len(extracted) >= 15 else [
+                "Validate local model performance and document indexing status.",
+                "Train departmental users on role-specific query interfaces.",
+                "Review daily audit trail logs to maintain zero compliance drift.",
+            ]
             slides.append(
                 SlideContent(
                     title="Summary & Next Steps",
                     category="SUMMARY",
-                    bullets=[
-                        "Validate local model performance and document indexing status.",
-                        "Train departmental users on role-specific query interfaces.",
-                        "Review daily audit trail logs to maintain zero compliance drift.",
-                    ],
+                    bullets=s5_bullets,
                     key_takeaway="Enterprise readiness achieved through automation, security, and verification.",
                     notes="Conclude and open floor for questions or approvals.",
                 )
@@ -508,12 +546,13 @@ Return ONLY valid JSON.
 
             # Slide Title
             st_box = slide.shapes.add_textbox(
-                Inches(0.8), Inches(0.45), Inches(10.0), Inches(0.6)
+                Inches(0.8), Inches(0.45), Inches(10.0), Inches(0.65)
             )
             st_tf = st_box.text_frame
+            st_tf.word_wrap = True
             st_p = st_tf.paragraphs[0]
             st_p.text = slide_model.title
-            st_p.font.size = Pt(22)
+            st_p.font.size = Pt(19) if len(slide_model.title) > 45 else Pt(22)
             st_p.font.bold = True
             st_p.font.color.rgb = c_white
 
@@ -547,18 +586,22 @@ Return ONLY valid JSON.
 
             # Bullet points box inside card
             content_box = slide.shapes.add_textbox(
-                Inches(1.2), Inches(1.9), Inches(10.9), Inches(3.2)
+                Inches(1.2), Inches(1.85), Inches(10.9), Inches(3.2)
             )
             c_tf = content_box.text_frame
             c_tf.word_wrap = True
 
+            b_count = len(slide_model.bullets)
+            b_size = Pt(13.5) if b_count > 3 else Pt(15.5)
+            b_space = Pt(8) if b_count > 3 else Pt(12)
+
             for b_idx, bullet in enumerate(slide_model.bullets):
                 p_bullet = c_tf.paragraphs[0] if b_idx == 0 else c_tf.add_paragraph()
                 p_bullet.text = f"•   {bullet}"
-                p_bullet.font.size = Pt(16)
+                p_bullet.font.size = b_size
                 p_bullet.font.color.rgb = c_navy
-                p_bullet.space_after = Pt(14)
-                p_bullet.line_spacing = 1.2
+                p_bullet.space_after = b_space
+                p_bullet.line_spacing = 1.15
 
             # Key Takeaway footer box inside card
             if slide_model.key_takeaway:
@@ -706,7 +749,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
             logger.warning("Local LLM report generation warning: %s. Using heuristic synthesizer.", exc)
 
         if not doc_data or not doc_data.sections:
-            doc_data = self._heuristic_report_fallback(prompt, classification)
+            doc_data = self._heuristic_report_fallback(prompt, classification, context=context)
 
         file_id = str(uuid.uuid4())[:12]
         path, meta = self.render_pdf(doc_data, file_id=file_id)
@@ -725,27 +768,67 @@ Ensure the response is strictly valid JSON with no extraneous characters.
 
         start = cleaned.find("{")
         end = cleaned.rfind("}")
-        if start != -1 and end != -1:
+        if start != -1 and end != -1 and end > start:
+            json_str = cleaned[start : end + 1]
             try:
-                parsed = json.loads(cleaned[start : end + 1])
+                parsed = json.loads(json_str)
                 return ReportDocument(**parsed)
             except Exception:
-                pass
+                try:
+                    cleaned_commas = re.sub(r",\s*([}\]])", r"\1", json_str)
+                    parsed = json.loads(cleaned_commas)
+                    return ReportDocument(**parsed)
+                except Exception:
+                    pass
         return None
 
-    def _heuristic_report_fallback(self, prompt: str, classification: str) -> ReportDocument:
+    def _heuristic_report_fallback(
+        self, prompt: str, classification: str, context: str = ""
+    ) -> ReportDocument:
         """Constructs a rich executive report fallback when LLM output is non-JSON."""
         clean_title = prompt.split("\n")[0][:70].strip() or "Enterprise System Assessment"
+        extracted = self._extract_insights_from_context(context)
+
+        exec_summary = (
+            context[:350].strip()
+            if len(context.strip()) > 80
+            else (
+                f"This document provides an authoritative evaluation of '{clean_title}'. "
+                "The analysis synthesizes zero-trust architectural principles, localized on-premise execution, "
+                "and automated governance policies to ensure verified, compliance-ready enterprise performance."
+            )
+        )
+
+        sec1_bullets = extracted[:3] if len(extracted) >= 3 else [
+            "Zero external telemetry or data egress during query and generation processing.",
+            "Strict Role-Based Access Control enforcing clearance from Public to Restricted.",
+            "Deterministic policy checks preceding all model and tool executions.",
+        ]
+
+        sec2_bullets = extracted[3:6] if len(extracted) >= 6 else [
+            "Automated risk scoring based on keyword detection and declared data sensitivity.",
+            "Cryptographic SHA-256 audit ledger recording actor, action, and decision.",
+            "Immutable document versioning preventing unauthorized modification.",
+        ]
+
+        sec3_bullets = extracted[6:9] if len(extracted) >= 9 else [
+            "Execute automated integration verification across all 5 core security subsystems.",
+            "Regularly reindex departmental document repositories to maintain semantic accuracy.",
+            "Review pending approvals and ledger event sequences on a weekly cadence.",
+        ]
+
+        recs = extracted[9:12] if len(extracted) >= 12 else [
+            "Deploy local LLM runtime (Ollama) with verified hardware resource allocations.",
+            "Enforce dual-custody approvals for any infrastructure modification or sensitive export.",
+            "Perform scheduled audit ledger verification to validate cryptographic chain integrity.",
+        ]
+
         return ReportDocument(
             title=clean_title,
             subtitle="Executive Technical Report & Operational Analysis",
             classification=classification,
             author="ServerGen AI Local Knowledge Engine",
-            executive_summary=(
-                f"This document provides an authoritative evaluation of '{clean_title}'. "
-                "The analysis synthesizes zero-trust architectural principles, localized on-premise execution, "
-                "and automated governance policies to ensure verified, compliance-ready enterprise performance."
-            ),
+            executive_summary=exec_summary,
             sections=[
                 ReportSection(
                     heading="1. Operational Scope & Architecture Overview",
@@ -754,11 +837,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                         "execution runtimes. All operations must adhere to verified access boundaries without "
                         "relying on external public cloud APIs."
                     ),
-                    bullet_points=[
-                        "Zero external telemetry or data egress during query and generation processing.",
-                        "Strict Role-Based Access Control enforcing clearance from Public to Restricted.",
-                        "Deterministic policy checks preceding all model and tool executions.",
-                    ],
+                    bullet_points=sec1_bullets,
                     key_metric="100% On-Premise Air-Gapped Operation",
                 ),
                 ReportSection(
@@ -768,11 +847,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                         "When tasks exceed acceptable autonomous thresholds, dual-custody approval workflows "
                         "halt execution pending authorized review."
                     ),
-                    bullet_points=[
-                        "Automated risk scoring based on keyword detection and declared data sensitivity.",
-                        "Cryptographic SHA-256 audit ledger recording actor, action, and decision.",
-                        "Immutable document versioning preventing unauthorized modification.",
-                    ],
+                    bullet_points=sec2_bullets,
                     key_metric="Cryptographic Tamper-Evidence Ledger",
                 ),
                 ReportSection(
@@ -782,19 +857,11 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                         "established safety criteria. Regular regression checks and verification suites provide "
                         "objective confidence in operational stability."
                     ),
-                    bullet_points=[
-                        "Execute automated integration verification across all 5 core security subsystems.",
-                        "Regularly reindex departmental document repositories to maintain semantic accuracy.",
-                        "Review pending approvals and ledger event sequences on a weekly cadence.",
-                    ],
+                    bullet_points=sec3_bullets,
                     key_metric="Zero Compliance Drift",
                 ),
             ],
-            recommendations=[
-                "Deploy local LLM runtime (Ollama) with verified hardware resource allocations.",
-                "Enforce dual-custody approvals for any infrastructure modification or sensitive export.",
-                "Perform scheduled audit ledger verification to validate cryptographic chain integrity.",
-            ],
+            recommendations=recs,
         )
 
     def render_pdf(
@@ -807,6 +874,16 @@ Ensure the response is strictly valid JSON with no extraneous characters.
         sanitized_title = re.sub(r"[^\w\-]", "_", doc_data.title)[:40].strip("_") or "report"
         filename = f"{fid}_{sanitized_title}.pdf"
         output_path = self.storage_dir / filename
+
+        def _esc(txt: Any, allow_tags: bool = True) -> str:
+            if not txt:
+                return ""
+            t = str(txt).replace("&amp;", "&").replace("&lt;", "<").replace("&gt;", ">")
+            escaped = t.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+            if allow_tags:
+                for tag in ("b", "/b", "i", "/i", "strong", "/strong", "em", "/em", "u", "/u"):
+                    escaped = escaped.replace(f"&lt;{tag}&gt;", f"<{tag}>")
+            return escaped
 
         # 40pt margins = ~0.55 in
         doc = SimpleDocTemplate(
@@ -902,7 +979,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
 
         # ── 1. Header Banner & Security Badge ───────────────────────────────
         badge_p = Paragraph(
-            f"<b>CLASSIFICATION: {doc_data.classification.upper()}</b>",
+            f"<b>CLASSIFICATION: {_esc(doc_data.classification.upper())}</b>",
             ParagraphStyle(
                 "Badge",
                 fontName="Helvetica-Bold",
@@ -927,14 +1004,14 @@ Ensure the response is strictly valid JSON with no extraneous characters.
         story.append(Spacer(1, 8))
 
         # Title & Subtitle
-        story.append(Paragraph(doc_data.title, title_style))
+        story.append(Paragraph(_esc(doc_data.title), title_style))
         if doc_data.subtitle:
-            story.append(Paragraph(doc_data.subtitle, subtitle_style))
+            story.append(Paragraph(_esc(doc_data.subtitle), subtitle_style))
 
         # Metadata table (Author, Date, System)
         meta_data = [
             [
-                Paragraph(f"<b>Author:</b> {doc_data.author}", body_style),
+                Paragraph(f"<b>Author:</b> {_esc(doc_data.author)}", body_style),
                 Paragraph(
                     f"<b>Date:</b> {datetime.date.today().strftime('%B %d, %Y')}", body_style
                 ),
@@ -957,7 +1034,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
         # ── 2. Executive Summary Box ────────────────────────────────────────
         if doc_data.executive_summary:
             summary_title = Paragraph("<b>EXECUTIVE SUMMARY</b>", h1_style)
-            summary_body = Paragraph(doc_data.executive_summary, callout_style)
+            summary_body = Paragraph(_esc(doc_data.executive_summary), callout_style)
             sum_cell = [summary_title, Spacer(1, 4), summary_body]
             sum_table = Table([[sum_cell]], colWidths=[532])
             sum_table.setStyle(
@@ -978,17 +1055,17 @@ Ensure the response is strictly valid JSON with no extraneous characters.
 
         # ── 3. Content Sections ─────────────────────────────────────────────
         for sec in doc_data.sections:
-            sec_elements: list[Any] = [Paragraph(sec.heading, h1_style)]
+            sec_elements: list[Any] = [Paragraph(_esc(sec.heading), h1_style)]
 
             if sec.content:
-                sec_elements.append(Paragraph(sec.content, body_style))
+                sec_elements.append(Paragraph(_esc(sec.content), body_style))
 
             for bp in sec.bullet_points:
-                sec_elements.append(Paragraph(f"•  {bp}", bullet_style))
+                sec_elements.append(Paragraph(f"•  {_esc(bp)}", bullet_style))
 
             if sec.key_metric:
                 metric_p = Paragraph(
-                    f"<b>KEY FINDING / BENCHMARK:</b> {sec.key_metric}",
+                    f"<b>KEY FINDING / BENCHMARK:</b> {_esc(sec.key_metric)}",
                     ParagraphStyle(
                         "Metric",
                         parent=styles["Normal"],
@@ -1022,7 +1099,7 @@ Ensure the response is strictly valid JSON with no extraneous characters.
             ]
             for idx, rec in enumerate(doc_data.recommendations, start=1):
                 rec_elements.append(
-                    Paragraph(f"<b>[{idx}]</b>  {rec}", bullet_style)
+                    Paragraph(f"<b>[{idx}]</b>  {_esc(rec)}", bullet_style)
                 )
             rec_elements.append(Spacer(1, 10))
             story.append(KeepTogether(rec_elements))
