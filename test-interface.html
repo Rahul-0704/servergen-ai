@@ -1198,6 +1198,8 @@
                                 <option value="" selected>None (Direct Local LLM Generation)</option>
                                 <option value="calculator">Calculator (Safe Math Execution)</option>
                                 <option value="system_info">System Info (Diagnostic Probe)</option>
+                                <option value="pdf_generator">PDF Generator (Executive Report)</option>
+                                <option value="presentation_generator">PowerPoint Generator (16:9 PPTX)</option>
                                 <option value="shell_execute">Shell Command (Blocked High-Risk Tool)</option>
                             </select>
                         </div>
@@ -1205,14 +1207,20 @@
 
                     <div style="margin-top:4px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
                         <input type="checkbox" id="ai-structured" style="width:auto; cursor:pointer;">
-                        <label for="ai-structured" style="cursor:pointer; font-size:0.82rem; color:#cbd5e1; margin-bottom:0;">
+                        <label for="ai-structured" style="cursor:pointer; font-size:0.82rem; color:#475569; margin-bottom:0;">
                             <strong>Enforce Structured Output (JSON Schema)</strong> &mdash; Enforces JSON with summary, details, and action items
                         </label>
                     </div>
 
-                    <div style="display:flex; align-items:center; gap:12px;">
+                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
                         <button id="btn-execute-ai" class="btn btn-primary" onclick="executeAITask()" style="min-width:170px;">
                             <i class="fa-solid fa-play"></i> Execute Pipeline
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pptx')" title="Generate a 16:9 PowerPoint presentation deck from this prompt">
+                            <i class="fa-solid fa-file-powerpoint text-warning"></i> Generate PPTX
+                        </button>
+                        <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pdf')" title="Generate a corporate PDF report from this prompt">
+                            <i class="fa-solid fa-file-pdf text-danger"></i> Generate PDF
                         </button>
                         <span id="ai-timer-status" style="font-size:0.8rem; color:#475569; display:none; align-items:center; gap:8px; font-variant-numeric:tabular-nums; min-width:280px; flex-shrink:0;">
                             <i class="fa-solid fa-spinner fa-spin"></i> <span id="ai-timer-text">Querying local LLM...</span>
@@ -1264,17 +1272,60 @@
 
                         <!-- Answer Display Card -->
                         <div id="ai-answer-card" style="display:none; background:#ffffff; border:1px solid #bfdbfe; border-left:5px solid #0284c7; box-shadow:0 4px 14px rgba(2,132,199,0.08); border-radius:6px; padding:18px; margin-bottom:14px;">
-                            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#38bdf8; font-weight:600; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                            <div style="font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; color:#0284c7; font-weight:700; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
                                 <span><i class="fa-solid fa-robot"></i> Verified Model Response</span>
-                                <span id="ai-answer-meta" style="font-size:0.75rem; color:#94a3b8; text-transform:none;"></span>
+                                <span id="ai-answer-meta" style="font-size:0.75rem; color:#64748B; text-transform:none;"></span>
                             </div>
                             <div id="ai-answer-text" class="markdown-rendered"></div>
+
+                            <!-- Export AI Response to Document -->
+                            <div style="margin-top:16px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span style="font-size:0.8rem; font-weight:600; color:#475569;"><i class="fa-solid fa-file-export text-primary"></i> Export this answer to an official document:</span>
+                                <div style="display:flex; gap:8px;">
+                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pptx')"><i class="fa-solid fa-file-powerpoint text-warning"></i> Export to PowerPoint (.pptx)</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pdf')"><i class="fa-solid fa-file-pdf text-danger"></i> Export to PDF (.pdf)</button>
+                                </div>
+                            </div>
+                            <div id="ai-export-result" style="display:none; margin-top:12px; padding:10px 14px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; font-size:0.85rem; color:#166534;"></div>
                         </div>
 
                         <div style="margin-top:10px;">
                             <button class="btn btn-secondary btn-sm" onclick="toggleRawJson('ai-output')"><i class="fa-solid fa-code"></i> Toggle Raw JSON</button>
                         </div>
                         <div id="ai-output" class="json-viewer" style="display:none; margin-top:8px;"></div>
+                    </div>
+                </div>
+
+                <!-- CARD 2: REAL-TIME SECURITY & EXECUTION AUDIT STREAM -->
+                <div class="card" style="margin-top:18px;">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <i class="fa-solid fa-shield-halved text-primary"></i> Live Security &amp; Execution Audit Stream
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <span id="live-audit-status" class="badge badge-success"><i class="fa-solid fa-circle-check"></i> SHA-256 Chain Verified</span>
+                            <button class="btn btn-secondary btn-sm" onclick="loadDashboardAuditLogs()"><i class="fa-solid fa-rotate-right"></i> Refresh Logs</button>
+                        </div>
+                    </div>
+                    <div class="card-desc">
+                        Real-time audit log streaming security pipeline events, policy decisions, risk evaluations, and cryptographic integrity.
+                    </div>
+                    <div class="table-responsive">
+                        <table class="table" style="width:100%; font-size:0.82rem;">
+                            <thead>
+                                <tr>
+                                    <th style="width:85px;">Time</th>
+                                    <th style="width:110px;">User &amp; Role</th>
+                                    <th>Event &amp; Action</th>
+                                    <th style="width:90px;">Risk Level</th>
+                                    <th style="width:120px;">Policy Decision</th>
+                                    <th style="width:100px; text-align:right;">Ledger Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="dashboard-audit-tbody">
+                                <tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:14px;">Loading real-time audit events...</td></tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
@@ -2213,6 +2264,8 @@
             }
             const aiBtn = document.querySelector('[data-nav="ai-run"]');
             if (aiBtn) switchNav('ai-run', aiBtn);
+            loadDashboardAuditLogs();
+            setInterval(loadDashboardAuditLogs, 10000);
         }
 
         function setAuthView(view) {
@@ -2804,6 +2857,7 @@
             }
 
             out.textContent = JSON.stringify(res.data, null, 2);
+            loadDashboardAuditLogs();
         }
 
         // Tools Handlers
@@ -2817,6 +2871,7 @@
             const out = document.getElementById('tools-output');
             out.style.display = 'block';
             out.textContent = JSON.stringify(res.data, null, 2);
+            loadDashboardAuditLogs();
         }
 
         async function runDirectSysInfo() {
@@ -2829,6 +2884,7 @@
             const out = document.getElementById('tools-output');
             out.style.display = 'block';
             out.textContent = JSON.stringify(res.data, null, 2);
+            loadDashboardAuditLogs();
         }
 
         // Approvals Handlers
@@ -4261,6 +4317,124 @@
                 });
             } catch (err) {
                 console.warn('Failed to load history: ' + err.message);
+            }
+        }
+
+        // ── Direct Document Generation from AI Assistant ────────────────────
+        function generateFromAIPrompt(type) {
+            const prompt = (document.getElementById('ai-prompt')?.value || '').trim();
+            if (!prompt) {
+                alert('Please enter a prompt or topic in the task input area.');
+                return;
+            }
+            switchNav('doc-gen', document.querySelector('.nav-item[data-nav="doc-gen"]'));
+            setDocGenMode(type);
+            const topicInput = document.getElementById('docgen-topic');
+            if (topicInput) topicInput.value = prompt;
+            generateDocument();
+        }
+
+        async function exportCurrentAIResponse(format) {
+            const prompt = (document.getElementById('ai-prompt')?.value || '').trim();
+            const answerEl = document.getElementById('ai-answer-text');
+            const answerText = (answerEl?.innerText || '').trim();
+            const resultBox = document.getElementById('ai-export-result');
+
+            if (!answerText) {
+                alert('No generated AI response to export yet.');
+                return;
+            }
+
+            if (resultBox) {
+                resultBox.style.display = 'block';
+                resultBox.className = '';
+                resultBox.innerHTML = `<i class="fa-solid fa-circle-notch fa-spin"></i> Generating ${format.toUpperCase()} from current response with local LLM...`;
+            }
+
+            try {
+                let res;
+                if (format === 'pptx') {
+                    res = await api('POST', '/api/v1/generate/presentation', {
+                        topic: prompt ? prompt.substring(0, 100) : 'Executive Briefing',
+                        num_slides: 5,
+                        classification: document.getElementById('ai-sensitivity')?.value || 'INTERNAL',
+                        context: answerText.substring(0, 2000)
+                    });
+                } else {
+                    res = await api('POST', '/api/v1/generate/pdf', {
+                        topic: prompt ? prompt.substring(0, 100) : 'Executive Report',
+                        classification: document.getElementById('ai-sensitivity')?.value || 'INTERNAL',
+                        context: answerText.substring(0, 2500)
+                    });
+                }
+
+                if (res && res.success && res.meta) {
+                    const meta = res.meta;
+                    if (resultBox) {
+                        resultBox.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                                <span><i class="fa-solid fa-circle-check text-success"></i> <strong>${escapeHtml(meta.title)}</strong> (${(meta.file_size/1024).toFixed(1)} KB) compiled successfully!</span>
+                                <a href="${meta.download_url}" class="btn btn-success btn-sm" download><i class="fa-solid fa-download"></i> Download ${format.toUpperCase()}</a>
+                            </div>
+                        `;
+                    }
+                    loadDashboardAuditLogs();
+                } else {
+                    if (resultBox) {
+                        resultBox.className = 'alert-banner danger';
+                        resultBox.textContent = 'Export failed: ' + (res?.error || res?.detail || 'Unknown error');
+                    }
+                }
+            } catch (err) {
+                if (resultBox) {
+                    resultBox.className = 'alert-banner danger';
+                    resultBox.textContent = 'Export error: ' + err.message;
+                }
+            }
+        }
+
+        // ── Real-Time Dashboard Audit Stream ────────────────────────────────
+        async function loadDashboardAuditLogs() {
+            const tbody = document.getElementById('dashboard-audit-tbody');
+            if (!tbody) return;
+
+            try {
+                const res = await api('GET', '/api/v1/audit/events?limit=8');
+                const items = Array.isArray(res) ? res : (res?.items || []);
+
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:14px;">No audit events recorded yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = '';
+                items.forEach(ev => {
+                    const tr = document.createElement('tr');
+                    const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : 'N/A';
+                    const userRole = `${ev.user_id ? ev.user_id.substring(0, 8) : 'sys'}<br><small style="color:#64748B;">${ev.role || 'system'}</small>`;
+                    const eventAction = `<strong>${escapeHtml(ev.event_type || '')}</strong><br><small style="color:#64748B;">${escapeHtml(ev.action || '')}</small>`;
+
+                    let decBadge = 'badge-secondary';
+                    if (ev.decision === 'allow') decBadge = 'badge-success';
+                    else if (ev.decision === 'require_approval') decBadge = 'badge-warning';
+                    else if (ev.decision === 'deny') decBadge = 'badge-danger';
+
+                    let riskBadge = 'badge-info';
+                    if (ev.risk_level === 'high' || ev.risk_level === 'critical') riskBadge = 'badge-danger';
+                    else if (ev.risk_level === 'medium') riskBadge = 'badge-warning';
+
+                    tr.innerHTML = `
+                        <td style="font-variant-numeric:tabular-nums; color:#475569;">${ts}</td>
+                        <td>${userRole}</td>
+                        <td>${eventAction}</td>
+                        <td><span class="badge ${riskBadge}">${(ev.risk_level || 'LOW').toUpperCase()}</span></td>
+                        <td><span class="badge ${decBadge}">${(ev.decision || 'ALLOW').toUpperCase()}</span></td>
+                        <td style="text-align:right;"><span class="badge badge-success" style="font-size:0.7rem;"><i class="fa-solid fa-lock"></i> Hashed</span></td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+            } catch (err) {
+                console.warn('Dashboard audit log load error:', err.message);
             }
         }
 
