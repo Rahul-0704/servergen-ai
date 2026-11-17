@@ -193,7 +193,10 @@ async def generate_from_rag(
 ) -> GenerationResponse:
     """Retrieve grounded knowledge from RAG and generate a PDF report or presentation."""
     retriever = RoleFilteredRetriever()
-    user_sens = DataSensitivity.from_str(body.classification)
+    try:
+        user_sens = DataSensitivity(body.classification.lower())
+    except Exception:
+        user_sens = DataSensitivity.INTERNAL
     rag_result = await retriever.retrieve(
         db=db,
         query=body.query,
@@ -214,24 +217,40 @@ async def generate_from_rag(
             context=context_text,
             classification=body.classification,
         )
-        return GenerationResponse(
-            success=True,
-            message=f"Grounded presentation generated from {len(rag_result.chunks)} retrieved sources.",
-            meta=meta,
-            outline=deck.model_dump(),
-        )
+        outline_data = deck.model_dump()
+        msg = f"Grounded presentation generated from {len(rag_result.chunks)} retrieved sources."
     else:
         doc_data, _, meta = await svc.generate_pdf_from_prompt(
             prompt=body.query,
             classification=body.classification,
             context=context_text,
         )
-        return GenerationResponse(
-            success=True,
-            message=f"Grounded PDF report generated from {len(rag_result.chunks)} retrieved sources.",
-            meta=meta,
-            outline=doc_data.model_dump(),
-        )
+        outline_data = doc_data.model_dump()
+        msg = f"Grounded PDF report generated from {len(rag_result.chunks)} retrieved sources."
+
+    audit = AuditService(db)
+    await audit.record(
+        event_type=f"document:generate_from_rag_{meta.format}",
+        action="generate_from_rag",
+        request_id=str(uuid.uuid4()),
+        user_id=auth.user_id,
+        role=auth.role,
+        resource=meta.filename,
+        metadata={
+            "query": body.query,
+            "target_format": meta.format,
+            "retrieved_chunks": len(rag_result.chunks),
+            "file_size": meta.file_size,
+        },
+    )
+    await db.commit()
+
+    return GenerationResponse(
+        success=True,
+        message=msg,
+        meta=meta,
+        outline=outline_data,
+    )
 
 
 @router.get("/history", response_model=list[GeneratedFileMeta])

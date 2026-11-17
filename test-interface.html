@@ -2325,6 +2325,7 @@
             if (panelId === 'users') loadUsers();
             if (panelId === 'rag') loadRAGDocs();
             if (panelId === 'doc-gen') loadDocGenHistory();
+            if (panelId === 'ai-run') loadDashboardAuditLogs();
             if (panelId === 'rag-lab') loadRAGHealth();
             if (panelId === 'approvals') loadApprovals();
             if (panelId === 'audit') loadAuditEvents();
@@ -2512,11 +2513,11 @@
         }
 
         const ROLE_NAV_PERMS = {
-            administrator: ['auth', 'users', 'ai-run', 'rag', 'verification', 'approvals', 'audit', 'rbac-matrix'],
-            it_operator: ['auth', 'ai-run', 'rag', 'verification'],
-            security_analyst: ['auth', 'ai-run', 'rag', 'verification', 'audit', 'rbac-matrix'],
-            manager: ['auth', 'ai-run', 'rag', 'verification', 'approvals'],
-            general_employee: ['auth', 'ai-run', 'rag', 'verification'],
+            administrator: ['auth', 'users', 'ai-run', 'rag', 'doc-gen', 'verification', 'approvals', 'audit', 'rbac-matrix'],
+            it_operator: ['auth', 'ai-run', 'rag', 'doc-gen', 'verification'],
+            security_analyst: ['auth', 'ai-run', 'rag', 'doc-gen', 'verification', 'audit', 'rbac-matrix'],
+            manager: ['auth', 'ai-run', 'rag', 'doc-gen', 'verification', 'approvals'],
+            general_employee: ['auth', 'ai-run', 'rag', 'doc-gen', 'verification'],
         };
 
         function applyRoleNav(role) {
@@ -4201,11 +4202,13 @@
                     });
                 }
 
-                if (res && res.success && res.meta) {
-                    renderDocGenResult(res);
+                const d = res.data;
+                if (res.ok && d && d.success && d.meta) {
+                    renderDocGenResult(d);
                     loadDocGenHistory();
                 } else {
-                    alert('Generation error: ' + (res?.error || res?.detail || 'Unknown server error'));
+                    const errMsg = (d && (d.detail || d.error || d.message)) || 'Unknown server error';
+                    alert('Generation error: ' + (typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg)));
                 }
             } catch (err) {
                 alert('Generation failed: ' + err.message);
@@ -4289,7 +4292,8 @@
             const tbody = document.getElementById('docgen-history-tbody');
             if (!tbody) return;
             try {
-                const list = await api('GET', '/api/v1/generate/history');
+                const res = await api('GET', '/api/v1/generate/history');
+                const list = Array.isArray(res.data) ? res.data : [];
                 if (!list || list.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:#94a3b8; padding:16px;">No generated documents yet. Use the studio above to create your first report or presentation.</td></tr>';
                     return;
@@ -4297,7 +4301,7 @@
                 tbody.innerHTML = '';
                 list.forEach(item => {
                     const tr = document.createElement('tr');
-                    const isPPT = item.format.toLowerCase() === 'pptx';
+                    const isPPT = item.format && item.format.toLowerCase() === 'pptx';
                     const icon = isPPT
                         ? '<i class="fa-solid fa-file-powerpoint text-warning" style="font-size:1.1rem;"></i> PPTX'
                         : '<i class="fa-solid fa-file-pdf text-danger" style="font-size:1.1rem;"></i> PDF';
@@ -4368,8 +4372,9 @@
                     });
                 }
 
-                if (res && res.success && res.meta) {
-                    const meta = res.meta;
+                const d = res.data;
+                if (res.ok && d && d.success && d.meta) {
+                    const meta = d.meta;
                     if (resultBox) {
                         resultBox.innerHTML = `
                             <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
@@ -4382,7 +4387,8 @@
                 } else {
                     if (resultBox) {
                         resultBox.className = 'alert-banner danger';
-                        resultBox.textContent = 'Export failed: ' + (res?.error || res?.detail || 'Unknown error');
+                        const errMsg = (d && (d.detail || d.error || d.message)) || 'Unknown error';
+                        resultBox.textContent = 'Export failed: ' + (typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
                     }
                 }
             } catch (err) {
@@ -4400,7 +4406,7 @@
 
             try {
                 const res = await api('GET', '/api/v1/audit/events?limit=8');
-                const items = Array.isArray(res) ? res : (res?.items || []);
+                const items = Array.isArray(res.data) ? res.data : (res.data?.items || []);
 
                 if (items.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:#94a3b8; padding:14px;">No audit events recorded yet.</td></tr>';
