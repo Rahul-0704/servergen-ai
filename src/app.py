@@ -31,6 +31,16 @@ logger = logging.getLogger("servergen")
 async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown hooks."""
     logger.info("Application starting up")
+    try:
+        from src.core.database import get_session_factory
+        from src.rag.indexer import DocumentIndexer
+
+        async with get_session_factory()() as db:
+            recovered = await DocumentIndexer.recover_stale_jobs(db)
+            if recovered:
+                logger.info("RAG Subsystem: recovered %d interrupted indexing jobs", recovered)
+    except Exception as exc:
+        logger.debug("RAG Subsystem startup recovery skipped: %s", exc)
     yield
     logger.info("Application shutting down — disposing database engine")
     await dispose_engine()
@@ -79,8 +89,11 @@ def create_app() -> FastAPI:
     from src.api.v1.approvals import router as approvals_router
     from src.api.v1.audit import router as audit_router
     from src.api.v1.auth import router as auth_router
+    from src.api.v1.generate import router as generate_router
     from src.api.v1.orchestrator import (
         orchestrator_alias_router,
+    )
+    from src.api.v1.orchestrator import (
         router as orchestrator_router,
     )
     from src.api.v1.rag import router as rag_router
@@ -89,6 +102,7 @@ def create_app() -> FastAPI:
     app.include_router(auth_router)
     app.include_router(approvals_router)
     app.include_router(audit_router)
+    app.include_router(generate_router)
     app.include_router(orchestrator_router)
     app.include_router(orchestrator_alias_router)
     app.include_router(rag_router)
@@ -101,6 +115,11 @@ def create_app() -> FastAPI:
         @app.get("/test", tags=["system"])
         async def test_interface():
             return FileResponse(test_interface_path)
+
+        @app.get("/", include_in_schema=False)
+        async def root_redirect():
+            from fastapi.responses import RedirectResponse
+            return RedirectResponse(url="/test")
 
     # ── Serve frontend dist if present ───────────────────────────────
     frontend_path = Path(settings.FRONTEND_DIST_DIR)

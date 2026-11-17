@@ -39,7 +39,20 @@ def get_engine() -> AsyncEngine:
 
         settings = get_settings()
         if settings.is_sqlite:
-            _engine = create_async_engine(settings.DATABASE_URL, echo=settings.DEBUG)
+            from sqlalchemy import event
+
+            _engine = create_async_engine(
+                settings.DATABASE_URL,
+                echo=settings.DEBUG,
+                connect_args={"timeout": 60.0},
+            )
+
+            @event.listens_for(_engine.sync_engine, "connect")
+            def _set_sqlite_pragma(dbapi_connection, connection_record):
+                cursor = dbapi_connection.cursor()
+                cursor.execute("PRAGMA journal_mode=WAL")
+                cursor.execute("PRAGMA busy_timeout=60000")
+                cursor.close()
         else:
             _engine = create_async_engine(
                 settings.DATABASE_URL,

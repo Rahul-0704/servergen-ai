@@ -8,6 +8,16 @@ can find them. Every new model MUST be imported here.
 from src.models.approval import ApprovalRequest
 from src.models.audit import AuditEvent
 from src.models.base import Base
+from src.models.document import (
+    ChunkEmbedding,
+    Document,
+    DocumentChunk,
+    DocumentPermission,
+    DocumentStatus,
+    DocumentVersion,
+    IndexingJob,
+    IndexingJobStatus,
+)
 from src.models.role import Permission, Role, RolePermission
 from src.models.session import RefreshSession
 from src.models.user import User
@@ -16,6 +26,14 @@ __all__ = [
     "ApprovalRequest",
     "AuditEvent",
     "Base",
+    "ChunkEmbedding",
+    "Document",
+    "DocumentChunk",
+    "DocumentPermission",
+    "DocumentStatus",
+    "DocumentVersion",
+    "IndexingJob",
+    "IndexingJobStatus",
     "Permission",
     "RefreshSession",
     "Role",

@@ -182,6 +182,24 @@ def test_policy_allow_admin_restricted_sensitivity() -> None:
     assert result.decision == PolicyDecision.ALLOW
 
 
+def test_policy_allow_manager_restricted_sensitivity() -> None:
+    """MANAGER can access RESTRICTED data under policy sensitivity rules."""
+    manager_context = AuthContext(
+        user_id="mgr-1",
+        role="manager",
+        permissions={"document.read", "report.generate"},
+    )
+    ctx = OperationContext(
+        user_id="mgr-1",
+        role="manager",
+        permission="document.read",
+        action="read",
+        data_sensitivity=DataSensitivity.RESTRICTED,
+    )
+    result = engine.evaluate(manager_context, ctx, _low_risk())
+    assert result.decision == PolicyDecision.ALLOW
+
+
 # ── Test 6: REQUIRE_APPROVAL for HIGH risk ─────────────────────────────
 
 

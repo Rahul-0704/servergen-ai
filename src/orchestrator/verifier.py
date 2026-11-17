@@ -50,7 +50,8 @@ class Verifier:
             passed.append("provider_success")
             if content and len(content.strip()) > 0:
                 passed.append("non_empty_content")
-                if not any(marker in content for marker in ("<|start_header_id|>", "<|im_start|>", "[INST]")):
+                raw_markers = ("<|start_header_id|>", "<|im_start|>", "[INST]")
+                if not any(marker in content for marker in raw_markers):
                     passed.append("no_raw_tokens_leaked")
                 else:
                     failed.append("raw_system_tokens_detected")

@@ -35,7 +35,9 @@ get_settings.cache_clear()
 # SQLite for unit tests (fast, isolated, no external dependencies)
 SQLITE_TEST_URL = "sqlite+aiosqlite:///:memory:"
 
-test_engine = create_async_engine(SQLITE_TEST_URL, echo=False)
+test_engine = create_async_engine(
+    SQLITE_TEST_URL, echo=False, connect_args={"timeout": 60.0}
+)
 TestingSessionLocal = async_sessionmaker(
     bind=test_engine,
     class_=AsyncSession,

@@ -268,3 +268,43 @@ def test_rate_limiter_exceeds_limit() -> None:
 
     with pytest.raises(RateLimitExceededError):
         limiter.check(RateLimitCategory.LOGIN, "test-exceed-key")
+
+
+# ── Test 11: Document knowledge query routes to KnowledgeAgent & returns citations ──
+
+
+@pytest.mark.asyncio
+async def test_document_query_routes_to_knowledge_agent_and_citations(
+    db_session: AsyncSession,
+) -> None:
+    """Document knowledge query maps to KnowledgeAgent and propagates citations into TaskResponse."""
+    from src.rag.store import KnowledgeDocument, KnowledgeStore
+    from src.schemas.orchestrator import orchestrator_result_to_task_response
+
+    store = KnowledgeStore.get_instance()
+    store.add_document(
+        KnowledgeDocument(
+            title="Standard Remote Work VPN Policy",
+            content="Employees must use Multi-Factor Authentication (MFA) to access the corporate VPN network.",
+            category="general",
+            classification=DataSensitivity.INTERNAL,
+            allowed_roles=["administrator", "manager", "general_employee"],
+        )
+    )
+
+    engine = OrchestratorEngine(db_session)
+    # Using employee auth ensures RESTRICTED executive audit docs are withheld by clearance filter
+    result = await engine.execute(
+        auth=_employee_auth(),
+        user_input="Summarize the document instructions for employee remote work VPN connection.",
+        data_sensitivity=DataSensitivity.INTERNAL,
+    )
+
+    assert result.agent_used == "knowledge_agent"
+    assert result.task_category == TaskCategory.DOCUMENT
+    assert len(result.citations) > 0
+    assert "Standard Remote Work VPN Policy" in [c["document_title"] for c in result.citations]
+
+    response = orchestrator_result_to_task_response(result)
+    assert len(response.citations) > 0
+    assert response.citations[0]["document_title"] == "Standard Remote Work VPN Policy"

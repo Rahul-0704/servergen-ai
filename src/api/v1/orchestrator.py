@@ -9,6 +9,8 @@ POST /api/v1/ai/execute  — submit a task through the full security pipeline
 
 from __future__ import annotations
 
+import contextlib
+import uuid
 from typing import Annotated
 
 from fastapi import APIRouter, Depends
@@ -39,10 +41,8 @@ async def list_models() -> list[dict]:
     provider = registry.get_provider("ollama")
     available_in_provider: set[str] = set()
     if provider and hasattr(provider, "list_models"):
-        try:
+        with contextlib.suppress(Exception):
             available_in_provider = set(await provider.list_models())
-        except Exception:
-            pass
 
     # Dynamically register any installed models found in Ollama
     for installed_name in available_in_provider:
@@ -68,20 +68,26 @@ async def list_models() -> list[dict]:
                 )
             )
 
-    return [
-        {
-            "name": m.name,
-            "provider": m.provider,
-            "capabilities": [c.value for c in m.capabilities],
-            "context_length": m.context_length,
-            "requires_gpu": m.requires_gpu,
-            "minimum_ram_gb": m.minimum_ram_gb,
-            "minimum_vram_gb": m.minimum_vram_gb,
-            "enabled": m.enabled and (not available_in_provider or m.name in available_in_provider or any(m.name in a for a in available_in_provider)),
-            "installed": (m.name in available_in_provider) or any(m.name in a for a in available_in_provider),
-        }
-        for m in registry.list_models()
-    ]
+    models_out = []
+    for m in registry.list_models():
+        is_inst = (m.name in available_in_provider) or any(
+            m.name in a for a in available_in_provider
+        )
+        is_en = m.enabled and (not available_in_provider or is_inst)
+        models_out.append(
+            {
+                "name": m.name,
+                "provider": m.provider,
+                "capabilities": [c.value for c in m.capabilities],
+                "context_length": m.context_length,
+                "requires_gpu": m.requires_gpu,
+                "minimum_ram_gb": m.minimum_ram_gb,
+                "minimum_vram_gb": m.minimum_vram_gb,
+                "enabled": is_en,
+                "installed": is_inst,
+            }
+        )
+    return models_out
 
 
 @router.get("/agents", dependencies=[Depends(_ai_read)])
@@ -138,20 +144,25 @@ async def execute_task(
             parameters=body.tool_parameters,
         )
 
+    from src.core.middleware import get_request_id
+    req_id = get_request_id() or str(uuid.uuid4())
+
     try:
         result = await engine.execute(
             auth=auth,
             user_input=body.input,
             data_sensitivity=body.data_sensitivity,
             tool_request=tool_request,
+            request_id=req_id,
             structured=body.structured,
             requested_model=body.model,
+            approval_id=body.approval_id,
         )
         return orchestrator_result_to_task_response(result)
 
     except ApprovalRequiredError as exc:
         return TaskResponse(
-            request_id="",
+            request_id=req_id,
             task_category="unknown",
             risk_level="high",
             policy_decision="require_approval",
@@ -165,7 +176,7 @@ async def execute_task(
 
     except (PolicyDeniedError, ToolNotFoundError) as exc:
         return TaskResponse(
-            request_id="",
+            request_id=req_id,
             task_category="unknown",
             risk_level="unknown",
             policy_decision="deny",

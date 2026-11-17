@@ -122,3 +122,12 @@ def test_exception_hierarchy() -> None:
     assert AuthorizationError().code == "AUTHORIZATION_DENIED"
     assert PolicyDeniedError().code == "POLICY_DENIED"
     assert ApprovalRequiredError().code == "APPROVAL_REQUIRED"
+
+    # Approval error mapping to HTTP status codes
+    from src.core.exceptions import ApprovalError, ApprovalNotFoundError
+    from src.core.middleware import _EXCEPTION_STATUS_MAP
+
+    assert issubclass(ApprovalError, ServerGenError)
+    assert issubclass(ApprovalNotFoundError, ApprovalError)
+    assert _EXCEPTION_STATUS_MAP[ApprovalError] == 400
+    assert _EXCEPTION_STATUS_MAP[ApprovalNotFoundError] == 404

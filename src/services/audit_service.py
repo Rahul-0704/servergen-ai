@@ -20,6 +20,7 @@ metadata keys are redacted before persistence.
 
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import uuid
@@ -32,6 +33,10 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.audit import AuditEvent
 from src.repositories.audit_repository import AuditRepository
+
+# Process-wide serialization lock for audit event sequence assignment and chain integrity
+_audit_append_lock = asyncio.Lock()
+
 
 
 class AuditEventType(StrEnum):
@@ -65,6 +70,19 @@ class AuditEventType(StrEnum):
     USER_UPDATED = "user_updated"
     USER_DISABLED = "user_disabled"
     USER_ENABLED = "user_enabled"
+    # Document Management & RAG
+    DOCUMENT_UPLOAD = "document_upload"
+    DOCUMENT_VERSION_CREATED = "document_version_created"
+    DOCUMENT_INDEXING_STARTED = "document_indexing_started"
+    DOCUMENT_INDEXING_COMPLETED = "document_indexing_completed"
+    DOCUMENT_INDEXING_FAILED = "document_indexing_failed"
+    DOCUMENT_REINDEX_REQUESTED = "document_reindex_requested"
+    DOCUMENT_DELETED = "document_deleted"
+    DOCUMENT_PERMISSION_CHANGED = "document_permission_changed"
+    DOCUMENT_ACCESS_DENIED = "document_access_denied"
+    RAG_QUERY = "rag_query"
+    RAG_RETRIEVAL = "rag_retrieval"
+    RAG_EVALUATION = "rag_evaluation"
     # System
     SYSTEM_ERROR = "system_error"
 
@@ -171,32 +189,34 @@ class AuditService:
         the surrounding transaction ends — callers that perform slow work (LLM
         calls) after recording should ``commit`` first.
         """
-        await self.repo.lock_chain()
-        tail = await self.repo.get_tail()
-        seq = (tail[0] + 1) if tail else 1
-        previous_hash = tail[1] if tail else None
+        async with _audit_append_lock:
+            await self.repo.lock_chain()
+            tail = await self.repo.get_tail()
+            seq = (tail[0] + 1) if tail else 1
+            previous_hash = tail[1] if tail else None
 
-        event = AuditEvent(
-            id=uuid.uuid4(),
-            sequence_number=seq,
-            timestamp=datetime.now(UTC).replace(microsecond=0),
-            user_id=user_id,
-            role=role,
-            request_id=request_id,
-            event_type=str(event_type),
-            action=action,
-            resource=resource,
-            decision=str(decision),
-            risk_level=str(risk_level),
-            agent=agent or None,
-            model=model or None,
-            tool=tool or None,
-            metadata_json=redact_metadata(metadata) if metadata else None,
-            previous_hash=previous_hash,
-            event_hash="",
-        )
-        event.event_hash = compute_event_hash(event, previous_hash)
-        return await self.repo.create(event)
+            event = AuditEvent(
+                id=uuid.uuid4(),
+                sequence_number=seq,
+                timestamp=datetime.now(UTC).replace(microsecond=0),
+                user_id=user_id,
+                role=role,
+                request_id=request_id,
+                event_type=str(event_type),
+                action=action,
+                resource=resource,
+                decision=str(decision),
+                risk_level=str(risk_level),
+                agent=agent or None,
+                model=model or None,
+                tool=tool or None,
+                metadata_json=redact_metadata(metadata) if metadata else None,
+                previous_hash=previous_hash,
+                event_hash="",
+            )
+            event.event_hash = compute_event_hash(event, previous_hash)
+            return await self.repo.create(event)
+
 
     async def verify_integrity(self, batch_size: int = 1000) -> IntegrityReport:
         """

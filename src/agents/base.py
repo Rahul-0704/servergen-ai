@@ -114,21 +114,40 @@ class Agent(ABC):
 
     async def execute(self, request: AgentRequest, provider: ModelProvider) -> AgentExecutionResult:
         """Run the task through the provider and return a structured, evidence-bearing result."""
-        prompt = request.task
         evidence: list[str] = []
         if request.rag_context:
             prompt = (
                 f"=== AUTHORIZED ORGANIZATIONAL KNOWLEDGE ===\n"
                 f"{request.rag_context}\n"
                 f"===========================================\n\n"
-                f"USER REQUEST:\n{prompt}\n\n"
+                f"USER QUERY:\n{request.task}\n\n"
                 "RESPONSE INSTRUCTIONS:\n"
-                "1. Answer thoroughly, factually, and accurately using the authorized organizational knowledge context above.\n"
-                "2. Structure your response with clean Markdown: include an Executive Summary, Detailed Breakdown, and Operational Recommendations (if applicable).\n"
+                "1. Provide a comprehensive, authoritative response answering the query using the authorized organizational knowledge above.\n"
+                "2. Format your response in clean Markdown with distinct structured sections:\n"
+                "   ### Executive Summary\n"
+                "   (Provide a high-density, 2-4 sentence synthesis answering the core question)\n"
+                "   ### Detailed Analysis & Core Concepts\n"
+                "   (Provide detailed explanations, bullet points, mechanisms, and architectural or operational breakdown)\n"
+                "   ### Key Recommendations & Operational Steps\n"
+                "   (Provide clear, actionable takeaways or operational procedures)\n"
                 "3. Explicitly cite the source document title(s) for the facts you provide (e.g., '[Source: <Document Title>]').\n"
-                "4. If the context does not contain the required information, explicitly state that the internal documentation does not provide these details rather than speculating."
+                "4. If the context does not contain the required information, state what is covered in the documentation."
             )
             evidence.append("rag_knowledge_grounding")
+        else:
+            prompt = (
+                f"USER QUERY:\n{request.task}\n\n"
+                "RESPONSE INSTRUCTIONS:\n"
+                "1. Provide a thorough, authoritative, and well-structured response directly addressing the user's query.\n"
+                "2. Format your response in clean, professional Markdown with clear sections:\n"
+                "   ### Executive Summary\n"
+                "   (High-level overview synthesizing the key answer and direct conclusions)\n"
+                "   ### Technical Breakdown & Core Concepts\n"
+                "   (Itemized bullet points, technical details, mechanisms, and architectural explanations)\n"
+                "   ### Best Practices & Operational Takeaways\n"
+                "   (Actionable recommendations, security considerations, or procedural guidelines)\n"
+                "3. Ensure the output is directly relevant, properly formatted, and avoids vague or overly simplistic one-line answers."
+            )
 
         if request.tool_output:
             prompt = (
@@ -324,9 +343,9 @@ class AgentSelector:
             if category is TaskCategory.SECURITY:
                 return AgentCapability.SECURITY
             return AgentCapability.OPERATIONS
-        if operation_type is OperationType.REPORT:
+        if operation_type is OperationType.REPORT or category is TaskCategory.REPORTING:
             return AgentCapability.REPORTING
-        if operation_type is OperationType.ANALYSIS:
+        if operation_type is OperationType.ANALYSIS or category is TaskCategory.DOCUMENT:
             return AgentCapability.KNOWLEDGE
         return AgentCapability.GENERAL
 

@@ -39,7 +39,8 @@ def main():
     print("\n--- AI Execute (admin, PUBLIC) ---")
     r = httpx.post(f"{BASE}/api/v1/ai/execute",
         json={"input": "What is 2+2?", "data_sensitivity": "public"},
-        headers={"Authorization": f"Bearer {tokens['admin']}"})
+        headers={"Authorization": f"Bearer {tokens['admin']}"},
+        timeout=60.0)
     d = r.json()
     print(f"  Category={d.get('task_category')} Risk={d.get('risk_level')} Policy={d.get('policy_decision')}")
 
@@ -47,7 +48,8 @@ def main():
     print("\n--- Calculator Tool ---")
     r = httpx.post(f"{BASE}/api/v1/ai/execute",
         json={"input": "calc", "tool": "calculator", "tool_parameters": {"expression": "2+2*10"}, "data_sensitivity": "public"},
-        headers={"Authorization": f"Bearer {tokens['admin']}"})
+        headers={"Authorization": f"Bearer {tokens['admin']}"},
+        timeout=60.0)
     d = r.json()
     print(f"  Tool={d.get('tool_used')} Output={d.get('tool_output')} Success={d.get('success')}")
 
@@ -55,7 +57,8 @@ def main():
     print("\n--- Unknown Tool (should DENY) ---")
     r = httpx.post(f"{BASE}/api/v1/ai/execute",
         json={"input": "hack", "tool": "nonexistent", "data_sensitivity": "public"},
-        headers={"Authorization": f"Bearer {tokens['admin']}"})
+        headers={"Authorization": f"Bearer {tokens['admin']}"},
+        timeout=60.0)
     d = r.json()
     print(f"  Policy={d.get('policy_decision')} Error={d.get('error','')[:60]}")
 
@@ -66,7 +69,8 @@ def main():
             continue
         r = httpx.post(f"{BASE}/api/v1/ai/execute",
             json={"input": "Read classified data", "data_sensitivity": "restricted"},
-            headers={"Authorization": f"Bearer {tokens[user]}"})
+            headers={"Authorization": f"Bearer {tokens[user]}"},
+            timeout=60.0)
         d = r.json()
         policy = d.get("policy_decision", "?")
         appr = d.get("approval_id", "")
@@ -80,7 +84,8 @@ def main():
             continue
         r = httpx.post(f"{BASE}/api/v1/ai/execute",
             json={"input": "Read HR records", "data_sensitivity": "confidential"},
-            headers={"Authorization": f"Bearer {tokens[user]}"})
+            headers={"Authorization": f"Bearer {tokens[user]}"},
+            timeout=60.0)
         d = r.json()
         policy = d.get("policy_decision", "?")
         print(f"  {user:<10} ({role:<18}) -> {policy}")

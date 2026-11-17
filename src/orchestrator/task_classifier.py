@@ -138,10 +138,12 @@ _CATEGORY_KEYWORDS: list[tuple[TaskCategory, frozenset[str]]] = [
     ),
 ]
 
-# Action verbs (prefix-matched so inflections are covered: "restarting", "disabled" ...).
+# Action verbs (inflections covered, e.g. "restarting", avoiding nouns like "runbook").
 _EXECUTE_RE = re.compile(
-    r"\b(restart|reboot|shutdown|deploy|execut|launch|trigger|rollback|terminat|kill|"
-    r"run|runs|running|start|starts|stop|stops|restor)\w*",
+    r"\b(restart|restarts|restarting|reboot|reboots|rebooting|shutdown|deploy|deploys|deploying|"
+    r"execute|executes|executing|launch|launches|launching|trigger|triggers|triggering|"
+    r"rollback|terminate|terminates|terminating|kill|kills|killing|"
+    r"run|runs|running|start|starts|starting|stop|stops|stopping|restore|restores|restoring)\b",
     re.IGNORECASE,
 )
 _MODIFY_RE = re.compile(

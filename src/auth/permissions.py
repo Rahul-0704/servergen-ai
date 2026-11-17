@@ -38,6 +38,12 @@ class PermissionCode(StrEnum):
     # Document management
     DOCUMENT_READ = "document.read"
     DOCUMENT_WRITE = "document.write"
+    DOCUMENT_UPLOAD = "document.upload"
+    DOCUMENT_UPDATE = "document.update"
+    DOCUMENT_DELETE = "document.delete"
+    DOCUMENT_REINDEX = "document.reindex"
+    DOCUMENT_MANAGE_PERMISSIONS = "document.manage_permissions"
+    RAG_EVAL = "rag.eval"
 
     # System operations
     SYSTEM_READ = "system.read"
@@ -78,6 +84,9 @@ DEFAULT_ROLE_PERMISSIONS: dict[SystemRole, set[PermissionCode]] = {
     SystemRole.IT_OPERATOR: {
         PermissionCode.DOCUMENT_READ,
         PermissionCode.DOCUMENT_WRITE,
+        PermissionCode.DOCUMENT_UPLOAD,
+        PermissionCode.DOCUMENT_UPDATE,
+        PermissionCode.DOCUMENT_REINDEX,
         PermissionCode.SYSTEM_READ,
         PermissionCode.SYSTEM_EXECUTE,
         PermissionCode.REPORT_GENERATE,
@@ -98,6 +107,8 @@ DEFAULT_ROLE_PERMISSIONS: dict[SystemRole, set[PermissionCode]] = {
     SystemRole.MANAGER: {
         PermissionCode.DOCUMENT_READ,
         PermissionCode.DOCUMENT_WRITE,
+        PermissionCode.DOCUMENT_UPLOAD,
+        PermissionCode.DOCUMENT_UPDATE,
         PermissionCode.SYSTEM_READ,
         PermissionCode.REPORT_GENERATE,
         PermissionCode.APPROVAL_APPROVE,

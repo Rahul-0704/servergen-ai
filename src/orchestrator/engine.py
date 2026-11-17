@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import logging
 import uuid
+from typing import Any
 
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,6 +30,7 @@ from src.ai.model_registry import ModelRouter, build_default_registry
 from src.ai.schemas import (
     DataSensitivity,
     OperationContext,
+    OperationType,
 )
 from src.auth.policy import PolicyDecision, PolicyEngine
 from src.auth.rbac import AuthContext
@@ -44,7 +46,7 @@ from src.orchestrator.verifier import Verifier
 from src.rag.retriever import RoleFilteredRetriever
 from src.rate_limiting.memory import RateLimitCategory, get_rate_limiter
 from src.schemas.orchestrator_result import OrchestratorResult
-from src.services.approval_service import ApprovalService
+from src.services.approval_service import ApprovalService, ApprovalStatus
 from src.services.audit_service import AuditEventType, AuditService
 from src.tools.base import ToolRequest, ToolSelector, build_default_tool_registry
 
@@ -89,6 +91,7 @@ class OrchestratorEngine:
         request_id: str | None = None,
         structured: bool = False,
         requested_model: str | None = None,
+        approval_id: str | None = None,
     ) -> OrchestratorResult:
         """
         Execute a user task through the full security pipeline.
@@ -116,29 +119,47 @@ class OrchestratorEngine:
         )
 
         # ── Step 3.5: Role-Filtered Knowledge Retrieval (RAG) ────────
-        rag_result = self.rag_retriever.retrieve(query=user_input, auth=auth)
+        rag_result = await self.rag_retriever.retrieve(
+            query=user_input,
+            auth=auth,
+            db=self.db,
+            max_sensitivity=sensitivity.level,
+        )
         rag_evidence: list[str] = []
         grounded_sources: list[dict[str, Any]] = []
+        rag_citations: list[dict[str, Any]] = []
+        for cit in rag_result.citations:
+            rag_citations.append(cit.model_dump())
+
         if rag_result.chunks:
             seen_titles: set[str] = set()
             for c in rag_result.chunks:
                 if c.doc_title not in seen_titles:
                     seen_titles.add(c.doc_title)
                     rag_evidence.append(f"rag_doc:{c.doc_title}")
+                    cat_val = (
+                        c.category.value
+                        if hasattr(c.category, "value")
+                        else str(c.category)
+                    )
                     grounded_sources.append({
                         "title": c.doc_title,
                         "classification": c.classification.value,
-                        "category": c.category.value if hasattr(c.category, "value") else str(c.category),
+                        "category": cat_val,
                         "relevance": getattr(c, "relevance_score", 0.0),
                     })
             from src.ai.schemas import _SENSITIVITY_ORDER
             from src.orchestrator.sensitivity import SensitivityResolution
-            if _SENSITIVITY_ORDER[rag_result.highest_sensitivity] > _SENSITIVITY_ORDER[sensitivity.level]:
+
+            rag_order = _SENSITIVITY_ORDER[rag_result.highest_sensitivity]
+            cur_order = _SENSITIVITY_ORDER[sensitivity.level]
+            if rag_order > cur_order:
+                high_sens = rag_result.highest_sensitivity.value
                 sensitivity = SensitivityResolution(
                     level=rag_result.highest_sensitivity,
                     reasons=[
                         *sensitivity.reasons,
-                        f"Elevated by organizational document clearance: {rag_result.highest_sensitivity.value}",
+                        f"Elevated by organizational document clearance: {high_sens}",
                     ],
                 )
 
@@ -180,7 +201,11 @@ class OrchestratorEngine:
             permission="ai.execute",
             extra_permissions=extra_permissions,
             resource=tool_name or "llm",
-            action="execute",
+            action=(
+                "execute"
+                if operation_type in (OperationType.EXECUTE, OperationType.MODIFY)
+                else "read"
+            ),
             agent=agent_name,
             tool=tool_name,
             data_sensitivity=sensitivity.level,
@@ -194,7 +219,20 @@ class OrchestratorEngine:
         risk = self.risk_engine.assess(context)
 
         # ── Step 8: Policy Decision ──────────────────────────────────
-        policy_result = self.policy_engine.evaluate(auth, context, risk)
+        approval_granted = False
+        appr_record = None
+        if approval_id:
+            try:
+                appr_record = await self.approval_svc.get(uuid.UUID(str(approval_id)))
+                if appr_record and appr_record.status == ApprovalStatus.APPROVED:
+                    approval_granted = True
+                    logger.info("Approval %s verified for request %s", approval_id, req_id)
+            except Exception as e:
+                logger.warning("Failed to lookup approval %s: %s", approval_id, e)
+
+        policy_result = self.policy_engine.evaluate(
+            auth, context, risk, approval_granted=approval_granted
+        )
 
         if policy_result.is_denied:
             await self.audit.record(
@@ -224,6 +262,14 @@ class OrchestratorEngine:
                 context=context,
                 risk=risk,
                 operation_summary=f"AI task: {user_input[:200]}",
+                payload={
+                    "input": user_input,
+                    "data_sensitivity": sensitivity.level.value,
+                    "model": requested_model,
+                    "tool": tool_request.tool if tool_request else None,
+                    "tool_parameters": tool_request.parameters if tool_request else {},
+                    "structured": structured,
+                },
             )
             await self.audit.record(
                 event_type=AuditEventType.APPROVAL_CREATED,
@@ -257,6 +303,7 @@ class OrchestratorEngine:
                 role=auth.role,
                 tool=tool_request.tool,
             )
+            await self.db.commit()
             tool_result = await tool.execute(tool_request.parameters)
             tool_used = tool_request.tool
             tool_output = (
@@ -281,6 +328,8 @@ class OrchestratorEngine:
             decision="allow",
             risk_level=risk.risk_level,
         )
+        # Commit prior ledger events to release database locks during slow model inference
+        await self.db.commit()
 
         # ── Step 11: Agent Execution ─────────────────────────────────
         # Agent shapes the prompt, calls the provider, returns structured result
@@ -327,6 +376,24 @@ class OrchestratorEngine:
             error="" if agent_result.success else "; ".join(agent_result.warnings),
         )
 
+        # Grounding & citation verification if RAG context was retrieved
+        if rag_result.citations:
+            from src.rag.verifier import CitationVerifier
+
+            verified_cits, cit_warnings = CitationVerifier.verify_citations(
+                output_text=agent_result.output,
+                retrieved_citations=rag_result.citations,
+            )
+            if cit_warnings:
+                agent_result.warnings.extend(cit_warnings)
+            if verified_cits:
+                rag_citations = [c.model_dump() for c in verified_cits]
+
+            # Detect adversarial prompt injection attempts in user input
+            injection_flags = CitationVerifier.detect_prompt_injection(user_input)
+            if injection_flags:
+                agent_result.warnings.extend(injection_flags)
+
         # ── Step 13: Audit completion ────────────────────────────────
         await self.audit.record(
             event_type=AuditEventType.EXECUTION_COMPLETED,
@@ -368,4 +435,5 @@ class OrchestratorEngine:
             warnings=agent_result.warnings,
             artifacts=agent_result.artifacts,
             grounded_sources=grounded_sources,
+            citations=rag_citations,
         )

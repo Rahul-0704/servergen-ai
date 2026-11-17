@@ -31,12 +31,14 @@ class ApprovalResponse(BaseModel):
     status: str
     risk_assessment_json: dict[str, Any] | None = None
     task_classification_json: dict[str, Any] | None = None
+    operation_payload: dict[str, Any] | None = None
     reviewer_user_id: uuid.UUID | None = None
     reviewer_notes: str | None = None
     created_at: datetime
     expires_at: datetime
     resolved_at: datetime | None = None
     consumed_at: datetime | None = None
+    execution_result: dict[str, Any] | None = None
 
 
 class ApprovalPage(BaseModel):

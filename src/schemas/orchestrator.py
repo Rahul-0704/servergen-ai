@@ -24,6 +24,10 @@ class TaskRequest(BaseModel):
         default=False,
         description="Request JSON-schema constrained structured decoding from model",
     )
+    approval_id: str | None = Field(
+        default=None,
+        description="Optional ID of an approved authorization ticket satisfying policy approval",
+    )
 
 
 class TaskResponse(BaseModel):
@@ -51,6 +55,7 @@ class TaskResponse(BaseModel):
     warnings: list[str] = Field(default_factory=list)
     artifacts: list[dict[str, Any]] = Field(default_factory=list)
     grounded_sources: list[dict[str, Any]] = Field(default_factory=list)
+    citations: list[dict[str, Any]] = Field(default_factory=list)
 
 
 def orchestrator_result_to_task_response(result: OrchestratorResult) -> TaskResponse:
@@ -76,4 +81,5 @@ def orchestrator_result_to_task_response(result: OrchestratorResult) -> TaskResp
         warnings=result.warnings,
         artifacts=result.artifacts,
         grounded_sources=getattr(result, "grounded_sources", []),
+        citations=getattr(result, "citations", []),
     )

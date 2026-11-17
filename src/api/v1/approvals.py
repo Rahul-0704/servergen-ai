@@ -75,6 +75,7 @@ async def approve(
     body: ApprovalActionRequest,
     auth: Annotated[AuthContext, Depends(get_auth_context)],
     svc: Annotated[ApprovalService, Depends(_svc)],
+    db: Annotated[AsyncSession, Depends(get_db)],
 ) -> ApprovalResponse:
     """Approve a pending operation. Requires approval.approve permission."""
     approval = await svc.approve(
@@ -83,7 +84,40 @@ async def approve(
         reviewer_role=auth.role,
         notes=body.notes,
     )
-    return ApprovalResponse.model_validate(approval)
+
+    exec_result_dict = None
+    if approval.operation_payload and isinstance(approval.operation_payload, dict):
+        try:
+            from src.ai.schemas import DataSensitivity
+            from src.orchestrator.engine import OrchestratorEngine
+            from src.schemas.orchestrator import orchestrator_result_to_task_response
+            from src.tools.base import ToolRequest
+
+            engine = OrchestratorEngine(db)
+            tool_req = None
+            if approval.operation_payload.get("tool"):
+                tool_req = ToolRequest(
+                    tool=approval.operation_payload["tool"],
+                    parameters=approval.operation_payload.get("tool_parameters", {}),
+                )
+
+            res = await engine.execute(
+                auth=auth,
+                user_input=approval.operation_payload.get("input", ""),
+                data_sensitivity=DataSensitivity(approval.operation_payload.get("data_sensitivity", "internal")),
+                tool_request=tool_req,
+                structured=approval.operation_payload.get("structured", False),
+                requested_model=approval.operation_payload.get("model"),
+                approval_id=str(approval.id),
+            )
+            task_resp = orchestrator_result_to_task_response(res)
+            exec_result_dict = task_resp.model_dump()
+        except Exception as e:
+            exec_result_dict = {"success": False, "error": str(e)}
+
+    resp = ApprovalResponse.model_validate(approval)
+    resp.execution_result = exec_result_dict
+    return resp
 
 
 @router.post(

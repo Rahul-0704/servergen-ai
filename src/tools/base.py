@@ -222,4 +222,8 @@ def build_default_tool_registry() -> ToolRegistry:
     registry = ToolRegistry()
     registry.register(CalculatorTool())
     registry.register(SystemInfoTool())
+    from src.tools.docgen import PDFGeneratorTool, PresentationGeneratorTool
+
+    registry.register(PDFGeneratorTool())
+    registry.register(PresentationGeneratorTool())
     return registry

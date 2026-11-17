@@ -97,6 +97,29 @@ class Settings(BaseSettings):
         description="Let the LLM refine GENERAL tasks (advisory only; rules always win).",
     )
 
+    # ── Document Management & RAG Subsystem ──────────────────────────────
+    DOCUMENT_STORAGE_DIR: str = Field(
+        default="storage/documents",
+        description="Durable on-premise document storage path.",
+    )
+    GENERATED_STORAGE_DIR: str = Field(
+        default="storage/generated",
+        description="Durable on-premise storage path for generated PDFs and presentations.",
+    )
+    MAX_DOCUMENT_UPLOAD_SIZE_BYTES: int = Field(
+        default=25 * 1024 * 1024,  # 25 MB
+        ge=1024,
+        description="Maximum permitted single document upload size in bytes.",
+    )
+    RAG_CHUNK_SIZE_TOKENS: int = Field(default=500, ge=100, le=2000)
+    RAG_CHUNK_OVERLAP_TOKENS: int = Field(default=80, ge=0, le=500)
+    RAG_EMBEDDING_MODEL: str = "nomic-embed-text"
+    RAG_EMBEDDING_DIMENSIONS: int = 768
+    RAG_TOP_K: int = Field(default=4, ge=1, le=20)
+    RAG_MIN_RELEVANCE: float = Field(default=0.25, ge=0.0, le=1.0)
+    RAG_RERANKER_ENABLED: bool = False
+    RAG_RERANKER_MODEL: str = ""
+
     # ── Initial Admin (consumed by the seed script only) ─────────────────
     ADMIN_USERNAME: str = "admin"
     ADMIN_EMAIL: str = "admin@servergen.local"

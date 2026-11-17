@@ -43,9 +43,22 @@ Thumbs.db
 
 # Database & Storage
 *.db
+*.db-shm
+*.db-wal
 *.sqlite3
 .pgdata/
 .pgdist/
+storage/*
+!storage/documents/
+storage/documents/*
+!storage/documents/.gitkeep
+!storage/tmp/
+storage/tmp/*
+!storage/tmp/.gitkeep
+!storage/generated/
+storage/generated/*
+!storage/generated/.gitkeep
+.storage/
 
 # Logs
 *.log

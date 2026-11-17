@@ -349,3 +349,35 @@ async def test_register_duplicate_fails(db_session: AsyncSession) -> None:
             email="another@example.com",
             password="ValidPassword123!",
         )
+
+
+@pytest.mark.asyncio
+async def test_refresh_preserves_role_and_cannot_escalate_to_admin(db_session: AsyncSession) -> None:
+    """
+    Token refresh must strictly preserve the user's authentic database role and identity.
+    A refresh request can never escalate a non-admin role (e.g. general_employee) to administrator.
+    """
+    from src.core.exceptions import InvalidTokenError
+
+    emp_role = await _seed_role(db_session, "general_employee")
+    await _seed_user(db_session, emp_role, username="emp_token_test", password="EmpPassword1!")
+
+    svc = AuthService(db_session)
+    login_tokens = await svc.login("emp_token_test", "EmpPassword1!")
+
+    initial_payload = decode_token(login_tokens.access_token, expected_type="access")
+    assert initial_payload["role"] == "general_employee"
+
+    # Rotate refresh token
+    refreshed_tokens = await svc.refresh(login_tokens.refresh_token)
+    refreshed_payload = decode_token(refreshed_tokens.access_token, expected_type="access")
+
+    # Role identity must be preserved
+    assert refreshed_payload["role"] == "general_employee"
+    assert refreshed_payload["role"] != "administrator"
+    assert refreshed_payload["sub"] == initial_payload["sub"]
+
+    # Forged or invalid refresh token cannot be used to obtain an access token
+    with pytest.raises(InvalidTokenError):
+        await svc.refresh("forged.invalid.refresh-token")
+

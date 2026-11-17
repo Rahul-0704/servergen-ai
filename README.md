@@ -1,142 +1,135 @@
-# ServerGen AI — Secure Enterprise Automation
+# ServerGen AI — Secure Enterprise Automation & Local Document Studio
 
-> A secure prototype foundation for controlled on-premise enterprise AI automation
-> using local LLM inference, policy-controlled orchestration, RBAC, human approval,
-> and tamper-evident auditing.
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-green.svg)](https://fastapi.tiangolo.com)
+[![Ollama](https://img.shields.io/badge/Local_LLM-Ollama-orange.svg)](https://ollama.ai)
+[![Zero-Trust](https://img.shields.io/badge/Security-Zero--Trust_RBAC-purple.svg)](#security-architecture)
+[![License](https://img.shields.io/badge/license-Proprietary-gray.svg)](#)
 
-⚠️ **This is a secure prototype foundation — not a production-ready platform.**
+> A controlled, on-premise enterprise AI automation platform powered by **local LLMs (Ollama `llama3.2:3b`)**, zero-trust clearance gating, hybrid RAG knowledge bases, tamper-evident cryptographic audit ledgers, and an automated **PDF & PowerPoint (PPTX) Generation Studio**.
 
-## Quick Start
+---
 
-### Prerequisites
+## 🌟 Key Capabilities
 
+### 1. 🛡️ Zero-Trust Identity & Access Control (RBAC/ABAC)
+- **Argon2id** password hashing with memory-hard protection against brute force and timing attacks.
+- **Cryptographic JWT** tokens with automatic rotation and 15-minute access token lifetimes.
+- **Hierarchical Clearances**: `PUBLIC`, `INTERNAL`, `CONFIDENTIAL`, and `RESTRICTED`.
+- **Dual-Custody Approvals**: Critical operational mutations require explicit managerial sign-off before execution.
+
+### 2. 🧠 Local AI Orchestration & Guardrails
+- **100% On-Premise Inference** via local Ollama runtime (`llama3.2:3b`) — zero external cloud data egress.
+- **Deterministic 10-Stage Pipeline**: Classification &rarr; Sensitivity Resolution &rarr; Risk Engine &rarr; Policy Decision &rarr; Model Routing &rarr; Verification &rarr; SHA-256 Audit Logging.
+- **Structured Synthesis**: Outputs include executive summaries, deep technical breakdowns, and actionable best practices.
+
+### 3. 📚 Enterprise Knowledge Base (Hybrid RAG)
+- Multi-format ingestion: `.pdf`, `.docx`, `.xlsx`, `.pptx`, `.csv`, `.txt`, `.md`, and `.html`.
+- Structural heading-aware semantic chunking with overlap protection.
+- Hybrid vector & keyword retrieval with strict zero-trust role-filtered clearance boundaries.
+
+### 4. 📊 PDF & PowerPoint (PPTX) Generation Studio *(New)*
+- **Widescreen 16:9 Presentation Decks (.pptx)**: Generates structured, corporate-styled slide decks with categories, bullet points, speaker notes, and key takeaways using `python-pptx`.
+- **Executive PDF Reports (.pdf)**: Generates publication-ready corporate reports with dynamic page numbering ("Page X of Y"), classification banners, and callout tables using ReportLab.
+- **Grounded Generation**: Synthesizes decks and reports directly from internal organizational knowledge bases.
+
+### 5. 🔍 Tamper-Evident SHA-256 Audit Ledger
+- Cryptographic hash-chained audit logging (`Hash_N = SHA-256(Hash_{N-1} + Timestamp + Actor + Action + Payload)`).
+- Instant verification of ledger integrity with zero tolerance for record tampering.
+
+---
+
+## 🚀 Quick Start (Running the Platform)
+
+### 1. Prerequisites
 - Python 3.11+
-- Docker & Docker Compose (for PostgreSQL)
-- Ollama (for local LLM inference, optional for Phase A)
+- [Ollama](https://ollama.com) installed with `llama3.2:3b`:
+  ```bash
+  ollama pull llama3.2:3b
+  ```
 
-### 1. Clone and Set Up Environment
-
+### 2. Setup Environment
 ```bash
-cd d:\projects\servergen-ai
+# Clone the repository
+git clone <your-repo-url>
+cd servergen-ai
 
-# Create virtual environment
+# Create and activate virtual environment
 python -m venv .venv
 
-# Activate (Windows)
+# On Windows:
 .venv\Scripts\activate
-
-# Activate (Linux/macOS)
+# On Linux / macOS:
 # source .venv/bin/activate
 
 # Install dependencies
 pip install -e ".[dev]"
 ```
 
-### 2. Configure Environment
-
+### 3. Configure Environment
 ```bash
-# Copy example environment file
-copy .env.example .env   # Windows
-# cp .env.example .env   # Linux/macOS
+# Copy template configuration
+copy .env.example .env    # Windows
+# cp .env.example .env    # Linux/macOS
+```
+*The default `.env` is pre-configured with SQLite WAL mode for instant, zero-setup local development.*
 
-# Generate a strong JWT secret
-python -c "import secrets; print(secrets.token_urlsafe(64))"
-
-# Edit .env and set:
-# - JWT_SECRET_KEY (paste the generated secret)
-# - ADMIN_PASSWORD (set a strong password)
-# - DATABASE_URL (if not using default Docker setup)
+### 4. Start Local Services
+In terminal 1 (Start Ollama LLM):
+```bash
+ollama serve
 ```
 
-### 3. Start PostgreSQL
-
+In terminal 2 (Start ServerGen AI API):
 ```bash
-docker compose up -d postgres
+uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-### 4. Run Database Migrations
+---
 
+## 🖥️ User Interfaces & Endpoints
+
+| Service | URL | Description |
+| :--- | :--- | :--- |
+| **Test & Demo Dashboard** | [http://127.0.0.1:8000/test](http://127.0.0.1:8000/test) | Full testing UI: AI Assistant, Doc & Slide Studio, Knowledge Base, Approvals |
+| **API Documentation (Swagger)** | [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs) | Interactive REST API tester and OpenAPI schemas |
+| **Health Check** | [http://127.0.0.1:8000/api/v1/health](http://127.0.0.1:8000/api/v1/health) | Backend, database, and local Ollama model status |
+
+---
+
+## 👥 Pre-Configured Test Accounts
+
+| Username | Password | Role | Clearance | Scope |
+| :--- | :--- | :--- | :--- | :--- |
+| `admin` | `admin123456` | `administrator` | `RESTRICTED` | Full system control, user management, audit logs |
+| `manager` | `manager123456` | `manager` | `CONFIDENTIAL` | Operational approvals, departmental documents |
+| `operator` | `operator123456` | `it_operator` | `CONFIDENTIAL` | Server diagnostics, runbooks, IT operations |
+| `analyst` | `analyst123456` | `security_analyst` | `INTERNAL` | RAG analytical queries, audit reviews |
+| `employee` | `employee123456` | `general_employee` | `PUBLIC` | General knowledge queries, public documents |
+
+---
+
+## 🎨 Building a Custom Frontend?
+
+If your team is building a frontend (React, Next.js, Vue, Svelte, or Mobile), see our dedicated guide:
+
+👉 **[FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)**
+
+It provides:
+- Exact REST API contracts with JSON request/response payloads
+- TypeScript interfaces and Axios interceptor setup with automatic token refresh
+- Component architecture recommendations for the AI Chat, Document Studio, and Approval Queue
+
+---
+
+## 🧪 Testing & Verification
+
+Run the core 5-stage verification suite:
 ```bash
-alembic upgrade head
+python scripts/verify_all_5_tests.py
 ```
 
-### 5. Start the Application
-
+Run unit tests with pytest:
 ```bash
-uvicorn src.app:app --reload --host 0.0.0.0 --port 8000
-```
-
-### 6. Verify
-
-- Health check: http://localhost:8000/health
-- API docs: http://localhost:8000/docs (development only)
-
-## Testing
-
-```bash
-# Run unit tests
 pytest tests/unit/ -v
-
-# Run with coverage (once installed)
-pytest tests/unit/ -v --tb=short
-
-# Run linting
-ruff check src/ tests/
-ruff format --check src/ tests/
 ```
-
-## Environment Variables
-
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `APP_ENV` | Environment mode | `development` |
-| `DATABASE_URL` | PostgreSQL async connection string | (see .env.example) |
-| `JWT_SECRET_KEY` | **Required.** JWT signing secret | (must be set) |
-| `JWT_ALGORITHM` | JWT signing algorithm (fixed) | `HS256` |
-| `ACCESS_TOKEN_EXPIRE_MINUTES` | Access token lifetime | `15` |
-| `REFRESH_TOKEN_EXPIRE_MINUTES` | Refresh token lifetime | `10080` (7 days) |
-| `MAX_LOGIN_ATTEMPTS` | Failed logins before lockout | `5` |
-| `LOCKOUT_DURATION_MINUTES` | Account lockout duration | `30` |
-| `OLLAMA_BASE_URL` | Ollama server URL | `http://localhost:11434` |
-| `DEFAULT_MODEL` | Default LLM model | `gemma3:4b` |
-
-## Project Structure
-
-```
-servergen-ai/
-├── src/
-│   ├── app.py              # FastAPI application factory
-│   ├── core/               # Configuration, database, security, middleware
-│   ├── models/             # SQLAlchemy ORM models
-│   ├── repositories/       # Data access layer
-│   ├── schemas/            # Pydantic request/response schemas
-│   ├── services/           # Business logic
-│   ├── auth/               # RBAC, policy engine, permissions
-│   ├── ai/                 # Model registry, providers, router
-│   ├── agents/             # AI agent interfaces
-│   ├── tools/              # Controlled tool interfaces
-│   ├── orchestrator/       # Orchestration engine
-│   └── api/v1/             # API route handlers
-├── alembic/                # Database migrations
-├── tests/
-│   ├── unit/               # SQLite-backed unit tests
-│   └── integration/        # PostgreSQL-backed integration tests
-├── docker-compose.yml      # PostgreSQL containers
-└── pyproject.toml          # Project configuration
-```
-
-## Security Architecture
-
-- **Authentication**: OAuth2 Bearer + JWT (HS256, fixed algorithm)
-- **Password Storage**: Argon2id (OWASP-recommended parameters)
-- **Access Tokens**: Short-lived (15 min default)
-- **Refresh Tokens**: Rotated on use, stored as hashes, family-based reuse detection
-- **RBAC**: Centralized permission-based authorization
-- **Policy Engine**: Deterministic ALLOW/DENY/REQUIRE_APPROVAL
-- **Audit**: Tamper-Evident AI Activity Ledger (SHA-256 hash chain)
-- **LLM Security**: Structured output only, no direct shell/SQL/filesystem execution
-
-## Known Limitations
-
-This is a secure prototype foundation suitable for further enterprise hardening.
-See ARCHITECTURE.md (upcoming) for full limitations list.

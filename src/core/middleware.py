@@ -19,6 +19,8 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 
 from src.core.exceptions import (
     AccountLockedError,
+    ApprovalError,
+    ApprovalNotFoundError,
     ApprovalRequiredError,
     AuditIntegrityError,
     AuthenticationError,
@@ -106,6 +108,8 @@ _EXCEPTION_STATUS_MAP: dict[type[ServerGenError], int] = {
     AuthorizationError: 403,
     PolicyDeniedError: 403,
     ApprovalRequiredError: 202,
+    ApprovalNotFoundError: 404,
+    ApprovalError: 400,
     RateLimitExceededError: 429,
     ModelNotAvailableError: 503,
     ModelProviderError: 502,
