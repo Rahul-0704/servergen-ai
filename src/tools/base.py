@@ -226,4 +226,6 @@ def build_default_tool_registry() -> ToolRegistry:
 
     registry.register(PDFGeneratorTool())
     registry.register(PresentationGeneratorTool())
+    from src.tools.spreadsheet_tool import SpreadsheetAnalyticsTool
+    registry.register(SpreadsheetAnalyticsTool())
     return registry

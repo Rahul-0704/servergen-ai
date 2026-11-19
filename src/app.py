@@ -97,6 +97,7 @@ def create_app() -> FastAPI:
         router as orchestrator_router,
     )
     from src.api.v1.rag import router as rag_router
+    from src.api.v1.spreadsheets import router as spreadsheets_router
     from src.api.v1.users import router as users_router
 
     app.include_router(auth_router)
@@ -106,6 +107,7 @@ def create_app() -> FastAPI:
     app.include_router(orchestrator_router)
     app.include_router(orchestrator_alias_router)
     app.include_router(rag_router)
+    app.include_router(spreadsheets_router)
     app.include_router(users_router)
 
     # ── Static files for test interface ──────────────────────────────
