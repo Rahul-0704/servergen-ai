@@ -92,11 +92,21 @@ Content-Type: application/json
   "access_token": "eyJhbGciOi...",
   "refresh_token": "eyJhbGciOi...",
   "token_type": "bearer",
-  "user": {
-    "id": "b88c44d2-...",
-    "username": "admin",
-    "role": "administrator"
-  }
+  "expires_in": 900
+}
+```
+
+#### `GET /api/v1/auth/me`
+Fetch currently authenticated user profile (requires `Authorization: Bearer <ACCESS_TOKEN>`):
+```json
+// Response (200 OK)
+{
+  "id": "610cf9d9-e665-4962-98b8-3a29103e91f5",
+  "username": "admin",
+  "email": "admin@servergen.local",
+  "full_name": "System Administrator",
+  "role": "administrator",
+  "is_active": true
 }
 ```
 
