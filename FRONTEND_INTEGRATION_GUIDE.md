@@ -23,11 +23,11 @@ The backend allows CORS requests from all standard local development servers:
 
 | Username | Password | Role | Clearance Level | Primary Responsibilities |
 | :--- | :--- | :--- | :--- | :--- |
-| `admin` | `admin123456` | `administrator` | `RESTRICTED` | Full system control, user management, audit logs, policy overrides |
-| `manager` | `manager123456` | `manager` | `CONFIDENTIAL` | Operational approvals, departmental documents, report generation |
-| `operator` | `operator123456` | `it_operator` | `CONFIDENTIAL` | System diagnostics, runbooks, server operations |
-| `analyst` | `analyst123456` | `security_analyst` | `INTERNAL` | RAG analytical queries, audit reviews, policy checks |
-| `employee` | `employee123456` | `general_employee` | `PUBLIC` | General knowledge queries, public documents |
+| `admin` | `admin` | `administrator` | `RESTRICTED` | Full system control, user management, audit logs, policy overrides |
+| `manager` | `Manager1!` | `manager` | `CONFIDENTIAL` | Operational approvals, departmental documents, report generation |
+| `operator` | `Operator1!` | `it_operator` | `CONFIDENTIAL` | System diagnostics, runbooks, server operations |
+| `analyst` | `Analyst1!` | `security_analyst` | `INTERNAL` | RAG analytical queries, audit reviews, policy checks |
+| `employee` | `Employee1!` | `general_employee` | `PUBLIC` | General knowledge queries, public documents |
 
 ---
 
@@ -45,7 +45,7 @@ Content-Type: application/json
 
 {
   "username": "admin",
-  "password": "admin123456"
+  "password": "admin"
 }
 
 // Response (HTTP 200)

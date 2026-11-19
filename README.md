@@ -51,7 +51,7 @@
 ### 2. Setup Environment
 ```bash
 # Clone the repository
-git clone <your-repo-url>
+git clone https://github.com/Rahul-0704/servergen-ai.git
 cd servergen-ai
 
 # Create and activate virtual environment
@@ -101,19 +101,23 @@ uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 
 | Username | Password | Role | Clearance | Scope |
 | :--- | :--- | :--- | :--- | :--- |
-| `admin` | `admin123456` | `administrator` | `RESTRICTED` | Full system control, user management, audit logs |
-| `manager` | `manager123456` | `manager` | `CONFIDENTIAL` | Operational approvals, departmental documents |
-| `operator` | `operator123456` | `it_operator` | `CONFIDENTIAL` | Server diagnostics, runbooks, IT operations |
-| `analyst` | `analyst123456` | `security_analyst` | `INTERNAL` | RAG analytical queries, audit reviews |
-| `employee` | `employee123456` | `general_employee` | `PUBLIC` | General knowledge queries, public documents |
+| `admin` | `admin` | `administrator` | `RESTRICTED` | Full system control, user management, audit logs |
+| `manager` | `Manager1!` | `manager` | `CONFIDENTIAL` | Operational approvals, departmental documents |
+| `operator` | `Operator1!` | `it_operator` | `CONFIDENTIAL` | Server diagnostics, runbooks, IT operations |
+| `analyst` | `Analyst1!` | `security_analyst` | `INTERNAL` | RAG analytical queries, audit reviews |
+| `employee` | `Employee1!` | `general_employee` | `PUBLIC` | General knowledge queries, public documents |
 
 ---
 
 ## 🎨 Building a Custom Frontend?
 
-If your team is building a frontend (React, Next.js, Vue, Svelte, or Mobile), see our dedicated guide:
+If your team is building a frontend (React, Next.js, Vue, Svelte, or Mobile), explore our guides and architecture blueprints:
 
-👉 **[FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)**
+👉 **[FRONTEND_DEVELOPER_GUIDE.md](FRONTEND_DEVELOPER_GUIDE.md)** — **Primary Guide for Collaborators**: Quickstart setup, seed credentials, REST API contracts with JSON request/response payloads, and UI wireframes.
+
+👉 **[FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)** — In-depth SDK details, TypeScript models, Axios interceptor setup, and reactive polling patterns.
+
+👉 **[System Architecture & Design Diagrams (PDF)](storage/generated/ServerGen_AI_System_Architecture_and_Design_Diagrams.pdf)** — High-resolution 7-page PDF containing 5.1 DFD, 5.2 Use Case, 5.3 Activity, 5.4 Class, 5.5 Sequence, and 5.6 Collaboration diagrams.
 
 It provides:
 - Exact REST API contracts with JSON request/response payloads

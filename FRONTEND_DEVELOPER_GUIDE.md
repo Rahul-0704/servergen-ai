@@ -62,10 +62,10 @@ When testing, use these default credentials:
 | Username | Password | Role | Clearance Ceiling | Description |
 | :--- | :--- | :--- | :--- | :--- |
 | **`admin`** | `admin` | `administrator` | **RESTRICTED** | Full governance, role management, clearance override |
-| **`operator`** | `operator` | `it_operator` | **CONFIDENTIAL** | System diagnostics, document ingestion, tool runs |
-| **`analyst`** | `analyst` | `security_analyst` | **CONFIDENTIAL** | Audit log inspection, ledger hash verification |
-| **`manager`** | `manager` | `manager` | **RESTRICTED** | Dual-custody review queue, approve/reject high-risk tasks |
-| **`employee`** | `employee` | `general_employee` | **INTERNAL** | Standard Q&A, slide & PDF generation |
+| **`operator`** | `Operator1!` | `it_operator` | **CONFIDENTIAL** | System diagnostics, document ingestion, tool runs |
+| **`analyst`** | `Analyst1!` | `security_analyst` | **CONFIDENTIAL** | Audit log inspection, ledger hash verification |
+| **`manager`** | `Manager1!` | `manager` | **RESTRICTED** | Dual-custody review queue, approve/reject high-risk tasks |
+| **`employee`** | `Employee1!` | `general_employee` | **INTERNAL** | Standard Q&A, slide & PDF generation |
 
 ---
 
