@@ -12,12 +12,10 @@ Exposes REST endpoints for:
 from __future__ import annotations
 
 import logging
-import mimetypes
 import uuid
-from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -26,14 +24,11 @@ from src.ai.schemas import DataSensitivity
 from src.auth.permissions import PermissionCode
 from src.auth.rbac import AuthContext, get_auth_context, require_permission
 from src.core.database import get_db
-from src.core.exceptions import NotFoundError, ValidationError
 from src.rag.retriever import RoleFilteredRetriever
 from src.services.audit_service import AuditService
 from src.services.docgen_service import (
     DocumentGeneratorService,
     GeneratedFileMeta,
-    PresentationDeck,
-    ReportDocument,
 )
 
 logger = logging.getLogger("servergen.api.generate")

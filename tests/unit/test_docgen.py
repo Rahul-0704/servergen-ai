@@ -5,7 +5,6 @@ Tests for PDF and PowerPoint (PPTX) Generation Subsystem and Tools.
 from __future__ import annotations
 
 import pytest
-
 from src.services.docgen_service import DocumentGeneratorService
 from src.tools.docgen import PDFGeneratorTool, PresentationGeneratorTool
 

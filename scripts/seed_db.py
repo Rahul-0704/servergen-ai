@@ -20,20 +20,19 @@ import uuid
 # Ensure src is importable
 sys.path.insert(0, ".")
 
-from src.auth.permissions import (  # noqa: E402
+# Import async session maker
+from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
+from src.auth.permissions import (
     DEFAULT_ROLE_PERMISSIONS,
     SystemRole,
     get_permission_resource_action,
 )
-from src.core.config import get_settings  # noqa: E402
-from src.core.database import get_engine  # noqa: E402
-from src.core.security import hash_password  # noqa: E402
-from src.models import Base  # noqa: E402
-from src.models.role import Permission, Role, RolePermission  # noqa: E402
-from src.models.user import User  # noqa: E402
-
-# Import async session maker
-from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker  # noqa: E402
+from src.core.config import get_settings
+from src.core.database import get_engine
+from src.core.security import hash_password
+from src.models import Base
+from src.models.role import Permission, Role, RolePermission
+from src.models.user import User
 
 
 async def seed() -> None:

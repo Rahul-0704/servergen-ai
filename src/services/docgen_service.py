@@ -20,15 +20,18 @@ import uuid
 from pathlib import Path
 from typing import Any
 
+import pptx
+from pptx.dml.color import RGBColor
+from pptx.enum.shapes import MSO_SHAPE
+from pptx.enum.text import PP_ALIGN
+from pptx.util import Inches, Pt
 from pydantic import BaseModel, Field
 from reportlab.lib import colors
 from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    HRFlowable,
     KeepTogether,
-    PageBreak,
     Paragraph,
     SimpleDocTemplate,
     Spacer,
@@ -36,11 +39,6 @@ from reportlab.platypus import (
     TableStyle,
 )
 
-import pptx
-from pptx.dml.color import RGBColor
-from pptx.enum.shapes import MSO_SHAPE
-from pptx.enum.text import PP_ALIGN
-from pptx.util import Inches, Pt
 from src.ai.providers.base import LLMRequest
 from src.ai.providers.ollama_provider import OllamaProvider
 from src.core.config import get_settings
@@ -194,9 +192,10 @@ class DocumentGeneratorService:
 
         # Try prefix match by file_id
         for candidate in self.storage_dir.iterdir():
-            if candidate.is_file() and candidate.name.startswith(clean):
-                if candidate.is_relative_to(self.storage_dir):
-                    return candidate
+            if candidate.is_file() and candidate.name.startswith(clean) and candidate.is_relative_to(self.storage_dir):
+                return candidate
+
+
         return None
 
     # ── Presentation (PPTX) Generation ──────────────────────────────────────
@@ -304,8 +303,8 @@ Return ONLY valid JSON.
                     cleaned_commas = re.sub(r",\s*([}\]])", r"\1", json_str)
                     parsed = json.loads(cleaned_commas)
                     return PresentationDeck(**parsed)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("JSON parse failed: %s", exc)
         return None
 
     def _extract_insights_from_context(self, context: str, min_items: int = 5) -> list[str]:
@@ -778,8 +777,8 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                     cleaned_commas = re.sub(r",\s*([}\]])", r"\1", json_str)
                     parsed = json.loads(cleaned_commas)
                     return ReportDocument(**parsed)
-                except Exception:
-                    pass
+                except Exception as exc:
+                    logger.debug("JSON parse failed: %s", exc)
         return None
 
     def _heuristic_report_fallback(

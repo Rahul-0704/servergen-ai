@@ -113,16 +113,50 @@ uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 
 If your team is building a frontend (React, Next.js, Vue, Svelte, or Mobile), explore our guides and architecture blueprints:
 
-👉 **[FRONTEND_DEVELOPER_GUIDE.md](FRONTEND_DEVELOPER_GUIDE.md)** — **Primary Guide for Collaborators**: Quickstart setup, seed credentials, REST API contracts with JSON request/response payloads, and UI wireframes.
+👉 **[docs/FRONTEND_GUIDE.md](docs/FRONTEND_GUIDE.md)** — **Primary Guide for Frontend Collaborators**: Quickstart setup, seed credentials, REST API contracts with JSON request/response payloads, and UI wireframes.
 
-👉 **[FRONTEND_INTEGRATION_GUIDE.md](FRONTEND_INTEGRATION_GUIDE.md)** — In-depth SDK details, TypeScript models, Axios interceptor setup, and reactive polling patterns.
+👉 **[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md)** — Architectural blueprint, 10-stage orchestration pipeline, and security boundaries.
+
+👉 **[docs/API.md](docs/API.md)** — Comprehensive REST API endpoint reference and OpenAPI schemas.
+
+👉 **[docs/SECURITY.md](docs/SECURITY.md)** — Zero-trust access policies, Argon2id security model, and cryptographic ledger proofs.
 
 👉 **[System Architecture & Design Diagrams (PDF)](storage/generated/ServerGen_AI_System_Architecture_and_Design_Diagrams.pdf)** — High-resolution 7-page PDF containing 5.1 DFD, 5.2 Use Case, 5.3 Activity, 5.4 Class, 5.5 Sequence, and 5.6 Collaboration diagrams.
 
-It provides:
-- Exact REST API contracts with JSON request/response payloads
-- TypeScript interfaces and Axios interceptor setup with automatic token refresh
-- Component architecture recommendations for the AI Chat, Document Studio, and Approval Queue
+---
+
+## 📁 Clean Project Structure
+
+```text
+servergen-ai/
+├── docs/                # Architecture, API specifications, and frontend guide
+│   ├── API.md
+│   ├── ARCHITECTURE.md
+│   ├── FRONTEND_GUIDE.md
+│   └── SECURITY.md
+├── scripts/             # Operational scripts
+│   ├── generate_diagrams.py   # High-resolution architectural diagram generator
+│   ├── seed_db.py             # Database initializer (roles, permissions, accounts)
+│   └── verify_all_5_tests.py  # 5-stage automated verification runner
+├── src/                 # Application source code
+│   ├── ai/              # Local LLM orchestration (Ollama provider, model registry)
+│   ├── api/v1/          # REST API endpoints (Auth, RAG, AI, Approvals, Generate)
+│   ├── auth/            # Zero-trust RBAC/ABAC and Argon2id security
+│   ├── core/            # Database engine, config, and exceptions
+│   ├── models/          # SQLAlchemy async models
+│   ├── orchestrator/    # 10-stage execution pipeline and risk engine
+│   ├── rag/             # Multi-format ingestion, chunking, and hybrid search
+│   └── services/        # Business services (Auth, DocGen, Approvals, Audit)
+├── storage/             # Managed document repository and generated PPTX/PDFs
+├── tests/               # Automated unit and integration test suite (162 tests)
+├── test-interface.html  # Live browser test dashboard and interactive playground
+├── pyproject.toml       # Dependencies, build system, and linter configuration
+├── run.bat              # Master runner script (checks & launcher)
+└── start.bat            # Quick local services launcher (Ollama + Uvicorn)
+```
+
+
+
 
 ---
 

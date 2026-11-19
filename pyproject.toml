@@ -99,6 +99,9 @@ ignore = [
 "src/agents/**/*.py" = ["E501"]
 "src/ai/**/*.py" = ["E501"]
 "src/services/auth_service.py" = ["E501"]
+"src/services/docgen_service.py" = ["E501"]
+"src/tools/docgen.py" = ["E501"]
+"scripts/**/*.py" = ["E501", "T201", "S310"]
 
 [tool.mypy]
 python_version = "3.11"

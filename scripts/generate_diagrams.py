@@ -18,7 +18,6 @@ from __future__ import annotations
 import datetime
 import json
 import math
-import os
 from pathlib import Path
 from typing import Any
 
@@ -28,8 +27,9 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.pdfgen import canvas
 from reportlab.platypus import (
-    HRFlowable,
     Image as RLImage,
+)
+from reportlab.platypus import (
     KeepTogether,
     PageBreak,
     Paragraph,

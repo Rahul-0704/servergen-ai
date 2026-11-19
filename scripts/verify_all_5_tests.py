@@ -1,17 +1,18 @@
-import urllib.request
 import json
 import time
+import urllib.request
+
 
 def run_tests():
     print("--- Verifying all 5 Core Tests against backend ---")
-    
+
     # 1. Test A: Auth
     t0 = time.time()
     login_data = json.dumps({'username': 'admin', 'password': 'admin'}).encode('utf-8')
     req = urllib.request.Request('http://127.0.0.1:8000/api/v1/auth/login', data=login_data, headers={'Content-Type': 'application/json'})
     resp = urllib.request.urlopen(req)
     token = json.loads(resp.read().decode('utf-8'))['access_token']
-    
+
     req_me = urllib.request.Request('http://127.0.0.1:8000/api/v1/auth/me', headers={'Authorization': f'Bearer {token}'})
     resp_me = urllib.request.urlopen(req_me)
     user_data = json.loads(resp_me.read().decode('utf-8'))
@@ -48,7 +49,7 @@ def run_tests():
         'Content-Disposition: form-data; name="classification"\r\n\r\n'
         'internal\r\n'
         f'--{boundary}--\r\n'
-    ).encode('utf-8')
+    ).encode()
     req_upload = urllib.request.Request(
         'http://127.0.0.1:8000/api/v1/rag/upload',
         data=body_doc,
@@ -79,7 +80,7 @@ def run_tests():
     login_emp = json.dumps({'username': 'employee', 'password': 'Employee1!'}).encode('utf-8')
     req_emp = urllib.request.Request('http://127.0.0.1:8000/api/v1/auth/login', data=login_emp, headers={'Content-Type': 'application/json'})
     token_emp = json.loads(urllib.request.urlopen(req_emp).read().decode('utf-8'))['access_token']
-    
+
     # Query restricted financial document as employee
     body_e = json.dumps({
         'query': 'What was the Q3 expenditure for enterprise automation under Policy HR-702?',
