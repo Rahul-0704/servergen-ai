@@ -26,6 +26,7 @@ from src.core.exceptions import ValidationError
 from src.rag.storage import DocumentStorage
 from src.services.audit_service import AuditEventType, AuditService
 from src.services.docgen_service import DocumentGeneratorService
+from src.services.pii_service import pii_service
 from src.services.spreadsheet_service import SpreadsheetAnalyticsService
 
 logger = logging.getLogger("servergen.api.spreadsheets")
@@ -43,7 +44,7 @@ docgen_service = DocumentGeneratorService()
 class AnalyzeRequest(BaseModel):
     document_id: str = Field(..., description="Document ID of the uploaded spreadsheet")
     sheet_name: str | None = Field(default=None, description="Specific tab name (defaults to first tab)")
-    operation: str = Field(default="overview", description="'overview', 'groupby', or 'filter'")
+    operation: str = Field(default="overview", description="'overview', 'groupby', 'filter', 'anomaly', or 'variance'")
     group_column: str | None = Field(default=None, description="Column to group by for 'groupby' operation")
     aggregations: list[dict[str, str]] = Field(
         default_factory=list,
@@ -54,6 +55,12 @@ class AnalyzeRequest(BaseModel):
     filter_value: Any = None
     sort_column: str | None = None
     ascending: bool = False
+    target_column: str | None = Field(default=None, description="Target column for outlier/anomaly detection")
+    anomaly_method: str = Field(default="iqr", description="'iqr' or 'zscore'")
+    base_column: str | None = Field(default=None, description="Base column for variance analysis")
+    comparison_column: str | None = Field(default=None, description="Comparison column for variance analysis")
+    dimension_column: str | None = Field(default=None, description="Category/dimension column")
+    mask_pii: bool = Field(default=False, description="Apply enterprise zero-trust PII redaction")
     prompt: str | None = Field(default=None, description="Custom prompt to guide executive insight synthesis")
 
 
@@ -185,6 +192,7 @@ async def analyze_spreadsheet(
     overview_md = spreadsheet_service.generate_overview_markdown(target_sheet)
 
     # 2. Execute requested operation
+    metrics: dict[str, Any] = {}
     if request.operation == "groupby" and request.group_column:
         aggs = request.aggregations or [{"column": target_sheet.headers[-1], "op": "sum"}]
         headers, rows = spreadsheet_service.group_by_aggregate(target_sheet, request.group_column, aggs)
@@ -197,10 +205,29 @@ async def analyze_spreadsheet(
             sort_col=request.sort_column,
             ascending=request.ascending,
         )
+    elif request.operation == "anomaly" and request.target_column:
+        headers, rows, metrics = spreadsheet_service.detect_anomalies(
+            target_sheet,
+            target_column=request.target_column,
+            dimension_col=request.dimension_column,
+            method=request.anomaly_method,
+        )
+    elif request.operation == "variance" and request.base_column and request.comparison_column:
+        headers, rows, metrics = spreadsheet_service.analyze_variance(
+            target_sheet,
+            base_col=request.base_column,
+            comparison_col=request.comparison_column,
+            dimension_col=request.dimension_column,
+        )
     else:
         # Default: sample data view with all headers
         headers = target_sheet.headers
         rows = target_sheet.rows[:30]
+
+    # Optional zero-trust PII scrubbing
+    pii_redactions = 0
+    if request.mask_pii:
+        headers, rows, pii_redactions = pii_service.redact_table(headers, rows)
 
     data_table_md = spreadsheet_service.format_markdown_table(headers, rows)
 
@@ -210,7 +237,11 @@ async def analyze_spreadsheet(
         overview_md=overview_md,
         data_table_md=data_table_md,
         user_prompt=request.prompt,
+        mask_pii=request.mask_pii,
     )
+
+    # Extract Chart Specification for UI and downstream charting
+    chart_spec = spreadsheet_service.extract_chart_spec(headers, rows)
 
     # 4. Audit ledger entry
     await audit.record(
@@ -224,6 +255,7 @@ async def analyze_spreadsheet(
             "sheet_name": target_sheet.name,
             "operation": request.operation,
             "rows_evaluated": target_sheet.row_count(),
+            "pii_redacted": pii_redactions,
         },
     )
     await db.commit()
@@ -239,6 +271,9 @@ async def analyze_spreadsheet(
         "data_table_markdown": data_table_md,
         "table_headers": headers,
         "table_rows": rows,
+        "chart_spec": chart_spec,
+        "metrics": metrics,
+        "pii_redacted_count": pii_redactions,
         "executive_insights": insights,
     }
 
@@ -272,11 +307,13 @@ async def export_spreadsheet_analysis(
         }
 
     elif fmt == "pdf":
-        prompt = f"Executive Analysis: {request.title}\n\nKey Insights:\n{request.executive_insights}"
-        out_path, _, meta = await docgen_service.generate_pdf_from_prompt(
-            prompt=prompt,
+        out_path, meta = docgen_service.render_executive_data_report(
+            title=request.title,
+            subtitle=f"Tabular Operations Report — {request.sheet_name or 'Sheet'}",
+            table_headers=request.table_headers,
+            table_rows=request.table_rows,
+            executive_insights=request.executive_insights,
             classification="INTERNAL",
-            context=f"Data Table:\n{' | '.join(request.table_headers)}\n{len(request.table_rows)} records evaluated.",
         )
         return {
             "status": "success",
@@ -287,12 +324,13 @@ async def export_spreadsheet_analysis(
         }
 
     elif fmt == "pptx":
-        prompt = f"Executive Presentation: {request.title}\n\nSummary:\n{request.executive_insights}"
-        out_path, meta = await docgen_service.generate_presentation_from_prompt(
-            prompt=prompt,
-            num_slides=5,
+        out_path, meta = docgen_service.render_executive_data_deck(
+            title=request.title,
+            subtitle=f"Executive Data Analysis — {request.sheet_name or 'Sheet'}",
+            table_headers=request.table_headers,
+            table_rows=request.table_rows,
+            executive_insights=request.executive_insights,
             classification="INTERNAL",
-            context=f"Analyzed {len(request.table_rows)} rows across {len(request.table_headers)} columns.",
         )
         return {
             "status": "success",

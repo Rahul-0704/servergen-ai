@@ -1712,6 +1712,8 @@
                                     <button id="sheet-op-overview" class="auth-tab-btn active" onclick="setSheetOp('overview')"><i class="fa-solid fa-chart-pie"></i> Statistical Overview</button>
                                     <button id="sheet-op-groupby" class="auth-tab-btn" onclick="setSheetOp('groupby')"><i class="fa-solid fa-layer-group"></i> Group By &amp; Aggregate</button>
                                     <button id="sheet-op-filter" class="auth-tab-btn" onclick="setSheetOp('filter')"><i class="fa-solid fa-filter"></i> Filter &amp; Sort</button>
+                                    <button id="sheet-op-anomaly" class="auth-tab-btn" onclick="setSheetOp('anomaly')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly &amp; Outliers</button>
+                                    <button id="sheet-op-variance" class="auth-tab-btn" onclick="setSheetOp('variance')"><i class="fa-solid fa-scale-balanced text-info"></i> Variance (MoM/QoQ)</button>
                                 </div>
                             </div>
                         </div>
@@ -1769,10 +1771,55 @@
                             </div>
                         </div>
 
-                        <!-- Prompt Input -->
-                        <div style="margin-bottom:14px;">
-                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Executive AI Analysis Guidance (Optional)</label>
-                            <input type="text" id="sheet-prompt" class="form-control" placeholder="e.g. Highlight highest cost centers and recommend 10% budget optimization strategies" style="width:100%;">
+                        <div id="sheet-anomaly-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:10px;">
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Target Numeric Column</label>
+                                    <select id="sheet-anomaly-target-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Detection Method</label>
+                                    <select id="sheet-anomaly-method" class="form-control" style="width:100%;">
+                                        <option value="iqr" selected>IQR (Interquartile 1.5x)</option>
+                                        <option value="zscore">Z-Score (&gt;2.5σ Deviation)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Label Column</label>
+                                    <select id="sheet-anomaly-dim-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div id="sheet-variance-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                            <div style="display:grid; grid-template-columns: 2fr 2fr 2fr; gap:10px;">
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Base Column (e.g. Budget)</label>
+                                    <select id="sheet-var-base-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Column (e.g. Actual)</label>
+                                    <select id="sheet-var-comp-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Category Column</label>
+                                    <select id="sheet-var-dim-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Prompt Input & Zero-Trust DLP Redaction -->
+                        <div style="display:grid; grid-template-columns: 1fr auto; gap:16px; margin-bottom:14px; align-items:flex-end;">
+                            <div>
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Executive AI Analysis Guidance (Optional)</label>
+                                <input type="text" id="sheet-prompt" class="form-control" placeholder="e.g. Highlight highest cost centers and recommend 10% budget optimization strategies" style="width:100%;">
+                            </div>
+                            <div style="padding-bottom:8px;">
+                                <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:700; color:#0F172A; cursor:pointer;">
+                                    <input type="checkbox" id="sheet-mask-pii" style="width:16px; height:16px; accent-color:#16A34A;">
+                                    <i class="fa-solid fa-shield-halved text-success"></i> Auto-Redact PII (DLP)
+                                </label>
+                            </div>
                         </div>
 
                         <button id="sheet-btn-analyze" class="btn btn-primary" onclick="runSpreadsheetAnalysis()" style="font-weight:700; padding:10px 24px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Run Deep Spreadsheet Analytics</button>
@@ -1791,6 +1838,15 @@
 
                         <!-- Export Notification -->
                         <div id="sheet-export-status" style="margin-bottom:12px; display:none;"></div>
+
+                        <!-- Interactive Visual Analytics Chart Card -->
+                        <div id="sheet-chart-card" class="card" style="margin-bottom:16px; background:#fff; border:1px solid #CBD5E1; display:none;">
+                            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
+                                <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-chart-column text-primary"></i> Interactive Visual Analytics</div>
+                                <span id="sheet-pii-badge" style="display:none;" class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> PII Scrubbed</span>
+                            </div>
+                            <div id="sheet-chart-container" style="padding:16px; overflow-x:auto;"></div>
+                        </div>
 
                         <!-- Results Tabs -->
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
@@ -4694,16 +4750,26 @@
 
             sheetState.currentSheet = sheetObj;
 
-            // Populate Column Selectors for Group By & Filter
+            // Populate Column Selectors for Group By, Filter, Anomaly & Variance
             const groupSelect = document.getElementById('sheet-group-col');
             const metricSelect = document.getElementById('sheet-metric-col');
             const filterColSelect = document.getElementById('sheet-filter-col');
             const sortColSelect = document.getElementById('sheet-sort-col');
+            const anomTargetSelect = document.getElementById('sheet-anomaly-target-col');
+            const anomDimSelect = document.getElementById('sheet-anomaly-dim-col');
+            const varBaseSelect = document.getElementById('sheet-var-base-col');
+            const varCompSelect = document.getElementById('sheet-var-comp-col');
+            const varDimSelect = document.getElementById('sheet-var-dim-col');
 
             groupSelect.innerHTML = '';
             metricSelect.innerHTML = '';
             filterColSelect.innerHTML = '';
             sortColSelect.innerHTML = '';
+            if (anomTargetSelect) anomTargetSelect.innerHTML = '';
+            if (anomDimSelect) anomDimSelect.innerHTML = '';
+            if (varBaseSelect) varBaseSelect.innerHTML = '';
+            if (varCompSelect) varCompSelect.innerHTML = '';
+            if (varDimSelect) varDimSelect.innerHTML = '';
 
             sheetObj.headers.forEach(h => {
                 const optG = document.createElement('option');
@@ -4720,6 +4786,19 @@
                 optS.value = h;
                 optS.textContent = h;
                 sortColSelect.appendChild(optS);
+
+                if (anomDimSelect) {
+                    const optAD = document.createElement('option');
+                    optAD.value = h;
+                    optAD.textContent = h;
+                    anomDimSelect.appendChild(optAD);
+                }
+                if (varDimSelect) {
+                    const optVD = document.createElement('option');
+                    optVD.value = h;
+                    optVD.textContent = h;
+                    varDimSelect.appendChild(optVD);
+                }
             });
 
             // Populate numeric metrics
@@ -4732,7 +4811,29 @@
                 optM.value = h;
                 optM.textContent = h;
                 metricSelect.appendChild(optM);
+
+                if (anomTargetSelect) {
+                    const optAT = document.createElement('option');
+                    optAT.value = h;
+                    optAT.textContent = h;
+                    anomTargetSelect.appendChild(optAT);
+                }
+                if (varBaseSelect) {
+                    const optVB = document.createElement('option');
+                    optVB.value = h;
+                    optVB.textContent = h;
+                    varBaseSelect.appendChild(optVB);
+                }
+                if (varCompSelect) {
+                    const optVC = document.createElement('option');
+                    optVC.value = h;
+                    optVC.textContent = h;
+                    varCompSelect.appendChild(optVC);
+                }
             });
+            if (varCompSelect && varCompSelect.options.length > 1) {
+                varCompSelect.selectedIndex = 1;
+            }
         }
 
         function setSheetOp(op) {
@@ -4743,6 +4844,8 @@
 
             document.getElementById('sheet-groupby-config').style.display = op === 'groupby' ? 'block' : 'none';
             document.getElementById('sheet-filter-config').style.display = op === 'filter' ? 'block' : 'none';
+            document.getElementById('sheet-anomaly-config').style.display = op === 'anomaly' ? 'block' : 'none';
+            document.getElementById('sheet-variance-config').style.display = op === 'variance' ? 'block' : 'none';
         }
 
         async function runSpreadsheetAnalysis() {
@@ -4755,15 +4858,18 @@
             const resultsArea = document.getElementById('sheet-results-area');
             const tableRender = document.getElementById('sheet-table-render');
             const insightsRender = document.getElementById('sheet-insights-render');
+            const piiBadge = document.getElementById('sheet-pii-badge');
 
             const tabSelect = document.getElementById('sheet-tab-select');
             const sheetName = tabSelect.value;
             const prompt = (document.getElementById('sheet-prompt')?.value || '').trim();
+            const maskPII = document.getElementById('sheet-mask-pii')?.checked || false;
 
             const reqBody = {
                 document_id: sheetState.docId,
                 sheet_name: sheetName,
                 operation: sheetState.currentOp,
+                mask_pii: maskPII,
                 prompt: prompt,
             };
 
@@ -4778,6 +4884,14 @@
                 reqBody.operator = document.getElementById('sheet-filter-op').value;
                 reqBody.filter_value = document.getElementById('sheet-filter-val').value;
                 reqBody.sort_column = document.getElementById('sheet-sort-col').value;
+            } else if (sheetState.currentOp === 'anomaly') {
+                reqBody.target_column = document.getElementById('sheet-anomaly-target-col').value;
+                reqBody.anomaly_method = document.getElementById('sheet-anomaly-method').value;
+                reqBody.dimension_column = document.getElementById('sheet-anomaly-dim-col').value;
+            } else if (sheetState.currentOp === 'variance') {
+                reqBody.base_column = document.getElementById('sheet-var-base-col').value;
+                reqBody.comparison_column = document.getElementById('sheet-var-comp-col').value;
+                reqBody.dimension_column = document.getElementById('sheet-var-dim-col').value;
             }
 
             btn.disabled = true;
@@ -4795,8 +4909,19 @@
                 sheetState.lastRows = data.table_rows || [];
                 sheetState.lastInsights = data.executive_insights || '';
 
+                // Handle PII badge
+                if (data.pii_redacted_count > 0 && piiBadge) {
+                    piiBadge.style.display = 'inline-block';
+                    piiBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> ${data.pii_redacted_count} PII Elements Redacted`;
+                } else if (piiBadge) {
+                    piiBadge.style.display = 'none';
+                }
+
                 // Render HTML Table
                 tableRender.innerHTML = renderHtmlTable(data.table_headers, data.table_rows);
+
+                // Render Interactive Chart
+                renderInteractiveChart(data.chart_spec);
 
                 // Render Insights
                 insightsRender.innerHTML = formatMarkdown(data.executive_insights || 'No insights returned.');
@@ -4807,6 +4932,48 @@
                 btn.disabled = false;
                 btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Run Deep Spreadsheet Analytics';
             }
+        }
+
+        function renderInteractiveChart(chartSpec) {
+            const card = document.getElementById('sheet-chart-card');
+            const container = document.getElementById('sheet-chart-container');
+            if (!chartSpec || !chartSpec.categories || chartSpec.categories.length === 0 || !chartSpec.series || chartSpec.series.length === 0) {
+                if (card) card.style.display = 'none';
+                return;
+            }
+
+            if (card) card.style.display = 'block';
+            const categories = chartSpec.categories;
+            const primarySeries = chartSpec.series[0];
+            const maxVal = Math.max(...primarySeries.data.map(v => Math.abs(v)), 1);
+
+            let html = `
+                <div style="margin-bottom:12px; display:flex; gap:16px; align-items:center;">
+                    <span style="font-weight:700; font-size:0.8rem; color:#475569;">Visual Distribution:</span>
+                    <span class="badge" style="background:#2563EB; color:#fff; font-size:0.75rem;">${escapeHtml(primarySeries.name)}</span>
+                </div>
+                <div style="display:flex; flex-direction:column; gap:8px;">
+            `;
+
+            categories.forEach((cat, idx) => {
+                const val = primarySeries.data[idx] || 0;
+                const pct = Math.min(Math.max((Math.abs(val) / maxVal) * 100, 3), 100);
+                const displayVal = Math.abs(val) < 1 && val !== 0 ? (val * 100).toFixed(2) + '%' : (typeof val === 'number' ? val.toLocaleString() : val);
+                const barColor = val >= 0 ? '#2563EB' : '#EF4444';
+
+                html += `
+                    <div style="display:grid; grid-template-columns: 160px 1fr 100px; gap:12px; align-items:center;">
+                        <div style="font-size:0.78rem; font-weight:600; color:#1E293B; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(cat)}">${escapeHtml(cat)}</div>
+                        <div style="background:#F1F5F9; border-radius:4px; height:18px; width:100%; overflow:hidden; position:relative;">
+                            <div style="background:${barColor}; width:${pct}%; height:100%; border-radius:4px; transition:width 0.4s ease;"></div>
+                        </div>
+                        <div style="font-size:0.78rem; font-weight:700; color:#0F172A; text-align:right; font-variant-numeric:tabular-nums;">${escapeHtml(displayVal)}</div>
+                    </div>
+                `;
+            });
+
+            html += `</div>`;
+            if (container) container.innerHTML = html;
         }
 
         function renderHtmlTable(headers, rows) {

@@ -28,6 +28,7 @@ from src.ai.providers.base import LLMRequest
 from src.ai.providers.ollama_provider import OllamaProvider
 from src.core.config import get_settings
 from src.core.exceptions import ValidationError
+from src.services.pii_service import pii_service
 
 logger = logging.getLogger("servergen.services.spreadsheet")
 
@@ -498,6 +499,235 @@ class SpreadsheetAnalyticsService:
             return s_filter in s_cell
         return False
 
+    def detect_anomalies(
+        self,
+        sheet: SheetData,
+        target_column: str,
+        dimension_col: str | None = None,
+        method: str = "iqr",
+        threshold: float = 1.5,
+        limit: int = 50,
+    ) -> tuple[list[str], list[list[Any]], dict[str, Any]]:
+        """
+        Scan a numeric column for statistical outliers using IQR or Z-score method.
+        Flags unusual variances, cost overruns, or operational spikes.
+        """
+        if target_column not in sheet.headers:
+            raise ValidationError(f"Target column '{target_column}' not found.")
+
+        t_idx = sheet.headers.index(target_column)
+        dim_idx = sheet.headers.index(dimension_col) if dimension_col and dimension_col in sheet.headers else 0
+
+        # Collect non-null numeric values
+        items: list[tuple[int, Any, float]] = []
+        for r_idx, row in enumerate(sheet.rows):
+            n = self._to_number(row[t_idx])
+            if n is not None and not math.isnan(n):
+                dim_val = row[dim_idx] if dim_idx < len(row) else f"Row {r_idx + 1}"
+                items.append((r_idx, dim_val, n))
+
+        if len(items) < 4:
+            raise ValidationError(f"Column '{target_column}' requires at least 4 numeric records for outlier analysis.")
+
+        nums = [it[2] for it in items]
+        mean_val = statistics.mean(nums)
+        std_val = statistics.stdev(nums) if len(nums) > 1 else 0.0
+
+        if len(nums) >= 4:
+            try:
+                q1, _q2, q3 = statistics.quantiles(nums, n=4)
+            except Exception:
+                sorted_nums = sorted(nums)
+                n_len = len(sorted_nums)
+                q1 = sorted_nums[int(n_len * 0.25)]
+                q3 = sorted_nums[int(n_len * 0.75)]
+        else:
+            q1, q3 = min(nums), max(nums)
+        iqr = q3 - q1
+
+        effective_thresh = threshold if len(nums) > 6 else min(threshold, 1.2)
+        if method.lower() == "zscore":
+            lower_bound = mean_val - (effective_thresh * std_val)
+            upper_bound = mean_val + (effective_thresh * std_val)
+        else:
+            lower_bound = q1 - (effective_thresh * iqr)
+            upper_bound = q3 + (effective_thresh * iqr)
+
+        dim_header = dimension_col if dimension_col and dimension_col in sheet.headers else sheet.headers[dim_idx]
+        out_headers = [dim_header, target_column, "Anomaly Type", "Severity", "Deviation", "Threshold Bound"]
+        out_rows: list[list[Any]] = []
+
+        for _r_idx, dim_val, val in items:
+            is_anomaly = False
+            a_type = ""
+            bound = 0.0
+            deviation = 0.0
+
+            if val > upper_bound:
+                is_anomaly = True
+                a_type = "High Outlier"
+                bound = upper_bound
+                deviation = val - upper_bound
+            elif val < lower_bound:
+                is_anomaly = True
+                a_type = "Low Outlier"
+                bound = lower_bound
+                deviation = lower_bound - val
+
+            if is_anomaly:
+                z_score = abs(val - mean_val) / std_val if std_val > 0 else 0.0
+                severity = "CRITICAL" if z_score > 3.0 or (iqr > 0 and abs(deviation) > 2.5 * iqr) else "ELEVATED"
+                dev_pct = (deviation / abs(bound) * 100.0) if bound != 0 else 0.0
+                dev_str = f"+{deviation:,.2f} (+{dev_pct:.1f}%)" if a_type == "High Outlier" else f"-{deviation:,.2f} (-{dev_pct:.1f}%)"
+
+                out_rows.append([
+                    dim_val,
+                    round(val, 2),
+                    a_type,
+                    severity,
+                    dev_str,
+                    round(bound, 2),
+                ])
+
+        out_rows.sort(key=lambda r: (0 if r[3] == "CRITICAL" else 1, -abs(float(str(r[1]).replace(",", "")))))
+
+        metrics = {
+            "method": method.upper(),
+            "target_column": target_column,
+            "total_records": len(items),
+            "anomalies_detected": len(out_rows),
+            "anomaly_rate_pct": round((len(out_rows) / len(items)) * 100.0, 2),
+            "lower_bound": round(lower_bound, 2),
+            "upper_bound": round(upper_bound, 2),
+            "q1": round(q1, 2),
+            "q3": round(q3, 2),
+            "iqr": round(iqr, 2),
+            "mean": round(mean_val, 2),
+            "std_dev": round(std_val, 2),
+        }
+        return out_headers, out_rows[:limit], metrics
+
+    def analyze_variance(
+        self,
+        sheet: SheetData,
+        base_col: str,
+        comparison_col: str,
+        dimension_col: str | None = None,
+        limit: int = 50,
+    ) -> tuple[list[str], list[list[Any]], dict[str, Any]]:
+        """
+        Calculate period-over-period or budget-vs-actual variance analysis across columns.
+        """
+        if base_col not in sheet.headers:
+            raise ValidationError(f"Base column '{base_col}' not found.")
+        if comparison_col not in sheet.headers:
+            raise ValidationError(f"Comparison column '{comparison_col}' not found.")
+
+        b_idx = sheet.headers.index(base_col)
+        c_idx = sheet.headers.index(comparison_col)
+        dim_idx = sheet.headers.index(dimension_col) if dimension_col and dimension_col in sheet.headers else 0
+
+        dim_header = dimension_col if dimension_col and dimension_col in sheet.headers else sheet.headers[dim_idx]
+        out_headers = [dim_header, base_col, comparison_col, "Variance ($)", "Variance (%)", "Performance"]
+        out_rows: list[list[Any]] = []
+
+        tot_base = 0.0
+        tot_comp = 0.0
+
+        for r_idx, row in enumerate(sheet.rows):
+            dim_val = row[dim_idx] if dim_idx < len(row) else f"Item {r_idx + 1}"
+            v_base = self._to_number(row[b_idx]) or 0.0
+            v_comp = self._to_number(row[c_idx]) or 0.0
+
+            delta = v_comp - v_base
+            delta_pct = (delta / abs(v_base) * 100.0) if v_base != 0 else (100.0 if delta > 0 else 0.0)
+            status = "Favorable" if delta >= 0 else "Unfavorable"
+
+            tot_base += v_base
+            tot_comp += v_comp
+
+            sign = "+" if delta >= 0 else ""
+            delta_str = f"{sign}{delta:,.2f}"
+            pct_str = f"{sign}{delta_pct:.2f}%"
+
+            out_rows.append([
+                dim_val,
+                round(v_base, 2),
+                round(v_comp, 2),
+                delta_str,
+                pct_str,
+                status,
+            ])
+
+        out_rows.sort(
+            key=lambda r: abs(float(str(r[3]).replace("+", "").replace(",", ""))),
+            reverse=True,
+        )
+
+        net_variance = tot_comp - tot_base
+        net_pct = (net_variance / abs(tot_base) * 100.0) if tot_base != 0 else 0.0
+
+        metrics = {
+            "base_column": base_col,
+            "comparison_column": comparison_col,
+            "total_base": round(tot_base, 2),
+            "total_comparison": round(tot_comp, 2),
+            "net_variance": round(net_variance, 2),
+            "net_variance_pct": round(net_pct, 2),
+            "overall_performance": "Favorable" if net_variance >= 0 else "Unfavorable",
+            "items_analyzed": len(out_rows),
+        }
+        return out_headers, out_rows[:limit], metrics
+
+    def extract_chart_spec(
+        self,
+        headers: list[str],
+        rows: list[list[Any]],
+        max_categories: int = 10,
+    ) -> dict[str, Any]:
+        """
+        Extract clean, Chart.js & PPTX compatible category and series specifications.
+        """
+        if not headers or not rows:
+            return {"categories": [], "series": [], "chart_type": "bar"}
+
+        categories: list[str] = [str(r[0])[:20] for r in rows[:max_categories]]
+
+        series: list[dict[str, Any]] = []
+        palette = [
+            {"bg": "rgba(37, 99, 235, 0.75)", "border": "#2563EB"},   # Blue
+            {"bg": "rgba(16, 185, 129, 0.75)", "border": "#10B981"},  # Emerald
+            {"bg": "rgba(245, 158, 11, 0.75)", "border": "#F59E0B"},  # Amber
+            {"bg": "rgba(99, 102, 241, 0.75)", "border": "#6366F1"},  # Indigo
+        ]
+
+        for col_idx in range(1, len(headers)):
+            col_name = headers[col_idx]
+            vals = []
+            is_numeric = False
+            for r in rows[:max_categories]:
+                v = self._to_number(r[col_idx])
+                if v is not None:
+                    vals.append(round(v, 2))
+                    is_numeric = True
+                else:
+                    vals.append(0.0)
+
+            if is_numeric and any(vals):
+                color = palette[len(series) % len(palette)]
+                series.append({
+                    "name": col_name,
+                    "data": vals,
+                    "backgroundColor": color["bg"],
+                    "borderColor": color["border"],
+                })
+
+        return {
+            "categories": categories,
+            "series": series,
+            "chart_type": "bar" if len(categories) > 3 else "doughnut",
+        }
+
     def format_markdown_table(
         self, headers: list[str], rows: list[list[Any]], max_rows: int = 30
     ) -> str:
@@ -542,9 +772,16 @@ class SpreadsheetAnalyticsService:
         overview_md: str,
         data_table_md: str,
         user_prompt: str | None = None,
+        mask_pii: bool = False,
     ) -> str:
         """Call local Ollama runtime to produce executive analysis grounded in verified metrics."""
         prompt_instruction = user_prompt or "Provide a comprehensive executive financial and operational analysis."
+
+        # Apply enterprise PII scrubbing if enabled
+        if mask_pii:
+            overview_md = pii_service.redact_text(overview_md).sanitized_text
+            data_table_md = pii_service.redact_text(data_table_md).sanitized_text
+            prompt_instruction = pii_service.redact_text(prompt_instruction).sanitized_text
 
         system_instruction = (
             "You are an expert Chief Financial Officer and enterprise data analyst. "
