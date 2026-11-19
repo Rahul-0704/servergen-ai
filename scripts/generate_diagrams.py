@@ -994,9 +994,14 @@ def compile_human_grade_pdf(storage_dir: Path) -> Path:
     with open(meta_file, "w", encoding="utf-8") as f:
         json.dump(records[:100], f, indent=2)
 
+    # Clean up intermediate raw image directory
+    import shutil
+    if images_dir.exists():
+        shutil.rmtree(images_dir, ignore_errors=True)
+
     return pdf_path
 
 
 if __name__ == "__main__":
-    out_dir = Path("storage/generated").resolve()
+    out_dir = Path("docs/diagrams").resolve()
     compile_human_grade_pdf(out_dir)

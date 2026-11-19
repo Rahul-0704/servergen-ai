@@ -121,7 +121,7 @@ If your team is building a frontend (React, Next.js, Vue, Svelte, or Mobile), ex
 
 👉 **[docs/SECURITY.md](docs/SECURITY.md)** — Zero-trust access policies, Argon2id security model, and cryptographic ledger proofs.
 
-👉 **[System Architecture & Design Diagrams (PDF)](storage/generated/ServerGen_AI_System_Architecture_and_Design_Diagrams.pdf)** — High-resolution 7-page PDF containing 5.1 DFD, 5.2 Use Case, 5.3 Activity, 5.4 Class, 5.5 Sequence, and 5.6 Collaboration diagrams.
+👉 **[System Architecture & Design Diagrams (PDF)](docs/diagrams/ServerGen_AI_System_Architecture_and_Design_Diagrams.pdf)** — High-resolution 7-page PDF containing 5.1 DFD, 5.2 Use Case, 5.3 Activity, 5.4 Class, 5.5 Sequence, and 5.6 Collaboration diagrams.
 
 ---
 

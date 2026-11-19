@@ -45,7 +45,7 @@ from src.orchestrator.task_classifier import TaskClassifier
 from src.orchestrator.verifier import Verifier
 from src.rag.retriever import RoleFilteredRetriever
 from src.rate_limiting.memory import RateLimitCategory, get_rate_limiter
-from src.schemas.orchestrator_result import OrchestratorResult
+from src.schemas.orchestrator import OrchestratorResult
 from src.services.approval_service import ApprovalService, ApprovalStatus
 from src.services.audit_service import AuditEventType, AuditService
 from src.tools.base import ToolRequest, ToolSelector, build_default_tool_registry

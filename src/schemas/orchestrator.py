@@ -9,7 +9,6 @@ from typing import Any
 from pydantic import BaseModel, Field
 
 from src.ai.schemas import DataSensitivity
-from src.schemas.orchestrator_result import OrchestratorResult
 
 
 class TaskRequest(BaseModel):
@@ -58,7 +57,15 @@ class TaskResponse(BaseModel):
     citations: list[dict[str, Any]] = Field(default_factory=list)
 
 
-def orchestrator_result_to_task_response(result: OrchestratorResult) -> TaskResponse:
+# OrchestratorResult is alias for TaskResponse
+OrchestratorResult = TaskResponse
+
+
+def orchestrator_result_to_task_response(result: TaskResponse) -> TaskResponse:
+    return result
+
+
+def _old_orchestrator_result_to_task_response(result: TaskResponse) -> TaskResponse:
     """Convert OrchestratorResult to TaskResponse."""
     return TaskResponse(
         request_id=result.request_id,
