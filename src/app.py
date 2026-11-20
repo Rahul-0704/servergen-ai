@@ -98,6 +98,7 @@ def create_app() -> FastAPI:
     from src.api.v1.auth import router as auth_router
     from src.api.v1.generate import router as generate_router
     from src.api.v1.manager import router as manager_router
+    from src.api.v1.notifications import router as notifications_router
     from src.api.v1.orchestrator import (
         orchestrator_alias_router,
     )
@@ -113,6 +114,7 @@ def create_app() -> FastAPI:
     app.include_router(audit_router)
     app.include_router(generate_router)
     app.include_router(manager_router)
+    app.include_router(notifications_router)
     app.include_router(orchestrator_router)
     app.include_router(orchestrator_alias_router)
     app.include_router(rag_router)

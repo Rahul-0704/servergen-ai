@@ -251,6 +251,27 @@ class OrchestratorEngine:
                     "sensitivity_reasons": sensitivity.reasons,
                 },
             )
+            # Dispatch security alert notification
+            try:
+                from src.auth.permissions import SystemRole
+                from src.services.notification_service import NotificationService
+
+                notif_svc = NotificationService(self.db)
+                await notif_svc.notify_role(
+                    role_name=SystemRole.SECURITY_ANALYST.value,
+                    event_type="security_alert",
+                    title="Security Policy Violation",
+                    message=(
+                        f"User {auth.username or auth.user_id} ({auth.role}) blocked: "
+                        f"{policy_result.reason}"
+                    ),
+                    related_resource_type="security",
+                    related_resource_id=req_id,
+                    priority="high",
+                )
+            except Exception as e:
+                logger.warning("Failed to dispatch security alert notification: %s", e)
+
             raise PolicyDeniedError(
                 message="Operation denied by policy",
                 reason=policy_result.reason,

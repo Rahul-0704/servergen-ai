@@ -107,12 +107,11 @@ async def get_auth_context(
         raise AuthenticationError("Account is not available")
 
     role_name = user.role.name
-    # Dynamic DB permissions if populated, fallback to canonical code definitions
+    # Union canonical code definitions with any dynamic DB-assigned permissions
+    permissions = resolve_permissions(role_name)
     role_perms = getattr(user.role, "permissions", None)
     if role_perms:
-        permissions = {str(p.codename) for p in role_perms}
-    else:
-        permissions = resolve_permissions(role_name)
+        permissions = permissions | {str(p.codename) for p in role_perms}
 
     return AuthContext(
         user_id=str(user.id),

@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import logging
 import uuid
 from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
@@ -30,6 +31,8 @@ from src.core.exceptions import ApprovalError, AuthorizationError, NotFoundError
 from src.models.approval import ApprovalRequest
 from src.repositories.approval_repository import ApprovalRepository
 from src.services.audit_service import AuditEventType, AuditService
+
+logger = logging.getLogger("servergen.services.approval")
 
 if TYPE_CHECKING:
     from src.auth.rbac import AuthContext
@@ -132,6 +135,29 @@ class ApprovalService:
             actor_role=context.role,
             decision="require_approval",
         )
+
+        # Notify managers of new pending authorization
+        try:
+            from src.auth.permissions import SystemRole
+            from src.services.notification_service import NotificationService
+
+            notif_svc = NotificationService(self.repo.db)
+            await notif_svc.notify_role(
+                role_name=SystemRole.MANAGER.value,
+                event_type="approval_required",
+                title="Approval Required: High-Risk Operation",
+                message=(
+                    f"Request {created.request_id[:8]} requires your executive authorization: "
+                    f"{operation_summary[:120]}"
+                ),
+                related_resource_type="approval",
+                related_resource_id=str(created.id),
+                priority="high" if str(risk.risk_level) in ("high", "critical") else "medium",
+                exclude_user_id=context.user_id,
+            )
+        except Exception as e:
+            logger.warning("Failed to dispatch approval_required notification: %s", e)
+
         return created
 
     async def get(self, approval_id: uuid.UUID) -> ApprovalRequest:
@@ -211,6 +237,27 @@ class ApprovalService:
             actor_id=reviewer_user_id,
             actor_role=reviewer_role,
         )
+
+        # Notify requesting employee
+        try:
+            from src.services.notification_service import NotificationService
+
+            notif_svc = NotificationService(self.repo.db)
+            await notif_svc.notify_user(
+                recipient_user_id=resolved.requester_user_id,
+                event_type="approval_decision",
+                title="Approval Granted",
+                message=(
+                    f"Your request '{resolved.operation_summary[:80]}' was approved "
+                    f"by {reviewer_role or 'executive'}."
+                ),
+                related_resource_type="approval",
+                related_resource_id=str(resolved.id),
+                priority="medium",
+            )
+        except Exception as e:
+            logger.warning("Failed to dispatch approval_decision notification: %s", e)
+
         return resolved
 
     async def reject(
@@ -239,6 +286,27 @@ class ApprovalService:
             actor_role=reviewer_role,
             decision="deny",
         )
+
+        # Notify requesting employee of rejection
+        try:
+            from src.services.notification_service import NotificationService
+
+            notif_svc = NotificationService(self.repo.db)
+            await notif_svc.notify_user(
+                recipient_user_id=resolved.requester_user_id,
+                event_type="approval_decision",
+                title="Approval Rejected",
+                message=(
+                    f"Your request '{resolved.operation_summary[:80]}' was rejected: "
+                    f"{notes or 'No justification provided'}"
+                ),
+                related_resource_type="approval",
+                related_resource_id=str(resolved.id),
+                priority="high",
+            )
+        except Exception as e:
+            logger.warning("Failed to dispatch approval_decision notification: %s", e)
+
         return resolved
 
     async def cancel(

@@ -244,6 +244,39 @@ class DocumentService:
             await self.db.refresh(version)
             await self.db.refresh(job)
 
+        # Trigger notification
+        if owner_uuid:
+            try:
+                from src.services.notification_service import NotificationService
+
+                notif_svc = NotificationService(self.db)
+                if version.indexing_status == IndexingJobStatus.COMPLETED:
+                    await notif_svc.notify_user(
+                        recipient_user_id=owner_uuid,
+                        event_type="document_indexed",
+                        title="Document Indexing Complete",
+                        message=(
+                            f"Document '{doc.title}' ({filename}) was successfully indexed "
+                            f"into {doc.vault_scope} vault."
+                        ),
+                        related_resource_type="document",
+                        related_resource_id=str(doc.id),
+                        priority="low",
+                    )
+                elif version.indexing_status == IndexingJobStatus.FAILED:
+                    err_msg = job.error_message or "Error"
+                    await notif_svc.notify_user(
+                        recipient_user_id=owner_uuid,
+                        event_type="document_failed",
+                        title="Document Indexing Failed",
+                        message=f"Indexing failed for '{doc.title}': {err_msg}",
+                        related_resource_type="document",
+                        related_resource_id=str(doc.id),
+                        priority="high",
+                    )
+            except Exception as e:
+                logger.warning("Failed to dispatch document notification: %s", e)
+
         return doc, version, job
 
     async def add_new_version(

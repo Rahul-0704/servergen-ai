@@ -10,12 +10,15 @@ Provides endpoints for:
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import uuid
+from pathlib import Path
 from typing import Annotated, Any
 
-from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, HTTPException, Query, UploadFile, status
 from pydantic import BaseModel, Field
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.ai.schemas import DataSensitivity
@@ -23,9 +26,12 @@ from src.auth.permissions import PermissionCode
 from src.auth.rbac import AuthContext, require_permission
 from src.core.database import get_db
 from src.core.exceptions import ValidationError
+from src.models.analysis_history import AnalysisHistory
+from src.models.document import Document
 from src.rag.storage import DocumentStorage
 from src.services.audit_service import AuditEventType, AuditService
 from src.services.docgen_service import DocumentGeneratorService
+from src.services.nl_analytics_service import NLAnalyticsService
 from src.services.pii_service import pii_service
 from src.services.spreadsheet_service import SpreadsheetAnalyticsService
 
@@ -102,20 +108,41 @@ async def upload_spreadsheet(
     if not content:
         raise HTTPException(status_code=400, detail="Uploaded file is empty.")
 
-    # 3. Store file atomically via DocumentStorageBackend
-    doc_id = uuid.uuid4()
-    meta = storage_backend.save_file(
-        document_id=doc_id,
-        version_number=1,
-        filename=file.filename or "spreadsheet.xlsx",
-        content=content,
-    )
-
-    # 4. Parse workbook structure
+    # 3. Parse workbook structure
     try:
         wb_data = spreadsheet_service.parse_content(content, file.filename or "spreadsheet.xlsx")
     except ValidationError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # 4. Store file & create Document entity atomically
+    vault_scope = "manager" if sensitivity.value in ("confidential", "restricted") and auth.role == "manager" else "all"
+    try:
+        from src.rag.service import DocumentService
+
+        doc_service = DocumentService(db)
+        doc, version, _ = await doc_service.create_document_with_file(
+            auth=auth,
+            filename=file.filename or "spreadsheet.xlsx",
+            content=content,
+            title=title or file.filename,
+            category="spreadsheet",
+            classification=sensitivity.value,
+            vault_scope=vault_scope,
+            description=f"Spreadsheet workbook with {len(wb_data.sheet_names)} sheet(s)",
+            auto_index=False,
+        )
+        doc_id = doc.id
+        file_size = version.file_size
+    except Exception as exc:
+        logger.warning("DocumentService registration fallback: %s", exc)
+        doc_id = uuid.uuid4()
+        meta = storage_backend.save_file(
+            document_id=doc_id,
+            version_number=1,
+            filename=file.filename or "spreadsheet.xlsx",
+            content=content,
+        )
+        file_size = meta.file_size
 
     # 5. Build summary of all sheets
     sheets_info = []
@@ -139,19 +166,37 @@ async def upload_spreadsheet(
         resource=str(doc_id),
         metadata={
             "filename": file.filename,
-            "file_size": meta.file_size,
+            "file_size": file_size,
             "sheets_count": len(wb_data.sheet_names),
             "classification": sensitivity.value,
         },
     )
     await db.commit()
 
+    # Dispatch spreadsheet upload notification
+    try:
+        from src.services.notification_service import NotificationService
+
+        notif_svc = NotificationService(db)
+        await notif_svc.notify_user(
+            recipient_user_id=auth.user_id,
+            event_type="document_uploaded",
+            title="Spreadsheet Ingested",
+            message=f"Uploaded '{file.filename}' ({len(wb_data.sheet_names)} sheet(s) detected).",
+            related_resource_type="spreadsheet",
+            related_resource_id=str(doc_id),
+            priority="low",
+        )
+        await db.commit()
+    except Exception as e:
+        logger.debug("Spreadsheet upload notification skipped: %s", e)
+
     return {
         "status": "success",
         "document_id": str(doc_id),
         "filename": file.filename,
         "classification": sensitivity.value,
-        "file_size": meta.file_size,
+        "file_size": file_size,
         "sheets_count": len(wb_data.sheet_names),
         "sheets": sheets_info,
     }
@@ -261,6 +306,27 @@ async def analyze_spreadsheet(
         },
     )
     await db.commit()
+
+    # Dispatch spreadsheet analysis notification
+    try:
+        from src.services.notification_service import NotificationService
+
+        notif_svc = NotificationService(db)
+        await notif_svc.notify_user(
+            recipient_user_id=auth.user_id,
+            event_type="analytics_completed",
+            title="Spreadsheet Analysis Completed",
+            message=(
+                f"Analysis of '{target_sheet.name}' ({request.operation}) "
+                f"completed successfully."
+            ),
+            related_resource_type="spreadsheet",
+            related_resource_id=request.document_id,
+            priority="low",
+        )
+        await db.commit()
+    except Exception as e:
+        logger.debug("Spreadsheet analysis notification skipped: %s", e)
 
     return {
         "status": "success",
@@ -490,6 +556,27 @@ async def execute_autonomous_spreadsheet_workflow(
     )
     await db.commit()
 
+    # Dispatch spreadsheet analysis notification
+    try:
+        from src.services.notification_service import NotificationService
+
+        notif_svc = NotificationService(db)
+        await notif_svc.notify_user(
+            recipient_user_id=auth.user_id,
+            event_type="analytics_completed",
+            title="Autonomous Analysis Completed",
+            message=(
+                f"Autonomous workflow for '{target_sheet.name}' ({route_res['mode']}) "
+                f"completed successfully."
+            ),
+            related_resource_type="spreadsheet",
+            related_resource_id=str(doc_uuid),
+            priority="low",
+        )
+        await db.commit()
+    except Exception as e:
+        logger.debug("Spreadsheet analysis notification skipped: %s", e)
+
     return {
         "status": "success",
         "document_id": str(doc_uuid),
@@ -524,4 +611,290 @@ async def execute_autonomous_spreadsheet_workflow(
             },
         },
     }
+
+
+# ── Helper: Storage Path Resolver ───────────────────────────────────────────
+
+
+def _resolve_spreadsheet_path(doc_uuid: uuid.UUID) -> Path | None:
+    """Resolve file path across standard storage and role-vault trees."""
+    doc_dir = storage_backend.base_dir / str(doc_uuid) / "1"
+    files = (
+        [f for f in doc_dir.glob("*") if f.is_file() and not f.name.endswith(".txt")]
+        if doc_dir.exists()
+        else []
+    )
+    if not files:
+        files = [
+            f
+            for f in (storage_backend.base_dir / "vaults").glob(f"*/{doc_uuid}/1/*")
+            if f.is_file() and not f.name.endswith(".txt")
+        ]
+    return files[0] if files else None
+
+
+# ── 5. Natural Language Data Analysis Endpoints ─────────────────────────────
+
+
+class NLQueryRequest(BaseModel):
+    document_id: str = Field(..., description="Uploaded spreadsheet document ID")
+    sheet_name: str | None = Field(
+        default=None, description="Specific sheet tab (defaults to first tab)"
+    )
+    question: str = Field(..., description="Plain English analytical question")
+    mask_pii: bool = Field(default=False, description="Apply enterprise zero-trust PII redaction")
+
+
+@router.post("/nl-query")
+async def execute_natural_language_query(
+    request: NLQueryRequest,
+    auth: AuthContext = Depends(require_permission(PermissionCode.DOCUMENT_READ)),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Execute plain-English natural language queries against authorized Excel/CSV spreadsheets.
+    - Role-vault clearance checks prevent horizontal privilege escalation.
+    - Deterministic numerical calculations run via Python, Pandas, and NumPy.
+    - Local LLM explains results; Chart.js specs enable instant visualization.
+    """
+    audit = AuditService(db)
+
+    try:
+        doc_uuid = uuid.UUID(request.document_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail="Invalid document ID format.") from err
+
+    # 1. Role-vault clearance enforcement
+    stmt = select(Document).where(Document.id == doc_uuid, Document.is_deleted.is_(False))
+    res = await db.execute(stmt)
+    doc_entity = res.scalar_one_or_none()
+    if not doc_entity:
+        raise HTTPException(status_code=404, detail="Spreadsheet document not found.")
+
+    if doc_entity.vault_scope == "manager" and auth.role not in ("manager", "administrator"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Document is secured within the Manager Confidential Vault.",
+        )
+
+    # 2. Resolve file path
+    file_path = _resolve_spreadsheet_path(doc_uuid)
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Spreadsheet file not found in storage.")
+
+    content = file_path.read_bytes()
+    wb_data = spreadsheet_service.parse_content(content, file_path.name)
+    target_sheet = (
+        wb_data.sheets.get(request.sheet_name)
+        if request.sheet_name and request.sheet_name in wb_data.sheets
+        else next(iter(wb_data.sheets.values()))
+    )
+
+    # 3. Execute natural language analysis
+    nl_service = NLAnalyticsService(db)
+    result = await nl_service.analyze_question(
+        sheet=target_sheet,
+        question=request.question,
+        user_id=auth.user_id,
+        document_id=doc_uuid,
+        mask_pii=request.mask_pii,
+    )
+
+    # 4. Audit ledger
+    await audit.record(
+        event_type=AuditEventType.EXECUTION_COMPLETED,
+        action="spreadsheet.nl_query",
+        request_id=str(uuid.uuid4()),
+        user_id=auth.user_id,
+        role=auth.role,
+        resource=str(doc_uuid),
+        metadata={
+            "question": request.question,
+            "operation": result.operation,
+            "sub_operation": result.sub_operation,
+            "latency_ms": result.execution_time_ms,
+        },
+    )
+    await db.commit()
+
+    # 5. Dispatch notification
+    try:
+        from src.services.notification_service import NotificationService
+
+        notif_svc = NotificationService(db)
+        await notif_svc.notify_user(
+            recipient_user_id=auth.user_id,
+            event_type="analytics_completed",
+            title="Natural Language Analysis Complete",
+            message=f"Answered: '{request.question[:60]}' on '{target_sheet.name}'",
+            related_resource_type="spreadsheet",
+            related_resource_id=str(doc_uuid),
+            priority="low",
+        )
+        await db.commit()
+    except Exception as e:
+        logger.debug("NL analytics notification skipped: %s", e)
+
+    return {
+        "status": "success",
+        "document_id": str(doc_uuid),
+        "filename": file_path.name,
+        "sheet_name": target_sheet.name,
+        "available_sheets": wb_data.sheet_names,
+        "question": result.question,
+        "operation": result.operation,
+        "sub_operation": result.sub_operation,
+        "direct_answer": result.direct_answer,
+        "executive_explanation": result.executive_explanation,
+        "table_headers": result.table_headers,
+        "table_rows": result.table_rows,
+        "kpis": result.kpis,
+        "metrics": result.metrics,
+        "chart_spec": result.chart_spec,
+        "row_count": result.row_count,
+        "col_count": result.col_count,
+        "execution_time_ms": result.execution_time_ms,
+        "pii_redacted_count": result.pii_redacted_count,
+        "answer": result.direct_answer,
+        "explanation": result.executive_explanation,
+        "data": {
+            "columns": result.table_headers,
+            "rows": result.table_rows,
+            "row_count": len(result.table_rows),
+        },
+    }
+
+
+@router.get("/{document_id}/schema")
+async def get_spreadsheet_schema(
+    document_id: str,
+    sheet_name: str | None = None,
+    auth: AuthContext = Depends(require_permission(PermissionCode.DOCUMENT_READ)),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Expose dataset columns, types, profile stats, and intelligent suggested questions
+    for the natural language analysis workbench.
+    """
+    try:
+        doc_uuid = uuid.UUID(document_id)
+    except ValueError as err:
+        raise HTTPException(status_code=400, detail="Invalid document ID format.") from err
+
+    # Clearance check
+    stmt = select(Document).where(Document.id == doc_uuid, Document.is_deleted.is_(False))
+    res = await db.execute(stmt)
+    doc_entity = res.scalar_one_or_none()
+    if not doc_entity:
+        raise HTTPException(status_code=404, detail="Document not found.")
+
+    if doc_entity.vault_scope == "manager" and auth.role not in ("manager", "administrator"):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Access denied: Document is secured within the Manager Confidential Vault.",
+        )
+
+    file_path = _resolve_spreadsheet_path(doc_uuid)
+    if not file_path:
+        raise HTTPException(status_code=404, detail="Spreadsheet file not found in storage.")
+
+    content = file_path.read_bytes()
+    wb_data = spreadsheet_service.parse_content(content, file_path.name)
+    target_sheet = (
+        wb_data.sheets.get(sheet_name)
+        if sheet_name and sheet_name in wb_data.sheets
+        else next(iter(wb_data.sheets.values()))
+    )
+
+    columns = []
+    numeric_cols = []
+    categorical_cols = []
+    for h in target_sheet.headers:
+        prof = target_sheet.column_profiles.get(h)
+        col_type = prof.inferred_type if prof else "text"
+        if col_type in ("numeric", "currency", "percentage"):
+            numeric_cols.append(h)
+        else:
+            categorical_cols.append(h)
+
+        sample = prof.sample_values[:3] if prof else []
+        columns.append({
+            "name": h,
+            "type": col_type,
+            "non_null_count": prof.non_null_count if prof else 0,
+            "null_count": prof.null_count if prof else 0,
+            "sample_values": sample,
+        })
+
+    # Generate intelligent suggested questions
+    suggested_questions = []
+    if numeric_cols and categorical_cols:
+        suggested_questions.append(
+            f"Which {categorical_cols[0]} has the highest {numeric_cols[0]}?"
+        )
+        suggested_questions.append(
+            f"Show the top 5 {categorical_cols[0]}s based on {numeric_cols[0]}"
+        )
+        suggested_questions.append(
+            f"Compare {numeric_cols[0]} across all {categorical_cols[0]}s"
+        )
+    if numeric_cols:
+        suggested_questions.append(f"Calculate the total {numeric_cols[0]} across all records")
+        suggested_questions.append(f"Detect statistical outliers in {numeric_cols[0]}")
+    if any("budget" in c.lower() for c in target_sheet.headers) and any(
+        "actual" in c.lower() or "expense" in c.lower() for c in target_sheet.headers
+    ):
+        suggested_questions.append("Which departments exceeded their allocated budgets?")
+        suggested_questions.append("Compare budget and actual expenses with variance percentages")
+    suggested_questions.append("Find any duplicate records in this dataset")
+    suggested_questions.append("Check for missing or blank values across columns")
+
+    return {
+        "document_id": str(doc_uuid),
+        "filename": file_path.name,
+        "vault_scope": doc_entity.vault_scope,
+        "available_sheets": wb_data.sheet_names,
+        "active_sheet": target_sheet.name,
+        "row_count": target_sheet.row_count(),
+        "col_count": target_sheet.col_count(),
+        "columns": columns,
+        "suggested_questions": suggested_questions,
+    }
+
+
+@router.get("/nl-history")
+async def get_nl_analysis_history(
+    document_id: str | None = None,
+    limit: int = Query(20, ge=1, le=50),
+    auth: AuthContext = Depends(require_permission(PermissionCode.DOCUMENT_READ)),
+    db: AsyncSession = Depends(get_db),
+) -> list[dict[str, Any]]:
+    """Retrieve the recent natural language analysis history for the current user."""
+    conditions = [AnalysisHistory.user_id == uuid.UUID(auth.user_id)]
+    if document_id:
+        with contextlib.suppress(ValueError):
+            conditions.append(AnalysisHistory.document_id == uuid.UUID(document_id))
+
+    stmt = (
+        select(AnalysisHistory)
+        .where(*conditions)
+        .order_by(AnalysisHistory.created_at.desc())
+        .limit(limit)
+    )
+    result = await db.execute(stmt)
+    items = list(result.scalars().all())
+
+    return [
+        {
+            "id": str(h.id),
+            "document_id": str(h.document_id) if h.document_id else None,
+            "sheet_name": h.sheet_name,
+            "question": h.question,
+            "analysis_type": h.analysis_type,
+            "status": h.status,
+            "result_summary": h.result_summary,
+            "created_at": h.created_at.isoformat() if h.created_at else "",
+        }
+        for h in items
+    ]
 
