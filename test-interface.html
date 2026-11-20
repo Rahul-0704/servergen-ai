@@ -2742,6 +2742,34 @@
                         High-risk operations and RESTRICTED data requests are held in PENDING state until approved by an authorized manager or administrator. Requesters cannot approve their own requests.
                     </div>
 
+                    <!-- Logical 3-Step Approval Workflow Architecture -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap:12px; margin: 16px 0;">
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #0284c7; border-radius:8px; padding:12px 14px;">
+                            <div style="font-size:0.75rem; font-weight:800; color:#0284c7; text-transform:uppercase; letter-spacing:0.04em;">
+                                <i class="fa-solid fa-shield-halved"></i> 1. Policy Interception
+                            </div>
+                            <div style="font-size:0.78rem; color:#475569; margin-top:4px; line-height:1.4;">
+                                High-risk tasks and sensitive tools are halted by Zero-Trust policy engine and held in <strong>PENDING</strong> state with a SHA-256 fingerprint.
+                            </div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #d97706; border-radius:8px; padding:12px 14px;">
+                            <div style="font-size:0.75rem; font-weight:800; color:#d97706; text-transform:uppercase; letter-spacing:0.04em;">
+                                <i class="fa-solid fa-users-viewfinder"></i> 2. Dual-Custody Review
+                            </div>
+                            <div style="font-size:0.78rem; color:#475569; margin-top:4px; line-height:1.4;">
+                                Authorized Manager or Administrator reviews request. <strong>Separation of duties</strong> strictly enforced: requesters cannot self-approve.
+                            </div>
+                        </div>
+                        <div style="background:#f8fafc; border:1px solid #e2e8f0; border-left:4px solid #16a34a; border-radius:8px; padding:12px 14px;">
+                            <div style="font-size:0.75rem; font-weight:800; color:#16a34a; text-transform:uppercase; letter-spacing:0.04em;">
+                                <i class="fa-solid fa-bolt"></i> 3. Closed-Loop Execution
+                            </div>
+                            <div style="font-size:0.78rem; color:#475569; margin-top:4px; line-height:1.4;">
+                                Upon approval, the system immediately resumes execution, runs tools, stamps the cryptographic audit ledger, and returns live outputs.
+                            </div>
+                        </div>
+                    </div>
+
                     <!-- Approvals Live Table -->
                     <div class="table-responsive" style="margin-bottom:20px;">
                         <table>
@@ -4410,7 +4438,21 @@
         let currentApprovalScope = 'review';
 
         async function loadApprovals(scope) {
-            if (scope) currentApprovalScope = scope;
+            const role = state.currentUser ? state.currentUser.role : '';
+            const canReview = role === 'administrator' || role === 'manager';
+
+            // Auto-detect default scope based on user's role:
+            if (!scope) {
+                currentApprovalScope = canReview ? 'review' : 'mine';
+            } else {
+                currentApprovalScope = scope;
+            }
+
+            // Non-approvers cannot review; gracefully redirect to 'mine'
+            if (currentApprovalScope === 'review' && !canReview) {
+                currentApprovalScope = 'mine';
+            }
+
             const s = currentApprovalScope;
             const tbody = document.getElementById('approvals-tbody');
             if (!tbody) return;
@@ -4418,6 +4460,7 @@
             const tabRev = document.getElementById('appr-tab-review');
             const tabMine = document.getElementById('appr-tab-mine');
             if (tabRev && tabMine) {
+                tabRev.style.display = canReview ? 'inline-flex' : 'none';
                 tabRev.className = s === 'review' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
                 tabMine.className = s === 'mine' ? 'btn btn-primary btn-sm' : 'btn btn-secondary btn-sm';
             }
@@ -4427,7 +4470,7 @@
                 return;
             }
 
-            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Fetching approvals...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center; color:#94a3b8;"><i class="fa-solid fa-spinner fa-spin"></i> Loading approval queue...</td></tr>';
             const res = await api('GET', `/api/v1/approvals?scope=${s}`);
             if (!res.ok) {
                 tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#f87171;">HTTP ${res.status}: ${res.data.message || res.data.detail || 'Access Denied'}</td></tr>`;
@@ -4435,8 +4478,13 @@
             }
 
             const items = res.data.items || [];
+            state.lastApprovalsList = items;
+
             if (items.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#94a3b8;">No approval requests found in '${s}' queue.</td></tr>`;
+                const emptyMsg = s === 'review'
+                    ? 'All clear! No pending requests awaiting review in your queue.'
+                    : 'You have not submitted any pending approval requests.';
+                tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:24px; color:#64748b;"><i class="fa-solid fa-circle-check text-success" style="font-size:1.4rem; display:block; margin-bottom:6px;"></i>${emptyMsg}</td></tr>`;
                 return;
             }
 
@@ -4444,30 +4492,52 @@
             items.forEach(a => {
                 const tr = document.createElement('tr');
                 const isPending = a.status === 'pending';
-                const riskVal = a.risk_assessment_json ? (a.risk_assessment_json.risk_level || 'HIGH') : 'HIGH';
-                const riskBadge = riskVal === 'critical' ? 'badge-danger' : 'badge-warning';
+                const riskVal = (a.risk_assessment_json ? (a.risk_assessment_json.risk_level || 'HIGH') : 'HIGH').toLowerCase();
+                const isCritical = riskVal === 'critical';
+                const riskBadge = isCritical ? 'badge-danger' : 'badge-warning';
+                const riskLabel = isCritical ? 'CRITICAL (Admin Required)' : 'HIGH (Manager/Admin)';
                 const statusBadge = a.status === 'approved' ? 'badge-success' : (a.status === 'rejected' ? 'badge-danger' : (a.status === 'expired' ? 'badge-secondary' : 'badge-warning'));
 
-                tr.innerHTML = `
-                    <td><code style="font-size:0.75rem; color:#38bdf8;">${a.id.substring(0, 8)}...</code></td>
-                    <td><strong>${a.requester_role}</strong><br><span style="font-size:0.7rem; color:#64748b;">${(a.requester_user_id || '').substring(0, 8)}</span></td>
-                    <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${a.operation_summary}">${a.operation_summary}</td>
-                    <td><span class="badge ${riskBadge}">${riskVal.toUpperCase()}</span></td>
-                    <td><span class="badge ${statusBadge}">${a.status.toUpperCase()}</span></td>
-                    <td style="font-size:0.72rem; color:#94a3b8;">${new Date(a.created_at).toLocaleTimeString()}</td>
-                    <td>
-                        ${isPending ? (s === 'mine' ? `
-                            <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                                <button class="btn btn-secondary btn-sm" onclick="switchRoleAndApprove('${a.id}')" title="Requester cannot self-approve. Switch to Manager to approve."><i class="fa-solid fa-user-shield text-warning"></i> Switch to Manager &amp; Approve</button>
+                let actionsHtml = '';
+                if (isPending) {
+                    if (s === 'mine') {
+                        actionsHtml = `
+                            <div style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
+                                <span class="badge badge-warning" style="font-size:0.7rem;"><i class="fa-solid fa-hourglass-half"></i> Pending Review</span>
+                                <button class="btn btn-secondary btn-sm" onclick="switchRoleAndApprove('${a.id}')" title="Requester cannot self-approve. Switch to Reviewer to approve."><i class="fa-solid fa-user-shield text-warning"></i> Switch Role &amp; Approve</button>
                                 <button class="btn btn-danger btn-sm" onclick="cancelMyApproval('${a.id}')" title="Cancel this request"><i class="fa-solid fa-ban"></i> Cancel</button>
                             </div>
-                        ` : `
-                            <div style="display:flex; gap:4px;">
-                                <button class="btn btn-success btn-sm" onclick="quickResolveApproval('${a.id}', 'approve')" title="Approve"><i class="fa-solid fa-check"></i> Approve</button>
-                                <button class="btn btn-danger btn-sm" onclick="quickResolveApproval('${a.id}', 'reject')" title="Reject"><i class="fa-solid fa-xmark"></i> Reject</button>
-                            </div>
-                        `) : `<span style="font-size:0.72rem; color:#64748b;">Resolved</span>`}
-                    </td>
+                        `;
+                    } else {
+                        // Review scope
+                        if (isCritical && role !== 'administrator') {
+                            actionsHtml = `
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <button class="btn btn-warning btn-sm" onclick="switchRoleAndApprove('${a.id}')" title="Requires Administrator clearance to approve CRITICAL risk"><i class="fa-solid fa-lock"></i> Escalate to Admin &amp; Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick="quickResolveApproval('${a.id}', 'reject')" title="Reject"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                </div>
+                            `;
+                        } else {
+                            actionsHtml = `
+                                <div style="display:flex; gap:6px; align-items:center;">
+                                    <button class="btn btn-success btn-sm" onclick="quickResolveApproval('${a.id}', 'approve')" title="Approve & Execute Operation"><i class="fa-solid fa-check"></i> Approve</button>
+                                    <button class="btn btn-danger btn-sm" onclick="quickResolveApproval('${a.id}', 'reject')" title="Reject"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                </div>
+                            `;
+                        }
+                    }
+                } else {
+                    actionsHtml = `<span style="font-size:0.75rem; color:#64748b; font-weight:600;"><i class="fa-solid fa-circle-check text-success"></i> ${a.status.toUpperCase()}</span>`;
+                }
+
+                tr.innerHTML = `
+                    <td><code style="font-size:0.75rem; color:#0284c7; font-weight:700;">${a.id.substring(0, 8)}...</code></td>
+                    <td><strong>${escapeHtml(a.requester_role.toUpperCase())}</strong><br><span style="font-size:0.7rem; color:#64748b;">${(a.requester_user_id || '').substring(0, 8)}</span></td>
+                    <td style="max-width:240px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;" title="${escapeHtml(a.operation_summary)}">${escapeHtml(a.operation_summary)}</td>
+                    <td><span class="badge ${riskBadge}">${riskLabel}</span></td>
+                    <td><span class="badge ${statusBadge}">${a.status.toUpperCase()}</span></td>
+                    <td style="font-size:0.72rem; color:#64748b;">${new Date(a.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</td>
+                    <td>${actionsHtml}</td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -6658,13 +6728,18 @@
                                     <span style="font-weight:700; color:#0f172a; font-size:0.85rem;">${escapeHtml(item.operation_summary)}</span>
                                     <div style="font-size:0.74rem; color:#64748b;">Requester Role: <strong>${escapeHtml(item.requester_role.toUpperCase())}</strong></div>
                                 </div>
-                                <span class="badge badge-warning">PENDING</span>
+                                ${(item.risk_assessment?.risk_level === 'critical') ? '<span class="badge badge-danger"><i class="fa-solid fa-shield-halved"></i> CRITICAL (Admin Required)</span>' : '<span class="badge badge-warning"><i class="fa-solid fa-clock"></i> PENDING</span>'}
                             </div>
                             <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                                <span style="font-size:0.72rem; color:#94a3b8;">Created: ${new Date(item.created_at).toLocaleString()}</span>
+                                <span style="font-size:0.72rem; color:#94a3b8;">Created: ${new Date(item.created_at).toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'})}</span>
                                 <div style="display:flex; gap:6px;">
-                                    <button class="btn btn-sm btn-success" onclick="decideManagerApproval('${item.id}', 'approve')"><i class="fa-solid fa-check"></i> Approve</button>
-                                    <button class="btn btn-sm btn-danger" onclick="decideManagerApproval('${item.id}', 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                    ${(item.risk_assessment?.risk_level === 'critical') ? `
+                                        <button class="btn btn-sm btn-warning" onclick="switchRoleAndApprove('${item.id}')" title="Requires Administrator clearance"><i class="fa-solid fa-lock"></i> Escalate to Admin</button>
+                                        <button class="btn btn-sm btn-danger" onclick="decideManagerApproval('${item.id}', 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                    ` : `
+                                        <button class="btn btn-sm btn-success" onclick="decideManagerApproval('${item.id}', 'approve')"><i class="fa-solid fa-check"></i> Approve</button>
+                                        <button class="btn btn-sm btn-danger" onclick="decideManagerApproval('${item.id}', 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                    `}
                                 </div>
                             </div>
                         </div>
@@ -6684,7 +6759,17 @@
                     decision: decision,
                     notes: notes
                 });
-                if (!res.ok) throw new Error(res.data?.detail || 'Decision failed');
+                if (!res.ok) {
+                    const errMsg = res.data?.message || res.data?.detail || 'Decision failed';
+                    if (errMsg.toLowerCase().includes('administrator')) {
+                        if (confirm("CRITICAL Governance Escalation: This operation requires Administrator authorization.\n\nSwitch to Administrator ('admin') to approve and execute now?")) {
+                            await switchRoleAndApprove(approvalId);
+                            loadManagerCockpit();
+                            return;
+                        }
+                    }
+                    throw new Error(errMsg);
+                }
                 showToast(`Request successfully ${decision}d.`, 'success');
                 loadManagerCockpit();
             } catch (err) {

@@ -330,6 +330,7 @@ async def decide_approval(
                 tool_req = None
                 if payload.get("tool"):
                     tool_req = ToolRequest(
+                        requested_action=payload.get("input", approval.operation_summary),
                         tool=payload["tool"],
                         parameters=payload.get("tool_parameters") or {},
                     )

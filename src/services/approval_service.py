@@ -142,19 +142,30 @@ class ApprovalService:
             from src.services.notification_service import NotificationService
 
             notif_svc = NotificationService(self.repo.db)
-            await notif_svc.notify_role(
-                role_name=SystemRole.MANAGER.value,
-                event_type="approval_required",
-                title="Approval Required: High-Risk Operation",
-                message=(
-                    f"Request {created.request_id[:8]} requires your executive authorization: "
-                    f"{operation_summary[:120]}"
-                ),
-                related_resource_type="approval",
-                related_resource_id=str(created.id),
-                priority="high" if str(risk.risk_level) in ("high", "critical") else "medium",
-                exclude_user_id=context.user_id,
+            is_critical = str(risk.risk_level) == "critical"
+            target_roles = (
+                [SystemRole.ADMIN.value]
+                if is_critical
+                else [SystemRole.MANAGER.value, SystemRole.ADMIN.value]
             )
+            req_role_title = (
+                "CRITICAL (Administrator Required)" if is_critical else "HIGH (Executive Sign-Off)"
+            )
+
+            for r_name in target_roles:
+                await notif_svc.notify_role(
+                    role_name=r_name,
+                    event_type="approval_required",
+                    title=f"Approval Required: {req_role_title}",
+                    message=(
+                        f"Request {created.request_id[:8]} requires your authorization: "
+                        f"{operation_summary[:120]}"
+                    ),
+                    related_resource_type="approval",
+                    related_resource_id=str(created.id),
+                    priority="high" if is_critical or str(risk.risk_level) == "high" else "medium",
+                    exclude_user_id=context.user_id,
+                )
         except Exception as e:
             logger.warning("Failed to dispatch approval_required notification: %s", e)
 

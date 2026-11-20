@@ -10,6 +10,7 @@ POST   /api/v1/approvals/{id}/cancel  — cancel (requester only)
 
 from __future__ import annotations
 
+import logging
 import uuid
 from typing import Annotated
 
@@ -21,6 +22,8 @@ from src.auth.rbac import AuthContext, get_auth_context, require_permission
 from src.core.database import get_db
 from src.schemas.approval import ApprovalActionRequest, ApprovalPage, ApprovalResponse
 from src.services.approval_service import ApprovalService
+
+logger = logging.getLogger("servergen.api.approvals")
 
 router = APIRouter(prefix="/api/v1/approvals", tags=["approvals"])
 
@@ -89,6 +92,7 @@ async def approve(
     if approval.operation_payload and isinstance(approval.operation_payload, dict):
         try:
             from src.ai.schemas import DataSensitivity
+            from src.auth.rbac import resolve_permissions
             from src.orchestrator.engine import OrchestratorEngine
             from src.schemas.orchestrator import orchestrator_result_to_task_response
             from src.tools.base import ToolRequest
@@ -97,12 +101,20 @@ async def approve(
             tool_req = None
             if approval.operation_payload.get("tool"):
                 tool_req = ToolRequest(
+                    requested_action=approval.operation_payload.get("input", approval.operation_summary),
                     tool=approval.operation_payload["tool"],
                     parameters=approval.operation_payload.get("tool_parameters", {}),
                 )
 
+            # Resume execution under original requester's operational context
+            req_auth = AuthContext(
+                user_id=str(approval.requester_user_id),
+                role=approval.requester_role,
+                permissions=resolve_permissions(approval.requester_role),
+            )
+
             res = await engine.execute(
-                auth=auth,
+                auth=req_auth,
                 user_input=approval.operation_payload.get("input", ""),
                 data_sensitivity=DataSensitivity(approval.operation_payload.get("data_sensitivity", "internal")),
                 tool_request=tool_req,
@@ -112,6 +124,12 @@ async def approve(
             )
             task_resp = orchestrator_result_to_task_response(res)
             exec_result_dict = task_resp.model_dump()
+
+            # Enforce single-use: mark approval as consumed
+            try:
+                await svc.consume(approval)
+            except Exception as cons_err:
+                logger.debug("Approval consume notice: %s", cons_err)
         except Exception as e:
             exec_result_dict = {"success": False, "error": str(e)}
 
