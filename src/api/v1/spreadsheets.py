@@ -857,6 +857,8 @@ async def get_spreadsheet_schema(
         "active_sheet": target_sheet.name,
         "row_count": target_sheet.row_count(),
         "col_count": target_sheet.col_count(),
+        "headers": target_sheet.headers,
+        "sample_rows": target_sheet.rows[:25],
         "columns": columns,
         "suggested_questions": suggested_questions,
     }

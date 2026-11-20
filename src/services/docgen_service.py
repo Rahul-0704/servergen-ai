@@ -266,10 +266,10 @@ Return ONLY valid JSON.
                 model=active_model,
                 prompt=user_content,
                 system_prompt=system_instruction,
-                max_tokens=900,
-                temperature=0.3,
+                max_tokens=2500,
+                temperature=0.25,
             )
-            response = await asyncio.wait_for(provider.generate(req), timeout=30.0)
+            response = await asyncio.wait_for(provider.generate(req), timeout=60.0)
             deck_data = self._parse_deck_json(response.content)
         except Exception as exc:
             logger.warning("Local LLM presentation generation warning: %s. Using heuristic synthesizer.", exc)
@@ -427,7 +427,8 @@ Return ONLY valid JSON.
         self, deck: PresentationDeck, file_id: str | None = None
     ) -> tuple[Path, GeneratedFileMeta]:
         """
-        Compiles a PresentationDeck Pydantic model into a modern 16:9 widescreen PPTX.
+        Compiles a PresentationDeck Pydantic model into a high-impact, modern 16:9 widescreen PPTX.
+        Includes Executive KPI Cards, 2-Column Analytical Cards, Strategic Milestones, and bold typography.
         """
         fid = file_id or str(uuid.uuid4())[:12]
         sanitized_title = re.sub(r"[^\w\-]", "_", deck.title)[:40].strip("_") or "presentation"
@@ -437,65 +438,83 @@ Return ONLY valid JSON.
         prs = pptx.Presentation()
         prs.slide_width = Inches(13.333)
         prs.slide_height = Inches(7.5)
-        blank_layout = prs.slide_layouts[6]  # Blank layout
+        blank_layout = prs.slide_layouts[6]
 
-        # Corporate color palette
-        c_navy = RGBColor(15, 23, 42)  # #0F172A
-        c_blue = RGBColor(37, 99, 235)  # #2563EB
-        c_slate = RGBColor(71, 85, 105)  # #475569
-        c_light_bg = RGBColor(248, 250, 252)  # #F8FAFC
+        # Corporate Color Palette
+        c_navy = RGBColor(15, 23, 42)        # #0F172A
+        c_blue = RGBColor(37, 99, 235)       # #2563EB
+        c_slate = RGBColor(71, 85, 105)      # #475569
+        c_light_bg = RGBColor(248, 250, 252) # #F8FAFC
         c_card_bg = RGBColor(255, 255, 255)
-        c_border = RGBColor(226, 232, 240)  # #E2E8F0
+        c_border = RGBColor(226, 232, 240)   # #E2E8F0
         c_white = RGBColor(255, 255, 255)
-        c_accent = RGBColor(56, 189, 248)  # #38BDF8
+        c_accent = RGBColor(56, 189, 248)    # #38BDF8
+        c_emerald = RGBColor(16, 185, 129)   # #10B981
+        c_purple = RGBColor(124, 58, 237)    # #7C3AED
 
-        # ── 1. Title Slide ──────────────────────────────────────────────────
+        def _add_bullet(tf, text_val: str, is_first: bool = False, font_sz: Pt | None = None, space: Pt | None = None):
+            f_sz = font_sz or Pt(13.5)
+            s_after = space or Pt(8)
+            p = tf.paragraphs[0] if is_first else tf.add_paragraph()
+            p.space_after = s_after
+            p.line_spacing = 1.15
+
+            # Match **Heading**: or Heading:
+            m = re.match(r"^(\*\*.*?\*\*|[A-Za-z0-9\s]{3,28}:)(.*)$", text_val.strip())
+            if m:
+                lead = m.group(1).replace("**", "").strip()
+                body = m.group(2).strip()
+                if not lead.endswith(":"):
+                    lead += ":"
+                r1 = p.add_run()
+                r1.text = f"?   {lead} "
+                r1.font.bold = True
+                r1.font.size = f_sz
+                r1.font.color.rgb = c_navy
+
+                r2 = p.add_run()
+                r2.text = body
+                r2.font.bold = False
+                r2.font.size = f_sz
+                r2.font.color.rgb = c_slate
+            else:
+                r = p.add_run()
+                r.text = f"?   {text_val.strip()}"
+                r.font.size = f_sz
+                r.font.color.rgb = c_navy
+
+        # ?? 1. Title Slide ??????????????????????????????????????????????????
         title_slide = prs.slides.add_slide(blank_layout)
-
-        # Background card
-        bg_shape = title_slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5)
-        )
+        bg_shape = title_slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
         bg_shape.fill.solid()
         bg_shape.fill.fore_color.rgb = c_navy
         bg_shape.line.fill.background()
 
-        # Accent top stripe
-        top_bar = title_slide.shapes.add_shape(
-            MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(0.2)
-        )
+        top_bar = title_slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(0.2))
         top_bar.fill.solid()
         top_bar.fill.fore_color.rgb = c_blue
         top_bar.line.fill.background()
 
-        # Classification pill
-        pill = title_slide.shapes.add_shape(
-            MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.0), Inches(1.2), Inches(2.2), Inches(0.4)
-        )
+        pill = title_slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.0), Inches(1.2), Inches(2.2), Inches(0.4))
         pill.fill.solid()
         pill.fill.fore_color.rgb = c_blue
         pill.line.fill.background()
-        pill_tf = pill.text_frame
-        pill_tf.text = deck.classification.upper()
-        p_p = pill_tf.paragraphs[0]
-        p_p.font.size = Pt(11)
-        p_p.font.bold = True
-        p_p.font.color.rgb = c_white
-        p_p.alignment = PP_ALIGN.CENTER
+        pill_p = pill.text_frame.paragraphs[0]
+        pill_p.text = deck.classification.upper()
+        pill_p.font.size = Pt(11)
+        pill_p.font.bold = True
+        pill_p.font.color.rgb = c_white
+        pill_p.alignment = PP_ALIGN.CENTER
 
-        # Deck Title
-        title_box = title_slide.shapes.add_textbox(
-            Inches(1.0), Inches(2.2), Inches(11.333), Inches(2.0)
-        )
+        title_box = title_slide.shapes.add_textbox(Inches(1.0), Inches(2.0), Inches(11.333), Inches(2.2))
         tf = title_box.text_frame
         tf.word_wrap = True
         p = tf.paragraphs[0]
         p.text = deck.title
-        p.font.size = Pt(40)
+        p.font.size = Pt(38)
         p.font.bold = True
         p.font.color.rgb = c_white
 
-        # Subtitle
         if deck.subtitle:
             p2 = tf.add_paragraph()
             p2.text = deck.subtitle
@@ -503,54 +522,39 @@ Return ONLY valid JSON.
             p2.font.color.rgb = c_accent
             p2.space_before = Pt(14)
 
-        # Footer author & system info
-        footer_box = title_slide.shapes.add_textbox(
-            Inches(1.0), Inches(5.8), Inches(11.333), Inches(0.8)
-        )
-        f_tf = footer_box.text_frame
-        f_p = f_tf.paragraphs[0]
-        f_p.text = (
-            f"Generated: {datetime.date.today().strftime('%B %d, %Y')}  |  "
-            f"Author: {deck.author}  |  Platform: ServerGen AI Enterprise Suite"
-        )
+        footer_box = title_slide.shapes.add_textbox(Inches(1.0), Inches(5.8), Inches(11.333), Inches(0.8))
+        f_p = footer_box.text_frame.paragraphs[0]
+        f_p.text = f"Generated: {datetime.date.today().strftime('%B %d, %Y')}  |  Author: {deck.author}  |  Platform: ServerGen AI Enterprise Suite"
         f_p.font.size = Pt(11)
         f_p.font.color.rgb = c_slate
 
-        # ── 2. Content Slides ───────────────────────────────────────────────
+        # ?? 2. Content Slides with Dynamic Enterprise Layouts ??????????????
+        total_slides = len(deck.slides)
         for idx, slide_model in enumerate(deck.slides, start=1):
             slide = prs.slides.add_slide(blank_layout)
 
             # Slide background
-            s_bg = slide.shapes.add_shape(
-                MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5)
-            )
+            s_bg = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(7.5))
             s_bg.fill.solid()
             s_bg.fill.fore_color.rgb = c_light_bg
             s_bg.line.fill.background()
 
             # Top banner
-            header_bar = slide.shapes.add_shape(
-                MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.2)
-            )
+            header_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0), Inches(0), Inches(13.333), Inches(1.15))
             header_bar.fill.solid()
             header_bar.fill.fore_color.rgb = c_navy
             header_bar.line.fill.background()
 
-            # Slide category tag
-            cat_box = slide.shapes.add_textbox(
-                Inches(0.8), Inches(0.15), Inches(8.0), Inches(0.3)
-            )
-            cat_tf = cat_box.text_frame
-            cat_p = cat_tf.paragraphs[0]
-            cat_p.text = f"{slide_model.category.upper()}  •  SLIDE {idx:02d}"
+            # Category tag
+            cat_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.12), Inches(8.0), Inches(0.28))
+            cat_p = cat_box.text_frame.paragraphs[0]
+            cat_p.text = f"{slide_model.category.upper()}  ?  SLIDE {idx:02d} OF {total_slides:02d}"
             cat_p.font.size = Pt(10)
             cat_p.font.bold = True
             cat_p.font.color.rgb = c_accent
 
             # Slide Title
-            st_box = slide.shapes.add_textbox(
-                Inches(0.8), Inches(0.45), Inches(10.0), Inches(0.65)
-            )
+            st_box = slide.shapes.add_textbox(Inches(0.8), Inches(0.42), Inches(10.0), Inches(0.65))
             st_tf = st_box.text_frame
             st_tf.word_wrap = True
             st_p = st_tf.paragraphs[0]
@@ -560,81 +564,251 @@ Return ONLY valid JSON.
             st_p.font.color.rgb = c_white
 
             # Classification top right badge
-            badge = slide.shapes.add_shape(
-                MSO_SHAPE.ROUNDED_RECTANGLE, Inches(11.2), Inches(0.4), Inches(1.5), Inches(0.35)
-            )
+            badge = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(11.2), Inches(0.38), Inches(1.5), Inches(0.35))
             badge.fill.solid()
             badge.fill.fore_color.rgb = c_blue
             badge.line.fill.background()
-            badge_tf = badge.text_frame
-            badge_p = badge_tf.paragraphs[0]
+            badge_p = badge.text_frame.paragraphs[0]
             badge_p.text = deck.classification
             badge_p.font.size = Pt(9)
             badge_p.font.bold = True
             badge_p.font.color.rgb = c_white
             badge_p.alignment = PP_ALIGN.CENTER
 
-            # Main content card
-            main_card = slide.shapes.add_shape(
-                MSO_SHAPE.ROUNDED_RECTANGLE,
-                Inches(0.8),
-                Inches(1.6),
-                Inches(11.733),
-                Inches(4.5),
-            )
-            main_card.fill.solid()
-            main_card.fill.fore_color.rgb = c_card_bg
-            main_card.line.color.rgb = c_border
-            main_card.line.width = Pt(1)
+            # LAYOUT VARIANT 1: Slide 1 -> Executive Overview with 3 KPI Stat Cards
+            if idx == 1:
+                # 3 KPI Metric Cards
+                kpi_defs = [
+                    ("CORE STRATEGY", "100% Local", "On-Premise LLM Inference", c_blue),
+                    ("GOVERNANCE & TRUST", "Dual-Custody", "Zero-Trust Policy Enforced", c_emerald),
+                    ("COMPLIANCE", "Air-Gapped", "Cryptographic SHA-256 Audit", c_purple),
+                ]
+                for k_i, (k_label, k_val, k_sub, k_color) in enumerate(kpi_defs):
+                    k_left = Inches(0.8 + k_i * 4.0)
+                    k_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, k_left, Inches(1.4), Inches(3.733), Inches(1.4))
+                    k_card.fill.solid()
+                    k_card.fill.fore_color.rgb = c_card_bg
+                    k_card.line.color.rgb = c_border
+                    k_card.line.width = Pt(1)
 
-            # Bullet points box inside card
-            content_box = slide.shapes.add_textbox(
-                Inches(1.2), Inches(1.85), Inches(10.9), Inches(3.2)
-            )
-            c_tf = content_box.text_frame
-            c_tf.word_wrap = True
+                    # Accent left stripe
+                    k_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, k_left, Inches(1.4), Inches(0.12), Inches(1.4))
+                    k_bar.fill.solid()
+                    k_bar.fill.fore_color.rgb = k_color
+                    k_bar.line.fill.background()
 
-            b_count = len(slide_model.bullets)
-            b_size = Pt(13.5) if b_count > 3 else Pt(15.5)
-            b_space = Pt(8) if b_count > 3 else Pt(12)
+                    k_tb = slide.shapes.add_textbox(k_left + Inches(0.2), Inches(1.48), Inches(3.4), Inches(1.2))
+                    k_tf = k_tb.text_frame
+                    k_tf.word_wrap = True
+                    p_l = k_tf.paragraphs[0]
+                    p_l.text = k_label
+                    p_l.font.size = Pt(9)
+                    p_l.font.bold = True
+                    p_l.font.color.rgb = c_slate
 
-            for b_idx, bullet in enumerate(slide_model.bullets):
-                p_bullet = c_tf.paragraphs[0] if b_idx == 0 else c_tf.add_paragraph()
-                p_bullet.text = f"•   {bullet}"
-                p_bullet.font.size = b_size
-                p_bullet.font.color.rgb = c_navy
-                p_bullet.space_after = b_space
-                p_bullet.line_spacing = 1.15
+                    p_v = k_tf.add_paragraph()
+                    p_v.text = k_val
+                    p_v.font.size = Pt(20)
+                    p_v.font.bold = True
+                    p_v.font.color.rgb = k_color
+                    p_v.space_before = Pt(2)
 
-            # Key Takeaway footer box inside card
-            if slide_model.key_takeaway:
-                takeaway_card = slide.shapes.add_shape(
-                    MSO_SHAPE.ROUNDED_RECTANGLE,
-                    Inches(1.2),
-                    Inches(5.1),
-                    Inches(10.9),
-                    Inches(0.8),
-                )
-                takeaway_card.fill.solid()
-                takeaway_card.fill.fore_color.rgb = RGBColor(238, 242, 255)  # Light indigo
-                takeaway_card.line.color.rgb = c_blue
-                takeaway_card.line.width = Pt(1)
+                    p_s = k_tf.add_paragraph()
+                    p_s.text = k_sub
+                    p_s.font.size = Pt(8.5)
+                    p_s.font.color.rgb = c_slate
 
-                t_tf = takeaway_card.text_frame
-                t_tf.word_wrap = True
-                t_p = t_tf.paragraphs[0]
-                t_p.text = f"KEY TAKEAWAY: {slide_model.key_takeaway}"
-                t_p.font.size = Pt(12)
-                t_p.font.bold = True
-                t_p.font.color.rgb = c_blue
-                t_p.alignment = PP_ALIGN.LEFT
+                # Main Overview Bullet Card
+                o_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(3.0), Inches(11.733), Inches(3.4))
+                o_card.fill.solid()
+                o_card.fill.fore_color.rgb = c_card_bg
+                o_card.line.color.rgb = c_border
+                o_card.line.width = Pt(1)
+
+                o_tb = slide.shapes.add_textbox(Inches(1.1), Inches(3.15), Inches(11.1), Inches(2.2))
+                o_tf = o_tb.text_frame
+                o_tf.word_wrap = True
+                for b_i, bullet in enumerate(slide_model.bullets[:3]):
+                    _add_bullet(o_tf, bullet, is_first=(b_i == 0), font_sz=Pt(13.5), space=Pt(8))
+
+                # Key Takeaway bar inside card
+                if slide_model.key_takeaway:
+                    t_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.1), Inches(5.45), Inches(11.1), Inches(0.75))
+                    t_card.fill.solid()
+                    t_card.fill.fore_color.rgb = RGBColor(238, 242, 255)
+                    t_card.line.color.rgb = c_blue
+                    t_card.line.width = Pt(1)
+                    t_p = t_card.text_frame.paragraphs[0]
+                    t_p.text = f"KEY STRATEGIC TAKEAWAY: {slide_model.key_takeaway}"
+                    t_p.font.size = Pt(11)
+                    t_p.font.bold = True
+                    t_p.font.color.rgb = c_blue
+
+            # LAYOUT VARIANT 2: Final Slide (if >= 4 slides) -> 4 Milestone Roadmap Cards
+            elif idx == total_slides and total_slides >= 4:
+                phases = [
+                    ("PHASE 01", "Discovery & Baseline", c_blue),
+                    ("PHASE 02", "Operational Rollout", RGBColor(2, 132, 199)),
+                    ("PHASE 03", "Governance Integration", c_emerald),
+                    ("PHASE 04", "Continuous Optimization", c_purple),
+                ]
+                for p_i, (p_tag, p_heading, p_color) in enumerate(phases):
+                    m_left = Inches(0.8 + p_i * 3.0)
+                    m_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, m_left, Inches(1.5), Inches(2.733), Inches(4.5))
+                    m_card.fill.solid()
+                    m_card.fill.fore_color.rgb = c_card_bg
+                    m_card.line.color.rgb = c_border
+                    m_card.line.width = Pt(1)
+
+                    # Top accent bar
+                    m_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, m_left, Inches(1.5), Inches(2.733), Inches(0.12))
+                    m_bar.fill.solid()
+                    m_bar.fill.fore_color.rgb = p_color
+                    m_bar.line.fill.background()
+
+                    # Phase Pill
+                    m_pill = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, m_left + Inches(0.2), Inches(1.75), Inches(1.2), Inches(0.32))
+                    m_pill.fill.solid()
+                    m_pill.fill.fore_color.rgb = p_color
+                    m_pill.line.fill.background()
+                    m_pill_p = m_pill.text_frame.paragraphs[0]
+                    m_pill_p.text = p_tag
+                    m_pill_p.font.size = Pt(9)
+                    m_pill_p.font.bold = True
+                    m_pill_p.font.color.rgb = c_white
+                    m_pill_p.alignment = PP_ALIGN.CENTER
+
+                    m_tb = slide.shapes.add_textbox(m_left + Inches(0.2), Inches(2.2), Inches(2.333), Inches(3.6))
+                    m_tf = m_tb.text_frame
+                    m_tf.word_wrap = True
+                    p_h = m_tf.paragraphs[0]
+                    p_h.text = p_heading
+                    p_h.font.size = Pt(13)
+                    p_h.font.bold = True
+                    p_h.font.color.rgb = c_navy
+                    p_h.space_after = Pt(8)
+
+                    bullet_content = slide_model.bullets[p_i] if p_i < len(slide_model.bullets) else "Operational milestone execution."
+                    p_b = m_tf.add_paragraph()
+                    p_b.text = re.sub(r"^\*\*.*?\*\*\s*", "", bullet_content)
+                    p_b.font.size = Pt(10.5)
+                    p_b.font.color.rgb = c_slate
+                    p_b.line_spacing = 1.15
+
+                # Bottom strategic commitment bar
+                if slide_model.key_takeaway:
+                    t_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.15), Inches(11.733), Inches(0.55))
+                    t_card.fill.solid()
+                    t_card.fill.fore_color.rgb = RGBColor(238, 242, 255)
+                    t_card.line.color.rgb = c_blue
+                    t_card.line.width = Pt(1)
+                    t_p = t_card.text_frame.paragraphs[0]
+                    t_p.text = f"EXECUTIVE COMMITMENT: {slide_model.key_takeaway}"
+                    t_p.font.size = Pt(10.5)
+                    t_p.font.bold = True
+                    t_p.font.color.rgb = c_blue
+
+            # LAYOUT VARIANT 3: Middle Slides with 4+ bullets -> 2-Column Comparison Cards
+            elif len(slide_model.bullets) >= 4:
+                # Left Column Card
+                l_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.5), Inches(5.7), Inches(4.5))
+                l_card.fill.solid()
+                l_card.fill.fore_color.rgb = c_card_bg
+                l_card.line.color.rgb = c_border
+                l_card.line.width = Pt(1)
+
+                l_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(1.5), Inches(5.7), Inches(0.12))
+                l_bar.fill.solid()
+                l_bar.fill.fore_color.rgb = c_blue
+                l_bar.line.fill.background()
+
+                l_tb = slide.shapes.add_textbox(Inches(1.1), Inches(1.75), Inches(5.1), Inches(3.9))
+                l_tf = l_tb.text_frame
+                l_tf.word_wrap = True
+                p_lh = l_tf.paragraphs[0]
+                p_lh.text = "STRATEGIC ARCHITECTURE & CONTEXT"
+                p_lh.font.size = Pt(11)
+                p_lh.font.bold = True
+                p_lh.font.color.rgb = c_blue
+                p_lh.space_after = Pt(10)
+
+                for b in slide_model.bullets[:2]:
+                    _add_bullet(l_tf, b, is_first=False, font_sz=Pt(12.5), space=Pt(10))
+
+                # Right Column Card
+                r_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(6.833), Inches(1.5), Inches(5.7), Inches(4.5))
+                r_card.fill.solid()
+                r_card.fill.fore_color.rgb = c_card_bg
+                r_card.line.color.rgb = c_border
+                r_card.line.width = Pt(1)
+
+                r_bar = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(6.833), Inches(1.5), Inches(5.7), Inches(0.12))
+                r_bar.fill.solid()
+                r_bar.fill.fore_color.rgb = c_emerald
+                r_bar.line.fill.background()
+
+                r_tb = slide.shapes.add_textbox(Inches(7.133), Inches(1.75), Inches(5.1), Inches(3.9))
+                r_tf = r_tb.text_frame
+                r_tf.word_wrap = True
+                p_rh = r_tf.paragraphs[0]
+                p_rh.text = "OPERATIONAL IMPACT & CONTROLS"
+                p_rh.font.size = Pt(11)
+                p_rh.font.bold = True
+                p_rh.font.color.rgb = c_emerald
+                p_rh.space_after = Pt(10)
+
+                for b in slide_model.bullets[2:4]:
+                    _add_bullet(r_tf, b, is_first=False, font_sz=Pt(12.5), space=Pt(10))
+
+                # Key Takeaway bar across bottom
+                if slide_model.key_takeaway:
+                    t_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(6.15), Inches(11.733), Inches(0.55))
+                    t_card.fill.solid()
+                    t_card.fill.fore_color.rgb = RGBColor(238, 242, 255)
+                    t_card.line.color.rgb = c_blue
+                    t_card.line.width = Pt(1)
+                    t_p = t_card.text_frame.paragraphs[0]
+                    t_p.text = f"KEY TAKEAWAY: {slide_model.key_takeaway}"
+                    t_p.font.size = Pt(10.5)
+                    t_p.font.bold = True
+                    t_p.font.color.rgb = c_blue
+
+            # LAYOUT VARIANT 4: Standard Deep Content Card
+            else:
+                main_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(0.8), Inches(1.5), Inches(11.733), Inches(4.5))
+                main_card.fill.solid()
+                main_card.fill.fore_color.rgb = c_card_bg
+                main_card.line.color.rgb = c_border
+                main_card.line.width = Pt(1)
+
+                top_bar_mc = slide.shapes.add_shape(MSO_SHAPE.RECTANGLE, Inches(0.8), Inches(1.5), Inches(11.733), Inches(0.12))
+                top_bar_mc.fill.solid()
+                top_bar_mc.fill.fore_color.rgb = c_blue
+                top_bar_mc.line.fill.background()
+
+                content_box = slide.shapes.add_textbox(Inches(1.2), Inches(1.85), Inches(10.9), Inches(3.0))
+                c_tf = content_box.text_frame
+                c_tf.word_wrap = True
+
+                for b_idx, bullet in enumerate(slide_model.bullets):
+                    _add_bullet(c_tf, bullet, is_first=(b_idx == 0), font_sz=Pt(14), space=Pt(12))
+
+                if slide_model.key_takeaway:
+                    takeaway_card = slide.shapes.add_shape(MSO_SHAPE.ROUNDED_RECTANGLE, Inches(1.2), Inches(5.1), Inches(10.9), Inches(0.75))
+                    takeaway_card.fill.solid()
+                    takeaway_card.fill.fore_color.rgb = RGBColor(238, 242, 255)
+                    takeaway_card.line.color.rgb = c_blue
+                    takeaway_card.line.width = Pt(1)
+                    t_p = takeaway_card.text_frame.paragraphs[0]
+                    t_p.text = f"KEY TAKEAWAY: {slide_model.key_takeaway}"
+                    t_p.font.size = Pt(11.5)
+                    t_p.font.bold = True
+                    t_p.font.color.rgb = c_blue
 
             # Slide Footer
-            footer_txt = slide.shapes.add_textbox(
-                Inches(0.8), Inches(6.8), Inches(11.733), Inches(0.4)
-            )
+            footer_txt = slide.shapes.add_textbox(Inches(0.8), Inches(6.8), Inches(11.733), Inches(0.4))
             ft_p = footer_txt.text_frame.paragraphs[0]
-            ft_p.text = f"ServerGen AI Enterprise Knowledge Deck  |  Slide {idx} of {len(deck.slides)}"
+            ft_p.text = f"ServerGen AI Enterprise Knowledge Deck  |  Slide {idx} of {total_slides}  |  {deck.classification.upper()}"
             ft_p.font.size = Pt(9)
             ft_p.font.color.rgb = c_slate
 
@@ -1286,10 +1460,10 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                 model=active_model,
                 prompt=user_content,
                 system_prompt=system_instruction,
-                max_tokens=1100,
-                temperature=0.3,
+                max_tokens=2500,
+                temperature=0.25,
             )
-            response = await asyncio.wait_for(provider.generate(req), timeout=30.0)
+            response = await asyncio.wait_for(provider.generate(req), timeout=60.0)
             doc_data = self._parse_report_json(response.content)
         except Exception as exc:
             logger.warning("Local LLM report generation warning: %s. Using heuristic synthesizer.", exc)
@@ -1597,9 +1771,30 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                 )
             )
             story.append(sum_table)
+            story.append(Spacer(1, 10))
+            kpi_table_data = [
+                [
+                    Paragraph("<b>DATA SECURITY</b><br/><font color='#2563EB' size='10'><b>100% On-Premise</b></font><br/><font color='#64748B' size='7.5'>Zero External Cloud Egress</font>", styles["Normal"]),
+                    Paragraph(f"<b>CLEARANCE CEILING</b><br/><font color='#10B981' size='10'><b>{_esc(doc_data.classification.upper())}</b></font><br/><font color='#64748B' size='7.5'>Role Vault Segregated</font>", styles["Normal"]),
+                    Paragraph("<b>AUDIT INTEGRITY</b><br/><font color='#7C3AED' size='10'><b>SHA-256 Chained</b></font><br/><font color='#64748B' size='7.5'>Tamper-Evident Ledger</font>", styles["Normal"]),
+                ]
+            ]
+            kpi_pdf_table = Table(kpi_table_data, colWidths=[177, 177, 178])
+            kpi_pdf_table.setStyle(
+                TableStyle([
+                    ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#F8FAFC")),
+                    ("BOX", (0, 0), (-1, -1), 1, c_border),
+                    ("INNERGRID", (0, 0), (-1, -1), 0.5, c_border),
+                    ("TOPPADDING", (0, 0), (-1, -1), 6),
+                    ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                    ("LEFTPADDING", (0, 0), (-1, -1), 10),
+                    ("RIGHTPADDING", (0, 0), (-1, -1), 10),
+                ])
+            )
+            story.append(kpi_pdf_table)
             story.append(Spacer(1, 14))
 
-        # ── 3. Content Sections ─────────────────────────────────────────────
+        # ?? 3. Content Sections ?????????????????????????????????????????????
         for sec in doc_data.sections:
             sec_elements: list[Any] = [Paragraph(_esc(sec.heading), h1_style)]
 
@@ -1607,7 +1802,16 @@ Ensure the response is strictly valid JSON with no extraneous characters.
                 sec_elements.append(Paragraph(_esc(sec.content), body_style))
 
             for bp in sec.bullet_points:
-                sec_elements.append(Paragraph(f"•  {_esc(bp)}", bullet_style))
+                bp_str = str(bp).strip()
+                m_bp = re.match(r"^(\*\*.*?\*\*|[A-Za-z0-9\s]{3,28}:)(.*)$", bp_str)
+                if m_bp:
+                    lead = m_bp.group(1).replace("**", "").strip()
+                    if not lead.endswith(":"):
+                        lead += ":"
+                    body = m_bp.group(2).strip()
+                    sec_elements.append(Paragraph(f"&bull;  <b>{_esc(lead)}</b> {_esc(body)}", bullet_style))
+                else:
+                    sec_elements.append(Paragraph(f"&bull;  {_esc(bp_str)}", bullet_style))
 
             if sec.key_metric:
                 metric_p = Paragraph(

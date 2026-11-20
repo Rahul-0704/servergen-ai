@@ -1125,33 +1125,25 @@
     <!-- App Body -->
     <div class="app-body">
         
-        <!-- Sidebar Navigation -->
+        <!-- Sidebar Navigation (Streamlined 7 Core Workspaces) -->
         <aside id="sidebar-nav">
-            <div class="nav-category" data-cat="executive" id="cat-executive" style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-crown text-warning"></i> Executive Suite</div>
-            <button class="nav-item active" data-nav="manager-suite" id="nav-item-manager-suite" onclick="switchNav('manager-suite', this)"><i class="fa-solid fa-briefcase" style="color:#0284c7;"></i> Manager Command Center</button>
+            <div class="nav-category" data-cat="workspace" style="font-weight:700; color:#475569; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em;"><i class="fa-solid fa-layer-group text-primary"></i> Core Workspace</div>
+            <button class="nav-item active" data-nav="ai-run" id="nav-item-ai-run" onclick="switchNav('ai-run', this)"><i class="fa-solid fa-wand-magic-sparkles text-primary"></i> AI Assistant &amp; Reasoning</button>
+            <button class="nav-item" data-nav="spreadsheets" id="nav-item-spreadsheets" onclick="switchNav('spreadsheets', this)"><i class="fa-solid fa-table-cells text-success"></i> Excel &amp; Spreadsheet Studio</button>
+            <button class="nav-item" data-nav="doc-gen" id="nav-item-doc-gen" onclick="switchNav('doc-gen', this)"><i class="fa-solid fa-file-powerpoint text-warning"></i> Slide &amp; Document Studio</button>
+            <button class="nav-item" data-nav="rag" id="nav-item-rag" onclick="switchNav('rag', this)"><i class="fa-solid fa-folder-closed text-info"></i> Uploaded Documents Library</button>
 
-            <div class="nav-category" data-cat="workspace">Workspace</div>
-            <button class="nav-item active" data-nav="ai-run" onclick="switchNav('ai-run', this)"><i class="fa-solid fa-robot"></i> AI Assistant &amp; Grounding</button>
-            <button class="nav-item" data-nav="rag" onclick="switchNav('rag', this)"><i class="fa-solid fa-book-bookmark"></i> Enterprise Documents</button>
-            <button class="nav-item" data-nav="doc-gen" onclick="switchNav('doc-gen', this)"><i class="fa-solid fa-file-powerpoint"></i> Doc &amp; Slide Studio</button>
-            <button class="nav-item" data-nav="spreadsheets" onclick="switchNav('spreadsheets', this)"><i class="fa-solid fa-file-excel"></i> Excel &amp; Spreadsheet Studio</button>
-            <button class="nav-item" data-nav="verification" onclick="switchNav('verification', this)"><i class="fa-solid fa-list-check"></i> System Verification (5 Tests)</button>
-
-            <div class="nav-category" data-cat="account">Identity &amp; Admin</div>
-            <button class="nav-item" data-nav="auth" onclick="switchNav('auth', this)"><i class="fa-solid fa-key"></i> Authentication &amp; Profile</button>
-            <button class="nav-item" data-nav="users" onclick="switchNav('users', this)"><i class="fa-solid fa-users-gear"></i> User Directory</button>
-
-            <div class="nav-category" data-cat="governance">Governance &amp; Audit</div>
-            <button class="nav-item" data-nav="approvals" onclick="switchNav('approvals', this)"><i class="fa-solid fa-stamp"></i> Approvals Queue</button>
-            <button class="nav-item" data-nav="audit" onclick="switchNav('audit', this)"><i class="fa-solid fa-fingerprint"></i> Tamper-Evident Audit</button>
-            <button class="nav-item" data-nav="rbac-matrix" onclick="switchNav('rbac-matrix', this)"><i class="fa-solid fa-table-list"></i> RBAC Policy Matrix</button>
+            <div class="nav-category" data-cat="governance" style="font-weight:700; color:#475569; font-size:0.75rem; text-transform:uppercase; letter-spacing:0.05em; margin-top:14px;"><i class="fa-solid fa-shield-halved text-purple"></i> Governance &amp; Ops</div>
+            <button class="nav-item" data-nav="manager-suite" id="nav-item-manager-suite" onclick="switchNav('manager-suite', this)"><i class="fa-solid fa-briefcase text-primary"></i> Manager Command Center</button>
+            <button class="nav-item" data-nav="approvals" id="nav-item-approvals" onclick="switchNav('approvals', this)"><i class="fa-solid fa-stamp text-purple"></i> Approvals Queue</button>
+            <button class="nav-item" data-nav="audit" id="nav-item-audit" onclick="switchNav('audit', this)"><i class="fa-solid fa-receipt text-secondary"></i> Tamper-Evident Audit</button>
         </aside>
 
         <!-- Main Content Area -->
         <main>
 
             <!-- EXECUTIVE MANAGER COMMAND CENTER PANEL -->
-            <div id="panel-manager-suite" class="panel active">
+            <div id="panel-manager-suite" class="panel">
                 <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bfdbfe;">
                     <div class="card-header" style="border-bottom:1px solid #dbeafe;">
                         <div class="card-title" style="color:#0f172a; font-size:1.15rem;">
@@ -1639,6 +1631,70 @@
                                 <div class="scenario-title">Hadoop Cluster &amp; MapReduce Runbook</div>
                                 <div class="scenario-desc">Query OCR-extracted terminal screenshots: ResourceManager, NodeManager, DataNode, and Java 1.8 runtime.</div>
                             </div>
+                        </div>
+                    </div>
+
+                    <!-- Document Attachment & Direct Upload Context Bar -->
+                    <div class="card" style="margin-bottom:16px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:14px 18px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
+                            <span style="font-size:0.85rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-paperclip text-primary"></i> Attached Document Context (Grounding &amp; Reasoning Focus)
+                            </span>
+                            <div style="display:flex; gap:6px;">
+                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('select')" id="ai-att-tab-select" style="font-size:0.76rem; padding:4px 10px; font-weight:700; background:#e2e8f0; color:#0f172a; border-radius:6px;">
+                                    <i class="fa-solid fa-folder-open"></i> Select Existing
+                                </button>
+                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('upload')" id="ai-att-tab-upload" style="font-size:0.76rem; padding:4px 10px; font-weight:700; background:#fff; color:#475569; border:1px solid #cbd5e1; border-radius:6px;">
+                                    <i class="fa-solid fa-cloud-arrow-up"></i> Upload New Document Directly
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Active Attachment Banner -->
+                        <div id="ai-active-att-bar" style="display:none; align-items:center; justify-content:space-between; background:#eff6ff; border:1px solid #bfdbfe; border-radius:6px; padding:8px 12px; margin-bottom:10px;">
+                            <div style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:#1e40af; flex-wrap:wrap;">
+                                <i class="fa-solid fa-file-circle-check text-primary" style="font-size:1.1rem;"></i>
+                                <span>Attached: <strong id="ai-att-filename">None</strong></span>
+                                <span id="ai-att-badge" class="badge badge-info" style="font-size:0.7rem;">INTERNAL</span>
+                                <span id="ai-att-meta" style="font-size:0.72rem; color:#64748b;"></span>
+                            </div>
+                            <div style="display:flex; gap:6px; align-items:center;">
+                                <button type="button" id="ai-att-open-sheet-btn" class="btn btn-sm btn-secondary" onclick="openCurrentAttachmentInSpreadsheetStudio()" style="display:none; font-size:0.72rem; padding:2px 8px;">
+                                    <i class="fa-solid fa-table-cells text-success"></i> Open in Spreadsheet Studio
+                                </button>
+                                <button type="button" class="btn btn-sm btn-danger" onclick="clearAiAttachment()" style="font-size:0.72rem; padding:2px 8px;">
+                                    <i class="fa-solid fa-xmark"></i> Remove
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mode 1: Select from Existing Documents -->
+                        <div id="ai-doc-select-wrap" style="display:block;">
+                            <div style="display:flex; gap:8px; align-items:center;">
+                                <select id="ai-doc-select" class="form-control" onchange="onAiDocSelectChange()" style="flex:1; font-size:0.85rem; background:#fff;">
+                                    <option value="">-- No Document Attached (Assistant Queries Entire Authorized Knowledge Base) --</option>
+                                </select>
+                                <button type="button" class="btn btn-sm btn-secondary" onclick="refreshAiDocList()" title="Refresh uploaded documents" style="padding:6px 12px;">
+                                    <i class="fa-solid fa-rotate-right"></i>
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Mode 2: Direct Upload Inline at AI Assistant -->
+                        <div id="ai-doc-upload-wrap" style="display:none; margin-top:8px; border-top:1px dashed #cbd5e1; padding-top:10px;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap:8px; align-items:center;">
+                                <input type="file" id="ai-inline-upload-file" class="form-control" style="background:#fff; font-size:0.8rem;" accept=".pdf,.docx,.xlsx,.xls,.pptx,.csv,.txt,.md,.png,.jpg">
+                                <select id="ai-inline-upload-class" class="form-control" style="background:#fff; font-size:0.8rem;">
+                                    <option value="internal" selected>INTERNAL (Default)</option>
+                                    <option value="confidential">CONFIDENTIAL</option>
+                                    <option value="restricted">RESTRICTED</option>
+                                    <option value="public">PUBLIC</option>
+                                </select>
+                                <button type="button" id="ai-btn-inline-upload" class="btn btn-primary btn-sm" onclick="uploadDirectAtAssistant()" style="font-size:0.8rem; padding:6px 16px;">
+                                    <i class="fa-solid fa-upload"></i> Upload &amp; Attach
+                                </button>
+                            </div>
+                            <div id="ai-inline-upload-status" style="font-size:0.75rem; margin-top:6px; display:none;"></div>
                         </div>
                     </div>
 
@@ -2139,425 +2195,332 @@
             <!-- TAB: EXCEL & SPREADSHEET ANALYTICS STUDIO -->
             <div id="panel-spreadsheets" class="panel">
                 <div class="card" style="margin-bottom:16px;">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-file-excel text-success"></i> Enterprise Spreadsheet &amp; Excel Studio</div>
-                        <span class="badge badge-success">Prompt-First Autonomous Analytics &amp; Multi-Tab Engine</span>
-                    </div>
-                    <div class="card-desc">
-                        Execute prompt-driven analysis on multi-sheet Excel (.xlsx, .xls) and CSV workbooks. Get instant verified KPI cards, visual charts, and 1-click downloadable PowerPoint decks, PDF reports, and styled Excel deliverables.
-                    </div>
-
-                    <!-- 1. Prompt-First Autonomous Studio (Primary) -->
-                    <div style="background:linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%); border:2px solid #3B82F6; border-radius:10px; padding:20px; margin-top:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
-                            <div style="font-weight:800; font-size:1.05rem; color:#0F172A; display:flex; align-items:center; gap:8px;">
-                                <span style="background:#2563EB; color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem;"><i class="fa-solid fa-bolt"></i></span>
-                                1-Click Autonomous Spreadsheet Workflow
+                    <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                        <div>
+                            <div class="card-title" style="font-size:1.15rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-table-cells text-success"></i> Enterprise Spreadsheet &amp; Excel Operations Studio
                             </div>
-                            <span class="badge badge-primary" style="font-size:0.75rem;"><i class="fa-solid fa-robot"></i> Fully Automated</span>
+                            <div style="font-size:0.82rem; color:#64748b; margin-top:3px;">
+                                Multi-sheet Excel &amp; CSV intelligence: Deterministic Python calculations, live data preview, anomaly &amp; variance audits, natural language query, and 1-click deliverables.
+                            </div>
                         </div>
+                        <div style="display:flex; gap:8px; align-items:center;">
+                            <button class="btn btn-primary btn-sm" onclick="toggleSpreadsheetUploadDrawer()"><i class="fa-solid fa-cloud-arrow-up"></i> Upload Spreadsheet</button>
+                            <button class="btn btn-secondary btn-sm" onclick="loadSpreadsheetWorkspace()"><i class="fa-solid fa-rotate-right"></i> Refresh</button>
+                        </div>
+                    </div>
 
-                        <!-- File Input & Title Grid -->
-                        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; margin-bottom:14px;">
+                    <!-- Quick Upload Drawer (Collapsible) -->
+                    <div id="sheet-upload-drawer" style="display:none; background:#f8fafc; border:1px solid #bfdbfe; border-radius:8px; padding:16px; margin:14px 0;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <span style="font-weight:700; font-size:0.85rem; color:#1e40af;"><i class="fa-solid fa-file-arrow-up"></i> Upload New Spreadsheet File</span>
+                            <button class="btn btn-secondary btn-sm" onclick="toggleSpreadsheetUploadDrawer()" style="padding:2px 8px; font-size:0.75rem;"><i class="fa-solid fa-xmark"></i></button>
+                        </div>
+                        <div style="display:grid; grid-template-columns: 2fr 1.5fr 1fr auto; gap:10px; align-items:flex-end;">
                             <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Upload Spreadsheet (.xlsx, .xls, .csv)</label>
-                                <input type="file" id="sheet-auto-file" accept=".xlsx,.xls,.xlsm,.csv,.tsv" class="form-control" style="background:#fff; width:100%;">
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">File (.xlsx, .xls, .csv)</label>
+                                <input type="file" id="sheet-main-upload-file" accept=".xlsx,.xls,.xlsm,.csv,.tsv" class="form-control" style="background:#fff; width:100%;">
                             </div>
                             <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Workflow Title</label>
-                                <input type="text" id="sheet-auto-title" class="form-control" placeholder="e.g. Q3 Sales &amp; Operations Review" style="background:#fff; width:100%;">
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Document Title</label>
+                                <input type="text" id="sheet-main-upload-title" class="form-control" placeholder="e.g. Q3 Regional Financials" style="background:#fff; width:100%;">
                             </div>
                             <div>
                                 <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Classification</label>
-                                <select id="sheet-auto-class" class="form-control" style="background:#fff; width:100%;">
-                                    <option value="internal" selected>INTERNAL (Default)</option>
+                                <select id="sheet-main-upload-class" class="form-control" style="background:#fff; width:100%;">
+                                    <option value="internal" selected>INTERNAL</option>
                                     <option value="confidential">CONFIDENTIAL</option>
                                     <option value="restricted">RESTRICTED</option>
                                     <option value="public">PUBLIC</option>
                                 </select>
                             </div>
-                        </div>
-
-                        <!-- Prompt Input Area -->
-                        <div style="margin-bottom:12px;">
-                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Analytical Goal / Prompt (Natural Language)</label>
-                            <div style="position:relative;">
-                                <input type="text" id="sheet-auto-prompt" class="form-control" placeholder="e.g. Highlight budget vs actual variance, flag abnormal cost spikes, and build presentation deck" style="background:#fff; width:100%; padding-right:30px; font-size:0.9rem;">
+                            <div>
+                                <button id="sheet-btn-drawer-upload" class="btn btn-primary" onclick="uploadSpreadsheetFromDrawer()" style="height:38px; font-weight:700; font-size:0.82rem;">
+                                    <i class="fa-solid fa-upload"></i> Upload &amp; Inspect
+                                </button>
                             </div>
                         </div>
+                        <div id="sheet-drawer-upload-status" style="margin-top:8px; font-size:0.82rem; display:none;"></div>
+                    </div>
 
-                        <!-- 1-Click Prompt Preset Chips -->
-                        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px;">
-                            <span style="font-size:0.75rem; font-weight:700; color:#64748B;">Quick Prompt Presets:</span>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('executive')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-bolt text-primary"></i> Executive Summary &amp; Deck</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('anomaly')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly &amp; Outlier Audit</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('variance')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-scale-balanced text-info"></i> Budget vs. Actual Variance</button>
-                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('breakdown')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-layer-group text-success"></i> Segment Breakdown</button>
-                        </div>
-
-                        <!-- Actions Bar: DLP Toggle & Main Run Button -->
-                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                            <label style="display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:700; color:#0F172A; cursor:pointer;">
-                                <input type="checkbox" id="sheet-auto-mask-pii" style="width:17px; height:17px; accent-color:#16A34A;" checked>
-                                <i class="fa-solid fa-shield-halved text-success"></i> Zero-Trust DLP PII Redaction
+                    <!-- Primary Document & Sheet Selector Bar -->
+                    <div style="display:grid; grid-template-columns: 2fr 1.2fr auto; gap:12px; margin:16px 0; align-items:end; background:#f1f5f9; padding:12px 14px; border-radius:8px; border:1px solid #e2e8f0;">
+                        <div>
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">
+                                <i class="fa-solid fa-file-excel text-success"></i> Active Spreadsheet File
                             </label>
-
-                            <button id="sheet-btn-auto-run" class="btn btn-primary" onclick="executeAutonomousWorkflow()" style="font-size:0.95rem; font-weight:800; padding:10px 28px; background:linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow:0 4px 12px rgba(37,99,235,0.3);">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i> Execute Autonomous Workflow
+                            <select id="nl-doc-select" class="form-control" onchange="onSpreadsheetDocSelected()" style="background:#fff; width:100%; font-weight:600;">
+                                <option value="">-- Select Uploaded Spreadsheet --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">
+                                <i class="fa-solid fa-table-columns text-primary"></i> Active Worksheet / Tab
+                            </label>
+                            <select id="sheet-tab-select" class="form-control" onchange="onSpreadsheetTabChanged()" style="background:#fff; width:100%; font-weight:600;">
+                                <option value="">-- Active Sheet --</option>
+                            </select>
+                        </div>
+                        <div>
+                            <button type="button" class="btn btn-secondary" onclick="loadSpreadsheetWorkspace()" title="Refresh spreadsheets list" style="height:38px; padding:0 14px;">
+                                <i class="fa-solid fa-arrows-rotate"></i>
                             </button>
                         </div>
-
-                        <!-- Status Alert / Progress -->
-                        <div id="sheet-auto-status" style="margin-top:12px; font-size:0.85rem; display:none;"></div>
                     </div>
 
-                    <!-- Autonomous Workflow Deliverables & Results -->
-                    <div id="sheet-results-area" style="display:none; margin-top:24px;">
-
-                        <!-- 1-Click Deliverables Banner -->
-                        <div id="sheet-deliverables-banner" style="background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color:#fff; border-radius:10px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 14px rgba(15,23,42,0.15);">
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
-                                <div>
-                                    <div style="font-weight:800; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
-                                        <i class="fa-solid fa-circle-check text-success"></i> Workflow Completed &amp; 3 Deliverables Ready
-                                    </div>
-                                    <div id="sheet-deliverables-subtitle" style="font-size:0.82rem; color:#94A3B8; margin-top:3px;">
-                                        Widescreen slide deck, executive vector PDF report, and styled Excel workbook compiled.
-                                    </div>
-                                </div>
-                                <div style="display:flex; gap:10px; flex-wrap:wrap;">
-                                    <a id="sheet-dl-pptx" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-powerpoint text-warning"></i> Download Slide Deck (.pptx)</a>
-                                    <a id="sheet-dl-pdf" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-pdf text-danger"></i> Download Report (.pdf)</a>
-                                    <a id="sheet-dl-xlsx" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-excel text-success"></i> Download Excel (.xlsx)</a>
-                                </div>
-                            </div>
+                    <!-- Dynamic Metadata & Health Strip -->
+                    <div id="sheet-meta-strip" style="display:none; background:#ffffff; border:1px solid #cbd5e1; border-radius:8px; padding:10px 14px; margin-bottom:16px; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; align-items:center; gap:10px; font-size:0.82rem; color:#334155; flex-wrap:wrap;">
+                            <span><i class="fa-solid fa-file-lines text-primary"></i> <strong id="sheet-active-filename">--</strong></span>
+                            <span>&bull;</span>
+                            <span><i class="fa-solid fa-table"></i> <strong id="sheet-active-rows">0</strong> Rows &times; <strong id="sheet-active-cols">0</strong> Columns</span>
+                            <span id="sheet-vault-badge" class="badge badge-info" style="font-size:0.7rem;">ROLE VAULT PROTECTED</span>
                         </div>
-
-                        <!-- 3 KPI Stat Cards -->
-                        <div id="sheet-kpi-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:18px;">
-                            <!-- Populated dynamically -->
-                        </div>
-
-                        <!-- Interactive Visual Analytics Chart Card -->
-                        <div id="sheet-chart-card" class="card" style="margin-bottom:18px; background:#fff; border:1px solid #CBD5E1;">
-                            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px; display:flex; justify-content:space-between; align-items:center;">
-                                <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-chart-column text-primary"></i> Interactive Tabular Visual Analytics</div>
-                                <span id="sheet-pii-badge" style="display:none;" class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> PII Scrubbed</span>
-                            </div>
-                            <div id="sheet-chart-container" style="padding:16px; overflow-x:auto;"></div>
-                        </div>
-
-                        <!-- Results Side-by-Side: Formatted Table & Executive Insights -->
-                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
-                            <div class="card" style="margin:0; background:#fff; border:1px solid #CBD5E1;">
-                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px;">
-                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-table"></i> Formatted Tabular Data</div>
-                                </div>
-                                <div id="sheet-table-render" style="overflow-x:auto; max-height:450px; padding:12px; font-size:0.85rem;"></div>
-                            </div>
-
-                            <div class="card" style="margin:0; background:#fff; border:1px solid #CBD5E1;">
-                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px;">
-                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-brain text-primary"></i> Grounded Executive Insights (Local Ollama LLM)</div>
-                                </div>
-                                <div id="sheet-insights-render" style="overflow-y:auto; max-height:450px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1E293B;"></div>
-                            </div>
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.78rem; font-weight:700; color:#0f172a; cursor:pointer;">
+                                <input type="checkbox" id="sheet-mask-pii" style="accent-color:#16a34a;" checked>
+                                <i class="fa-solid fa-shield-halved text-success"></i> Zero-Trust DLP PII Redaction
+                            </label>
                         </div>
                     </div>
 
-                    <!-- Collapsible Advanced Manual Controls -->
-                    <details style="margin-top:24px; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; padding:12px;">
-                        <summary style="font-weight:700; font-size:0.85rem; color:#475569; cursor:pointer;"><i class="fa-solid fa-sliders"></i> Advanced Manual Workbench (Multi-Step Column Selectors)</summary>
-                        <div style="padding-top:14px;">
-                            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:12px; align-items:flex-end; margin-bottom:14px;">
+                    <!-- Schema Columns Type Pills -->
+                    <div id="nl-schema-container" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px; margin-bottom:16px;">
+                        <div style="font-size:0.74rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px;">
+                            <i class="fa-solid fa-diagram-project text-primary"></i> Detected Column Profiles &amp; Data Types:
+                        </div>
+                        <div id="nl-schema-pills" style="display:flex; flex-wrap:wrap; gap:6px;"></div>
+                    </div>
+
+                    <!-- Operations Navigation Tabs -->
+                    <div class="auth-toggle-bar" style="margin-bottom:14px; display:flex; flex-wrap:wrap; gap:6px;">
+                        <button id="tab-op-preview" class="auth-tab-btn active" onclick="setSpreadsheetOp('preview')"><i class="fa-solid fa-table-list"></i> Live Data Preview</button>
+                        <button id="tab-op-nl" class="auth-tab-btn" onclick="setSpreadsheetOp('nl')"><i class="fa-solid fa-comments text-primary"></i> Natural Language Query</button>
+                        <button id="tab-op-groupby" class="auth-tab-btn" onclick="setSpreadsheetOp('groupby')"><i class="fa-solid fa-layer-group text-info"></i> Group By &amp; Aggregate</button>
+                        <button id="tab-op-filter" class="auth-tab-btn" onclick="setSpreadsheetOp('filter')"><i class="fa-solid fa-filter text-secondary"></i> Filter &amp; Sort</button>
+                        <button id="tab-op-variance" class="auth-tab-btn" onclick="setSpreadsheetOp('variance')"><i class="fa-solid fa-scale-balanced text-warning"></i> Variance &amp; Overruns</button>
+                        <button id="tab-op-anomaly" class="auth-tab-btn" onclick="setSpreadsheetOp('anomaly')"><i class="fa-solid fa-triangle-exclamation text-danger"></i> Anomaly Detection</button>
+                    </div>
+
+                    <!-- Dynamic Operation Configuration Body -->
+                    <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:16px;">
+                        
+                        <!-- TAB 1: Live Data Preview -->
+                        <div id="op-config-preview" style="display:block;">
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                                <div style="font-size:0.85rem; font-weight:700; color:#0f172a;"><i class="fa-solid fa-table text-primary"></i> Sheet Live Preview (First 25 Rows)</div>
+                                <span style="font-size:0.75rem; color:#64748b;">Instant client-side rendering from sovereign schema cache</span>
+                            </div>
+                            <div id="sheet-preview-table-container" style="overflow-x:auto; max-height:380px; font-size:0.82rem; border:1px solid #e2e8f0; border-radius:6px;">
+                                <div style="text-align:center; padding:30px; color:#94a3b8;">Select or upload a spreadsheet above to preview data.</div>
+                            </div>
+                        </div>
+
+                        <!-- TAB 2: Natural Language Query -->
+                        <div id="op-config-nl" style="display:none;">
+                            <div style="margin-bottom:10px;">
+                                <div style="font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                                    <i class="fa-solid fa-lightbulb text-warning"></i> Suggested Natural Language Analytical Questions:
+                                </div>
+                                <div id="nl-suggested-chips-container" style="display:flex; flex-wrap:wrap; gap:6px; margin-bottom:12px;">
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Calculate the total expenditure across all departments')"><i class="fa-solid fa-calculator text-primary"></i> Total Expenditure</button>
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Show the top 5 departments based on expenditure')"><i class="fa-solid fa-ranking-star text-warning"></i> Top 5 by Expenditure</button>
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Compare expenditure across departments')"><i class="fa-solid fa-layer-group text-info"></i> Compare by Department</button>
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Which departments exceeded their allocated budgets?')"><i class="fa-solid fa-scale-balanced text-danger"></i> Budget Overruns</button>
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Detect outliers and abnormal values in amount')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Outlier Detection</button>
+                                    <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Find all duplicate records in this spreadsheet')"><i class="fa-solid fa-clone text-purple"></i> Find Duplicates</button>
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px;">
+                                <input type="text" id="nl-query-input" class="form-control" placeholder="Ask in plain English: e.g. Which departments exceeded budget? or Show monthly revenue trend..." style="background:#fff; font-size:0.92rem; padding:10px 14px; border-radius:6px; border:1px solid #94a3b8; flex:1;" onkeydown="if(event.key==='Enter') runActiveSpreadsheetOp()">
+                                <button id="nl-btn-submit" class="btn btn-primary" onclick="runActiveSpreadsheetOp()" style="padding:0 22px; font-weight:700; font-size:0.88rem; border-radius:6px;">
+                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Execute NL Query
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- TAB 3: Group By & Aggregate -->
+                        <div id="op-config-groupby" style="display:none;">
+                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr auto; gap:12px; align-items:flex-end;">
                                 <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Spreadsheet File</label>
-                                    <input type="file" id="sheet-upload-file" accept=".xlsx,.xls,.csv" class="form-control" style="background:#fff; width:100%;">
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Group By Column</label>
+                                    <select id="sheet-group-col" class="form-control" style="width:100%;"></select>
                                 </div>
                                 <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Document Title</label>
-                                    <input type="text" id="sheet-upload-title" class="form-control" placeholder="e.g. Q3 Regional Sales &amp; KPIs" style="background:#fff; width:100%;">
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Metric Column (Numeric)</label>
+                                    <select id="sheet-metric-col" class="form-control" style="width:100%;"></select>
                                 </div>
                                 <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Classification</label>
-                                    <select id="sheet-upload-class" class="form-control" style="background:#fff; width:100%;">
-                                        <option value="internal" selected>INTERNAL (Default)</option>
-                                        <option value="confidential">CONFIDENTIAL</option>
-                                        <option value="restricted">RESTRICTED</option>
-                                        <option value="public">PUBLIC</option>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Aggregation Function</label>
+                                    <select id="sheet-agg-func" class="form-control" style="width:100%;">
+                                        <option value="sum" selected>SUM (Total)</option>
+                                        <option value="avg">AVG (Mean)</option>
+                                        <option value="min">MIN (Lowest)</option>
+                                        <option value="max">MAX (Highest)</option>
+                                        <option value="count">COUNT (Records)</option>
                                     </select>
                                 </div>
                                 <div>
-                                    <button id="sheet-btn-upload" class="btn btn-secondary" onclick="uploadSpreadsheetFile()" style="height:38px;"><i class="fa-solid fa-upload"></i> Upload &amp; Inspect</button>
+                                    <button class="btn btn-primary" onclick="runActiveSpreadsheetOp()" style="height:38px; font-weight:700;">
+                                        <i class="fa-solid fa-play"></i> Execute Aggregate
+                                    </button>
                                 </div>
-                            </div>
-                            <div id="sheet-upload-status" style="margin-bottom:12px; font-size:0.85rem; display:none;"></div>
-
-                            <!-- Manual Workbench -->
-                            <div id="sheet-workbench" style="display:none;">
-                                <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; align-items:center;">
-                                    <div style="min-width:200px;">
-                                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Select Sheet / Tab</label>
-                                        <select id="sheet-tab-select" class="form-control" onchange="onSpreadsheetTabChange()" style="width:100%; font-weight:600;"></select>
-                                    </div>
-                                    <div style="flex:1;">
-                                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Operation Mode</label>
-                                        <div class="auth-toggle-bar" style="margin:0;">
-                                            <button id="sheet-op-overview" class="auth-tab-btn active" onclick="setSheetOp('overview')"><i class="fa-solid fa-chart-pie"></i> Overview</button>
-                                            <button id="sheet-op-groupby" class="auth-tab-btn" onclick="setSheetOp('groupby')"><i class="fa-solid fa-layer-group"></i> Group By</button>
-                                            <button id="sheet-op-filter" class="auth-tab-btn" onclick="setSheetOp('filter')"><i class="fa-solid fa-filter"></i> Filter</button>
-                                            <button id="sheet-op-anomaly" class="auth-tab-btn" onclick="setSheetOp('anomaly')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly</button>
-                                            <button id="sheet-op-variance" class="auth-tab-btn" onclick="setSheetOp('variance')"><i class="fa-solid fa-scale-balanced text-info"></i> Variance</button>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="sheet-groupby-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Group By Column</label>
-                                            <select id="sheet-group-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Metric Column</label>
-                                            <select id="sheet-metric-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Aggregation Function</label>
-                                            <select id="sheet-agg-func" class="form-control" style="width:100%;">
-                                                <option value="sum" selected>SUM</option>
-                                                <option value="avg">AVG</option>
-                                                <option value="min">MIN</option>
-                                                <option value="max">MAX</option>
-                                                <option value="count">COUNT</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="sheet-filter-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                                    <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr; gap:10px;">
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Filter Column</label>
-                                            <select id="sheet-filter-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Condition</label>
-                                            <select id="sheet-filter-op" class="form-control" style="width:100%;">
-                                                <option value="==">==</option>
-                                                <option value="!=">!=</option>
-                                                <option value=">">&gt;</option>
-                                                <option value=">=">&gt;=</option>
-                                                <option value="<">&lt;</option>
-                                                <option value="<=">&lt;=</option>
-                                                <option value="contains">contains</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Value</label>
-                                            <input type="text" id="sheet-filter-val" class="form-control" style="width:100%;">
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Sort By</label>
-                                            <select id="sheet-sort-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="sheet-anomaly-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                                    <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:10px;">
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Target Numeric Column</label>
-                                            <select id="sheet-anomaly-target-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Detection Method</label>
-                                            <select id="sheet-anomaly-method" class="form-control" style="width:100%;">
-                                                <option value="iqr" selected>IQR (1.5x)</option>
-                                                <option value="zscore">Z-Score (&gt;2.5σ)</option>
-                                            </select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension Column</label>
-                                            <select id="sheet-anomaly-dim-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div id="sheet-variance-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                                    <div style="display:grid; grid-template-columns: 2fr 2fr 2fr; gap:10px;">
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Base Column (Budget)</label>
-                                            <select id="sheet-var-base-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Column (Actual)</label>
-                                            <select id="sheet-var-comp-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                        <div>
-                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension Column</label>
-                                            <select id="sheet-var-dim-col" class="form-control" style="width:100%;"></select>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <button id="sheet-btn-analyze" class="btn btn-secondary" onclick="runSpreadsheetAnalysis()" style="font-weight:700;"><i class="fa-solid fa-play"></i> Run Manual Analysis</button>
-                            </div>
-                        </div>
-                    </details>
-
-                    <!-- FEATURE: NATURAL LANGUAGE DATA ANALYSIS WORKBENCH -->
-                    <div class="nl-workbench-container" id="nl-workbench-card">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
-                            <div>
-                                <div style="font-weight:800; font-size:1.15rem; color:#0f172a; display:flex; align-items:center; gap:10px;">
-                                    <span style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color:#fff; width:32px; height:32px; border-radius:8px; display:inline-flex; align-items:center; justify-content:center; font-size:0.95rem; box-shadow:0 2px 6px rgba(2,132,199,0.3);">
-                                        <i class="fa-solid fa-comments"></i>
-                                    </span>
-                                    Natural Language Data Analysis Workbench
-                                </div>
-                                <div style="font-size:0.82rem; color:#64748b; margin-top:3px;">
-                                    Ask plain-English questions about uploaded Excel or CSV data. Executed deterministically with Python data engines &amp; explained by AI.
-                                </div>
-                            </div>
-                            <span class="badge badge-primary" style="font-size:0.75rem; padding:4px 10px;">
-                                <i class="fa-solid fa-shield-check"></i> Safe Deterministic Execution
-                            </span>
-                        </div>
-
-                        <!-- Document & Sheet Selector Bar -->
-                        <div style="display:grid; grid-template-columns: 2fr 1fr auto; gap:12px; margin-bottom:16px; align-items:end;">
-                            <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Active Spreadsheet File</label>
-                                <select id="nl-doc-select" class="form-control" onchange="onNlDocumentChanged()" style="background:#fff; width:100%;">
-                                    <option value="">-- Select Uploaded Spreadsheet --</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Worksheet</label>
-                                <select id="nl-sheet-select" class="form-control" onchange="onNlSheetChanged()" style="background:#fff; width:100%;">
-                                    <option value="">-- Active Sheet --</option>
-                                </select>
-                            </div>
-                            <div>
-                                <button type="button" class="btn btn-secondary" onclick="refreshNlDocuments()" title="Refresh uploaded documents list" style="height:38px;">
-                                    <i class="fa-solid fa-rotate-right"></i>
-                                </button>
                             </div>
                         </div>
 
-                        <!-- Sheet Schema Profile Explorer -->
-                        <div id="nl-schema-container" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:12px 16px; margin-bottom:16px;">
-                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                                <span style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em;">
-                                    <i class="fa-solid fa-table-columns text-primary"></i> Detected Columns &amp; Profiles (<span id="nl-schema-col-count">0</span> columns, <span id="nl-schema-row-count">0</span> rows)
-                                </span>
-                                <span id="nl-vault-badge" class="badge badge-info" style="font-size:0.7rem;">ROLE VAULT PROTECTED</span>
-                            </div>
-                            <div id="nl-schema-pills" style="display:flex; flex-wrap:wrap; gap:8px;">
-                                <!-- Dynamically populated schema pills -->
-                            </div>
-                        </div>
-
-                        <!-- Smart Suggested Questions Chips -->
-                        <div id="nl-suggestions-section" style="margin-bottom:16px;">
-                            <div style="font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-                                <i class="fa-solid fa-lightbulb text-warning"></i> Recommended Analytical Questions:
-                            </div>
-                            <div id="nl-suggested-chips-container" style="display:flex; flex-wrap:wrap; gap:8px;">
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Calculate the total expenditure across all departments')"><i class="fa-solid fa-calculator text-primary"></i> Total Expenditure</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Show the top 5 departments based on expenditure')"><i class="fa-solid fa-ranking-star text-warning"></i> Top 5 by Expenditure</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Compare expenditure across departments')"><i class="fa-solid fa-layer-group text-info"></i> Compare by Department</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Which departments exceeded their allocated budgets?')"><i class="fa-solid fa-scale-balanced text-danger"></i> Budget Overruns</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Detect outliers and abnormal values in amount')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Outlier Detection</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Find all duplicate records in this spreadsheet')"><i class="fa-solid fa-clone text-purple"></i> Find Duplicates</button>
-                                <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('Show the monthly trend for expenditure')"><i class="fa-solid fa-chart-line text-success"></i> Monthly Trend</button>
-                            </div>
-                        </div>
-
-                        <!-- Natural Language Query Input Bar -->
-                        <div style="margin-bottom:16px;">
-                            <div style="position:relative; display:flex; gap:10px;">
-                                <input type="text" id="nl-query-input" class="form-control" placeholder="Ask in natural language: e.g. Which departments exceeded budget? or Show top 5 sales..." style="background:#fff; font-size:0.95rem; padding:12px 16px; border-radius:8px; border:1px solid #94a3b8; flex:1;" onkeydown="if(event.key==='Enter') executeNlQuery()">
-                                <button id="nl-btn-submit" class="btn btn-primary" onclick="executeNlQuery()" style="padding:0 24px; font-weight:700; font-size:0.92rem; border-radius:8px; background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%);">
-                                    <i class="fa-solid fa-wand-magic-sparkles"></i> Ask AI
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Status Alert / Loading indicator -->
-                        <div id="nl-status-banner" style="display:none; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:0.85rem;"></div>
-
-                        <!-- Results Container -->
-                        <div id="nl-results-view" style="display:none; margin-top:20px;">
-                            <!-- Header with metadata & Export Deliverables -->
-                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:16px; padding-bottom:12px; border-bottom:1px solid #e2e8f0;">
+                        <!-- TAB 4: Filter & Sort -->
+                        <div id="op-config-filter" style="display:none;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr auto; gap:10px; align-items:flex-end;">
                                 <div>
-                                    <span id="nl-res-op-badge" class="badge badge-primary" style="text-transform:uppercase;">STATISTICAL</span>
-                                    <span id="nl-res-time-badge" style="font-size:0.75rem; color:#64748b; margin-left:8px;">Execution: 0.05s</span>
-                                    <span id="nl-res-count-badge" style="font-size:0.75rem; color:#64748b; margin-left:8px;">Rows: 0</span>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Filter Column</label>
+                                    <select id="sheet-filter-col" class="form-control" style="width:100%;"></select>
                                 </div>
-                                <div style="display:flex; gap:8px;">
-                                    <button class="btn btn-secondary btn-sm" onclick="exportNlResultTo('xlsx')" style="font-size:0.76rem; padding:5px 12px;"><i class="fa-solid fa-file-excel text-success"></i> Export Excel</button>
-                                    <button class="btn btn-secondary btn-sm" onclick="exportNlResultTo('pdf')" style="font-size:0.76rem; padding:5px 12px;"><i class="fa-solid fa-file-pdf text-danger"></i> Export PDF</button>
-                                    <button class="btn btn-secondary btn-sm" onclick="exportNlResultTo('pptx')" style="font-size:0.76rem; padding:5px 12px;"><i class="fa-solid fa-file-powerpoint text-warning"></i> Export Slide Deck</button>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Condition</label>
+                                    <select id="sheet-filter-op" class="form-control" style="width:100%;">
+                                        <option value="==">== (Equals)</option>
+                                        <option value="!=">!= (Not Equal)</option>
+                                        <option value=">">&gt; (Greater than)</option>
+                                        <option value=">=">&gt;= (At least)</option>
+                                        <option value="<">&lt; (Less than)</option>
+                                        <option value="<=">&lt;= (At most)</option>
+                                        <option value="contains">contains (Text match)</option>
+                                    </select>
                                 </div>
-                            </div>
-
-                            <!-- Direct Answer Callout -->
-                            <div class="nl-result-answer">
-                                <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">
-                                    <i class="fa-solid fa-circle-check"></i> Direct Answer
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Filter Value</label>
+                                    <input type="text" id="sheet-filter-val" class="form-control" placeholder="Value..." style="width:100%;">
                                 </div>
-                                <div id="nl-direct-answer-text" style="font-size:1.1rem; font-weight:700; color:#0f172a; line-height:1.4;">
-                                    --
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Sort By Column</label>
+                                    <select id="sheet-sort-col" class="form-control" style="width:100%;"></select>
                                 </div>
-                            </div>
-
-                            <!-- Executive AI Explanation Narrative -->
-                            <div id="nl-explanation-container" style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px 20px; margin-bottom:18px;">
-                                <div style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
-                                    <i class="fa-solid fa-brain text-primary"></i> Executive AI Analysis &amp; Interpretation
-                                </div>
-                                <div id="nl-explanation-text" style="font-size:0.86rem; color:#334155; line-height:1.6; white-space:pre-line;">
-                                    --
-                                </div>
-                            </div>
-
-                            <!-- Visual Chart Container -->
-                            <div id="nl-chart-wrapper" style="display:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:18px; margin-bottom:18px;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                                    <span id="nl-chart-title" style="font-weight:700; font-size:0.88rem; color:#0f172a;"><i class="fa-solid fa-chart-column text-primary"></i> Visualization</span>
-                                    <span id="nl-chart-type-tag" class="badge badge-secondary" style="font-size:0.7rem; text-transform:uppercase;">BAR CHART</span>
-                                </div>
-                                <div id="nl-chart-render" style="width:100%; min-height:220px; display:flex; align-items:center; justify-content:center;">
-                                    <!-- Rendered SVG Chart -->
-                                </div>
-                            </div>
-
-                            <!-- Tabular Data View -->
-                            <div id="nl-table-wrapper" style="display:none; background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-bottom:18px; overflow-x:auto;">
-                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                                    <span style="font-weight:700; font-size:0.85rem; color:#0f172a;"><i class="fa-solid fa-table text-primary"></i> Structured Data Results</span>
-                                    <span id="nl-table-meta" style="font-size:0.75rem; color:#64748b;">0 records</span>
-                                </div>
-                                <div id="nl-table-render" style="max-height:350px; overflow-y:auto;">
-                                    <!-- Dynamic table -->
+                                <div>
+                                    <button class="btn btn-primary" onclick="runActiveSpreadsheetOp()" style="height:38px; font-weight:700;">
+                                        <i class="fa-solid fa-filter"></i> Apply Filter
+                                    </button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Query History Drawer / List -->
-                        <div style="margin-top:20px; border-top:1px solid #e2e8f0; padding-top:16px;">
-                            <details id="nl-history-details">
-                                <summary style="font-size:0.82rem; font-weight:700; color:#475569; cursor:pointer; user-select:none; display:flex; align-items:center; gap:6px;">
-                                    <i class="fa-solid fa-clock-rotate-left text-primary"></i> Analysis History &amp; Previous Questions (<span id="nl-history-count">0</span>)
-                                </summary>
-                                <div id="nl-history-list" style="margin-top:12px;">
-                                    <div style="font-size:0.78rem; color:#94a3b8; text-align:center; padding:12px;">No previous queries for this document.</div>
+                        <!-- TAB 5: Variance & Overruns -->
+                        <div id="op-config-variance" style="display:none;">
+                            <div style="display:grid; grid-template-columns: 2fr 2fr 2fr auto; gap:10px; align-items:flex-end;">
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Base Column (e.g. Budget / Target)</label>
+                                    <select id="sheet-var-base-col" class="form-control" style="width:100%;"></select>
                                 </div>
-                            </details>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Column (e.g. Actual Spend)</label>
+                                    <select id="sheet-var-comp-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Category Column</label>
+                                    <select id="sheet-var-dim-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" onclick="runActiveSpreadsheetOp()" style="height:38px; font-weight:700;">
+                                        <i class="fa-solid fa-scale-balanced"></i> Analyze Variance
+                                    </button>
+                                </div>
+                            </div>
                         </div>
+
+                        <!-- TAB 6: Anomaly Detection -->
+                        <div id="op-config-anomaly" style="display:none;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr auto; gap:10px; align-items:flex-end;">
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Target Numeric Column</label>
+                                    <select id="sheet-anomaly-target-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Detection Method</label>
+                                    <select id="sheet-anomaly-method" class="form-control" style="width:100%;">
+                                        <option value="iqr" selected>IQR (1.5&times; Tukey)</option>
+                                        <option value="zscore">Z-Score (&gt;2.5&sigma; Normal)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Entity Column</label>
+                                    <select id="sheet-anomaly-dim-col" class="form-control" style="width:100%;"></select>
+                                </div>
+                                <div>
+                                    <button class="btn btn-primary" onclick="runActiveSpreadsheetOp()" style="height:38px; font-weight:700;">
+                                        <i class="fa-solid fa-triangle-exclamation"></i> Detect Outliers
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Status Alert / Progress Banner -->
+                    <div id="sheet-status-alert" style="display:none; padding:12px 16px; border-radius:8px; margin-bottom:16px; font-size:0.85rem;"></div>
+
+                    <!-- Results & Deliverables Showcase Area -->
+                    <div id="sheet-results-area" style="display:none; margin-top:20px;">
+                        
+                        <!-- 1-Click Deliverables Banner -->
+                        <div id="sheet-deliverables-banner" style="background:linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color:#fff; border-radius:10px; padding:14px 18px; margin-bottom:16px; box-shadow:0 4px 12px rgba(15,23,42,0.15);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                                <div>
+                                    <div style="font-weight:800; font-size:0.98rem; display:flex; align-items:center; gap:8px;">
+                                        <i class="fa-solid fa-circle-check text-success"></i> Calculation Completed &bull; 1-Click Deliverables Ready
+                                    </div>
+                                    <div style="font-size:0.78rem; color:#94a3b8; margin-top:2px;">
+                                        Download formatted Excel (.xlsx), widescreen presentation deck (.pptx), or executive PDF.
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button class="btn btn-sm" onclick="exportSpreadsheetDeliverable('xlsx')" style="background:#fff; color:#0f172a; font-weight:700; padding:6px 12px; font-size:0.78rem;">
+                                        <i class="fa-solid fa-file-excel text-success"></i> Download Excel (.xlsx)
+                                    </button>
+                                    <button class="btn btn-sm" onclick="exportSpreadsheetDeliverable('pptx')" style="background:#fff; color:#0f172a; font-weight:700; padding:6px 12px; font-size:0.78rem;">
+                                        <i class="fa-solid fa-file-powerpoint text-warning"></i> Download Slide Deck (.pptx)
+                                    </button>
+                                    <button class="btn btn-sm" onclick="exportSpreadsheetDeliverable('pdf')" style="background:#fff; color:#0f172a; font-weight:700; padding:6px 12px; font-size:0.78rem;">
+                                        <i class="fa-solid fa-file-pdf text-danger"></i> Download Report (.pdf)
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Direct Answer Callout (For NL Queries) -->
+                        <div id="nl-direct-answer-box" class="nl-result-answer" style="display:none; margin-bottom:16px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px;">
+                            <div style="font-size:0.75rem; font-weight:700; color:#15803d; text-transform:uppercase; letter-spacing:0.04em; margin-bottom:4px;">
+                                <i class="fa-solid fa-circle-check"></i> Direct Answer
+                            </div>
+                            <div id="nl-direct-answer-text" style="font-size:1.05rem; font-weight:700; color:#0f172a; line-height:1.4;">--</div>
+                        </div>
+
+                        <!-- Results Side-by-Side: Formatted Table & Executive Insights -->
+                        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px; margin-bottom:16px;" id="sheet-tables-split">
+                            <div class="card" style="margin:0; background:#fff; border:1px solid #cbd5e1;">
+                                <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-table"></i> Tabular Data Results</div>
+                                    <span id="sheet-res-rows-badge" class="badge badge-info" style="font-size:0.7rem;">0 rows</span>
+                                </div>
+                                <div id="sheet-table-render" style="overflow-x:auto; max-height:420px; padding:12px; font-size:0.82rem;"></div>
+                            </div>
+
+                            <div class="card" style="margin:0; background:#fff; border:1px solid #cbd5e1;">
+                                <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-brain text-primary"></i> Grounded Executive Insights (Local Ollama)</div>
+                                    <span id="sheet-pii-badge" style="display:none;" class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> PII Scrubbed</span>
+                                </div>
+                                <div id="sheet-insights-render" style="overflow-y:auto; max-height:420px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1e293b;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Visual Analytics Chart Card -->
+                        <div id="sheet-chart-card" class="card" style="margin-bottom:16px; background:#fff; border:1px solid #cbd5e1; display:none;">
+                            <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding:10px 14px; display:flex; justify-content:space-between; align-items:center;">
+                                <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-chart-column text-primary"></i> Interactive Visual Analytics</div>
+                                <span id="sheet-chart-type-tag" class="badge badge-secondary" style="font-size:0.7rem; text-transform:uppercase;">BAR CHART</span>
+                            </div>
+                            <div id="sheet-chart-container" style="padding:16px; overflow-x:auto; min-height:220px; display:flex; align-items:center; justify-content:center;"></div>
+                        </div>
+
                     </div>
                 </div>
             </div>
@@ -3566,7 +3529,7 @@
             }
 
             const btn = document.getElementById('nl-btn-submit');
-            const statusBanner = document.getElementById('nl-status-banner');
+            const statusBanner = document.getElementById('sheet-status-alert') || document.getElementById('nl-status-banner');
             const resultsView = document.getElementById('nl-results-view');
 
             btn.disabled = true;
@@ -3606,9 +3569,52 @@
         }
 
         function renderNlResult(data) {
+            // Sync with studio state
+            sheetState.lastHeaders = data.data?.columns || [];
+            sheetState.lastRows = data.data?.rows || [];
+            sheetState.lastInsights = (data.answer ? `### Direct Answer
+${data.answer}
+
+` : '') + (data.explanation || '');
+
+            // Populate Unified Spreadsheet Studio results area
+            const studioResultsArea = document.getElementById('sheet-results-area');
+            if (studioResultsArea) {
+                studioResultsArea.style.display = 'block';
+
+                const directBox = document.getElementById('nl-direct-answer-box');
+                const directText = document.getElementById('nl-direct-answer-text');
+                if (directBox && directText) {
+                    directBox.style.display = data.answer ? 'block' : 'none';
+                    directText.textContent = data.answer || '';
+                }
+
+                const tableRender = document.getElementById('sheet-table-render');
+                const rowsBadge = document.getElementById('sheet-res-rows-badge');
+                if (tableRender) {
+                    tableRender.innerHTML = renderHtmlTable(sheetState.lastHeaders, sheetState.lastRows);
+                }
+                if (rowsBadge) {
+                    rowsBadge.textContent = `${sheetState.lastRows.length} rows`;
+                }
+
+                const insightsRender = document.getElementById('sheet-insights-render');
+                if (insightsRender) {
+                    insightsRender.innerHTML = formatMarkdown(sheetState.lastInsights || 'Analysis complete.');
+                }
+
+                const chartCard = document.getElementById('sheet-chart-card');
+                const chartContainer = document.getElementById('sheet-chart-container');
+                if (chartCard && chartContainer && data.chart_spec && data.chart_spec.data && data.chart_spec.data.length > 0) {
+                    chartCard.style.display = 'block';
+                    renderSvgChart(chartContainer, data.chart_spec);
+                } else if (chartCard) {
+                    chartCard.style.display = 'none';
+                }
+            }
+
             const resultsView = document.getElementById('nl-results-view');
-            if (!resultsView) return;
-            resultsView.style.display = 'block';
+            if (resultsView) resultsView.style.display = 'block';
 
             // Badges & Meta
             document.getElementById('nl-res-op-badge').textContent = (data.operation || 'analysis').toUpperCase();
@@ -3809,6 +3815,7 @@
             const aiBtn = document.querySelector('[data-nav="ai-run"]');
             if (aiBtn) switchNav('ai-run', aiBtn);
             loadDashboardAuditLogs();
+            refreshAiDocList();
             setInterval(loadDashboardAuditLogs, 10000);
         }
 
@@ -3871,7 +3878,7 @@
             if (panelId === 'rag') loadRAGDocs();
             if (panelId === 'doc-gen') loadDocGenHistory();
             if (panelId === 'spreadsheets') loadSpreadsheetWorkspace();
-            if (panelId === 'ai-run') loadDashboardAuditLogs();
+            if (panelId === 'ai-run') { loadDashboardAuditLogs(); refreshAiDocList(); }
             if (panelId === 'rag-lab') loadRAGHealth();
             if (panelId === 'approvals') loadApprovals();
             if (panelId === 'audit') loadAuditEvents();
@@ -4266,8 +4273,15 @@
                 </div>
             `;
 
+            let finalPrompt = prompt;
+            if (aiAttachmentState.docId && aiAttachmentState.filename) {
+                finalPrompt = `[Attached Document Context: ${aiAttachmentState.filename} (ID: ${aiAttachmentState.docId})]
+
+${prompt}`;
+            }
+
             const payload = {
-                input: prompt,
+                input: finalPrompt,
                 data_sensitivity: sensitivity,
                 model: model,
                 structured: isStructured
@@ -4974,6 +4988,8 @@
                     <td>${statusBadge}</td>
                     <td style="font-size:0.75rem;">${(doc.allowed_roles || []).join(', ') || 'All Roles'}</td>
                     <td style="text-align:right;">
+                        <button class="btn btn-primary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="attachDocToAiAssistant('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Query in Assistant"><i class="fa-solid fa-wand-magic-sparkles"></i> Query</button>
+                        ${(doc.title && (doc.title.endsWith('.xlsx') || doc.title.endsWith('.xls') || doc.title.endsWith('.csv'))) ? `<button class="btn btn-success btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="openInSpreadsheetStudio('${doc.id}')" title="Analyze in Spreadsheet Studio"><i class="fa-solid fa-table-cells"></i> Studio</button>` : ''}
                         <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="previewDoc('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Preview Chunks"><i class="fa-solid fa-eye"></i></button>
                         <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="downloadDoc('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Download Original File"><i class="fa-solid fa-download"></i></button>
                         <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="reindexDoc('${doc.id}')" title="Reindex with OCR"><i class="fa-solid fa-arrows-rotate"></i></button>
@@ -6031,6 +6047,529 @@
                 console.warn('Dashboard audit log load error:', err.message);
             }
         }
+
+                // =========================================================================
+        // AI ASSISTANT DOCUMENT ATTACHMENT & GROUNDING LOGIC
+        // =========================================================================
+        let aiAttachmentState = {
+            docId: null,
+            filename: '',
+            classification: 'INTERNAL',
+            fileSize: 0,
+            isSpreadsheet: false
+        };
+
+        function toggleAiDocMode(mode) {
+            const selectWrap = document.getElementById('ai-doc-select-wrap');
+            const uploadWrap = document.getElementById('ai-doc-upload-wrap');
+            const btnSelect = document.getElementById('ai-att-tab-select');
+            const btnUpload = document.getElementById('ai-att-tab-upload');
+
+            if (mode === 'select') {
+                if (selectWrap) selectWrap.style.display = 'block';
+                if (uploadWrap) uploadWrap.style.display = 'none';
+                if (btnSelect) { btnSelect.style.background = '#e2e8f0'; btnSelect.style.color = '#0f172a'; }
+                if (btnUpload) { btnUpload.style.background = '#fff'; btnUpload.style.color = '#475569'; }
+                refreshAiDocList();
+            } else {
+                if (selectWrap) selectWrap.style.display = 'none';
+                if (uploadWrap) uploadWrap.style.display = 'block';
+                if (btnSelect) { btnSelect.style.background = '#fff'; btnSelect.style.color = '#475569'; }
+                if (btnUpload) { btnUpload.style.background = '#e2e8f0'; btnUpload.style.color = '#0f172a'; }
+            }
+        }
+
+        async function refreshAiDocList() {
+            try {
+                const res = await api('GET', '/api/v1/rag/documents');
+                const sel = document.getElementById('ai-doc-select');
+                if (!sel) return;
+                sel.innerHTML = '<option value="">-- No Document Attached (Assistant Queries Entire Authorized Knowledge Base) --</option>';
+                if (res.ok && Array.isArray(res.data)) {
+                    res.data.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        const sz = d.file_size ? `${(d.file_size / 1024).toFixed(0)} KB` : '';
+                        opt.textContent = `${d.title || d.filename} [${(d.classification || 'INTERNAL').toUpperCase()}] ${sz ? '(' + sz + ')' : ''}`;
+                        if (aiAttachmentState.docId === d.id) opt.selected = true;
+                        sel.appendChild(opt);
+                    });
+                }
+            } catch (err) {
+                console.error('Error refreshing AI doc list:', err);
+            }
+        }
+
+        function onAiDocSelectChange() {
+            const sel = document.getElementById('ai-doc-select');
+            const docId = sel.value;
+            if (!docId) {
+                clearAiAttachment();
+                return;
+            }
+            const opt = sel.options[sel.selectedIndex];
+            attachDocToAiAssistant(docId, opt ? opt.text.split(' [')[0] : 'Document');
+        }
+
+        function attachDocToAiAssistant(docId, docTitle) {
+            aiAttachmentState.docId = docId;
+            aiAttachmentState.filename = docTitle;
+            const lower = (docTitle || '').toLowerCase();
+            aiAttachmentState.isSpreadsheet = lower.endsWith('.xlsx') || lower.endsWith('.xls') || lower.endsWith('.csv');
+
+            const bar = document.getElementById('ai-active-att-bar');
+            const fnLabel = document.getElementById('ai-att-filename');
+            const openSheetBtn = document.getElementById('ai-att-open-sheet-btn');
+
+            if (bar && fnLabel) {
+                bar.style.display = 'flex';
+                fnLabel.textContent = docTitle;
+            }
+            if (openSheetBtn) {
+                openSheetBtn.style.display = aiAttachmentState.isSpreadsheet ? 'inline-block' : 'none';
+            }
+
+            const sel = document.getElementById('ai-doc-select');
+            if (sel) sel.value = docId;
+
+            switchNav('ai-run', document.getElementById('nav-item-ai-run'));
+            showToast(`Attached '${docTitle}' to AI Assistant session.`, 'success');
+        }
+
+        function clearAiAttachment() {
+            aiAttachmentState.docId = null;
+            aiAttachmentState.filename = '';
+            aiAttachmentState.isSpreadsheet = false;
+
+            const bar = document.getElementById('ai-active-att-bar');
+            if (bar) bar.style.display = 'none';
+
+            const sel = document.getElementById('ai-doc-select');
+            if (sel) sel.value = '';
+        }
+
+        function openCurrentAttachmentInSpreadsheetStudio() {
+            if (aiAttachmentState.docId) {
+                openInSpreadsheetStudio(aiAttachmentState.docId);
+            }
+        }
+
+        function openInSpreadsheetStudio(docId) {
+            sheetState.docId = docId;
+            nlState.activeDocId = docId;
+            switchNav('spreadsheets', document.getElementById('nav-item-spreadsheets'));
+            const docSel = document.getElementById('nl-doc-select');
+            if (docSel) docSel.value = docId;
+            onSpreadsheetDocSelected();
+        }
+
+        async function uploadDirectAtAssistant() {
+            const fileInput = document.getElementById('ai-inline-upload-file');
+            const classInput = document.getElementById('ai-inline-upload-class');
+            const btn = document.getElementById('ai-btn-inline-upload');
+            const statusDiv = document.getElementById('ai-inline-upload-status');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please choose a document to upload.');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const classification = classInput.value || 'internal';
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', file.name);
+            formData.append('classification', classification);
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<span style="color:#0284c7;"><i class="fa-solid fa-spinner fa-spin"></i> Storing, chunking & indexing document...</span>';
+
+            try {
+                const isSheet = file.name.endsWith('.xlsx') || file.name.endsWith('.xls') || file.name.endsWith('.csv');
+                const url = isSheet ? '/api/v1/spreadsheets/upload' : '/api/v1/rag/upload';
+
+                const res = await fetch(url, {
+                    method: 'POST',
+                    headers: state.token ? { 'Authorization': 'Bearer ' + state.token } : {},
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+                statusDiv.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-check"></i> Indexed '${escapeHtml(file.name)}' successfully!</span>`;
+                toggleAiDocMode('select');
+                await refreshAiDocList();
+                attachDocToAiAssistant(data.document_id || data.id, file.name);
+                fileInput.value = '';
+            } catch (err) {
+                statusDiv.innerHTML = `<span style="color:#ef4444; font-weight:600;"><i class="fa-solid fa-triangle-exclamation"></i> Error: ${escapeHtml(err.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload & Attach';
+            }
+        }
+
+        // =========================================================================
+        // UNIFIED ENTERPRISE SPREADSHEET STUDIO CLIENT LOGIC
+        // =========================================================================
+        function toggleSpreadsheetUploadDrawer() {
+            const drawer = document.getElementById('sheet-upload-drawer');
+            if (drawer) {
+                drawer.style.display = drawer.style.display === 'none' ? 'block' : 'none';
+            }
+        }
+
+        async function uploadSpreadsheetFromDrawer() {
+            const fileInput = document.getElementById('sheet-main-upload-file');
+            const titleInput = document.getElementById('sheet-main-upload-title');
+            const classInput = document.getElementById('sheet-main-upload-class');
+            const statusDiv = document.getElementById('sheet-drawer-upload-status');
+            const btn = document.getElementById('sheet-btn-drawer-upload');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a spreadsheet file (.xlsx, .xls, .csv).');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            const title = (titleInput.value || '').trim() || file.name;
+            const classification = classInput.value || 'internal';
+
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('title', title);
+            formData.append('classification', classification);
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploading...';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<span style="color:#0284c7;"><i class="fa-solid fa-spinner fa-spin"></i> Ingesting & profiling spreadsheet workbook...</span>';
+
+            try {
+                const res = await fetch('/api/v1/spreadsheets/upload', {
+                    method: 'POST',
+                    headers: state.token ? { 'Authorization': 'Bearer ' + state.token } : {},
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+                statusDiv.innerHTML = `<span style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Uploaded '${escapeHtml(data.filename)}'!</span>`;
+                sheetState.docId = data.document_id;
+                nlState.activeDocId = data.document_id;
+                await loadSpreadsheetWorkspace();
+                const docSel = document.getElementById('nl-doc-select');
+                if (docSel) docSel.value = data.document_id;
+                await onSpreadsheetDocSelected();
+                toggleSpreadsheetUploadDrawer();
+            } catch (err) {
+                statusDiv.innerHTML = `<span style="color:#ef4444; font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Error: ${escapeHtml(err.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload & Inspect';
+            }
+        }
+
+        async function loadSpreadsheetWorkspace() {
+            try {
+                const res = await api('GET', '/api/v1/rag/documents');
+                const docSelect = document.getElementById('nl-doc-select');
+                if (!docSelect) return;
+
+                docSelect.innerHTML = '<option value="">-- Select Uploaded Spreadsheet --</option>';
+
+                if (res.ok && Array.isArray(res.data)) {
+                    const sheets = res.data.filter(d => {
+                        const t = (d.title || d.filename || '').toLowerCase();
+                        return t.endsWith('.xlsx') || t.endsWith('.xls') || t.endsWith('.csv');
+                    });
+
+                    nlState.allDocs = sheets;
+                    sheets.forEach(d => {
+                        const opt = document.createElement('option');
+                        opt.value = d.id;
+                        opt.textContent = `${d.title || d.filename} (${(d.classification || 'INTERNAL').toUpperCase()})`;
+                        docSelect.appendChild(opt);
+                    });
+
+                    if (sheetState.docId && sheets.some(d => d.id === sheetState.docId)) {
+                        docSelect.value = sheetState.docId;
+                        await onSpreadsheetDocSelected();
+                    } else if (sheets.length > 0 && !docSelect.value) {
+                        docSelect.value = sheets[0].id;
+                        await onSpreadsheetDocSelected();
+                    }
+                }
+            } catch (err) {
+                console.error('Error loading spreadsheet workspace:', err);
+            }
+        }
+
+        async function onSpreadsheetDocSelected() {
+            const docSelect = document.getElementById('nl-doc-select');
+            const docId = docSelect ? docSelect.value : '';
+            sheetState.docId = docId;
+            nlState.activeDocId = docId;
+
+            const metaStrip = document.getElementById('sheet-meta-strip');
+            const schemaCont = document.getElementById('nl-schema-container');
+            const previewCont = document.getElementById('sheet-preview-table-container');
+
+            if (!docId) {
+                if (metaStrip) metaStrip.style.display = 'none';
+                if (schemaCont) schemaCont.style.display = 'none';
+                if (previewCont) previewCont.innerHTML = '<div style="text-align:center; padding:30px; color:#94a3b8;">Select or upload a spreadsheet above to preview data.</div>';
+                return;
+            }
+
+            try {
+                const res = await api('GET', `/api/v1/spreadsheets/${docId}/schema`);
+                if (res.ok && res.data) {
+                    renderSpreadsheetStudioSchema(res.data);
+                } else {
+                    if (res.status === 403) {
+                        showToast('Document resides in a restricted role vault (Access Denied).', 'danger');
+                    }
+                }
+            } catch (err) {
+                console.error('Error fetching spreadsheet schema:', err);
+            }
+        }
+
+        async function onSpreadsheetTabChanged() {
+            const tabSelect = document.getElementById('sheet-tab-select');
+            const sheetName = tabSelect ? tabSelect.value : '';
+            if (sheetState.docId && sheetName) {
+                const res = await api('GET', `/api/v1/spreadsheets/${sheetState.docId}/schema?sheet_name=${encodeURIComponent(sheetName)}`);
+                if (res.ok && res.data) {
+                    renderSpreadsheetStudioSchema(res.data);
+                }
+            }
+        }
+
+        function renderSpreadsheetStudioSchema(data) {
+            nlState.schema = data;
+            sheetState.sheets = data.available_sheets || [];
+            sheetState.currentSheet = data.sheet_name;
+
+            // Metadata strip
+            const metaStrip = document.getElementById('sheet-meta-strip');
+            const fnLabel = document.getElementById('sheet-active-filename');
+            const rowsLabel = document.getElementById('sheet-active-rows');
+            const colsLabel = document.getElementById('sheet-active-cols');
+            const vaultBadge = document.getElementById('sheet-vault-badge');
+
+            if (metaStrip) metaStrip.style.display = 'flex';
+            if (fnLabel) fnLabel.textContent = data.filename || 'Spreadsheet';
+            if (rowsLabel) rowsLabel.textContent = data.row_count || 0;
+            if (colsLabel) colsLabel.textContent = data.columns?.length || 0;
+            if (vaultBadge) vaultBadge.textContent = `${(data.classification || 'INTERNAL').toUpperCase()} VAULT`;
+
+            // Populate tab selector
+            const sheetSelect = document.getElementById('sheet-tab-select');
+            if (sheetSelect && data.available_sheets && data.available_sheets.length > 0) {
+                sheetSelect.innerHTML = '';
+                data.available_sheets.forEach(s => {
+                    const opt = document.createElement('option');
+                    opt.value = s;
+                    opt.textContent = s;
+                    if (s === data.sheet_name) opt.selected = true;
+                    sheetSelect.appendChild(opt);
+                });
+            }
+
+            // Populate column pills
+            const schemaCont = document.getElementById('nl-schema-container');
+            const pillsBox = document.getElementById('nl-schema-pills');
+            if (schemaCont && pillsBox) {
+                schemaCont.style.display = 'block';
+                let pillsHtml = '';
+                (data.columns || []).forEach(c => {
+                    const typeClass = c.data_type === 'number' ? 'nl-type-number' : (c.data_type === 'date' ? 'nl-type-date' : 'nl-type-string');
+                    pillsHtml += `
+                        <div class="nl-schema-pill" style="display:inline-flex; align-items:center; gap:6px; background:#fff; border:1px solid #cbd5e1; border-radius:14px; padding:3px 10px; font-size:0.75rem;">
+                            <span style="font-weight:700; color:#0f172a;">${escapeHtml(c.name)}</span>
+                            <span class="badge ${typeClass === 'nl-type-number' ? 'badge-primary' : (typeClass === 'nl-type-date' ? 'badge-warning' : 'badge-secondary')}" style="font-size:0.65rem;">${escapeHtml(c.data_type)}</span>
+                            ${c.null_count > 0 ? `<span style="color:#ef4444; font-size:0.65rem;">${c.null_count} nulls</span>` : ''}
+                        </div>
+                    `;
+                });
+                pillsBox.innerHTML = pillsHtml;
+            }
+
+            // Populate column dropdowns for Group By, Filter, Variance, Anomaly
+            populateStudioDropdowns(data.columns || []);
+
+            // Render live sample data preview table immediately
+            renderLiveSamplePreviewTable(data.headers || (data.columns || []).map(c => c.name), data.sample_rows || []);
+
+            // Render dynamic suggested questions if provided
+            if (data.suggested_questions && data.suggested_questions.length > 0) {
+                const chipsBox = document.getElementById('nl-suggested-chips-container');
+                if (chipsBox) {
+                    let chipsHtml = '';
+                    data.suggested_questions.forEach(q => {
+                        chipsHtml += `
+                            <button type="button" class="nl-chip-btn" onclick="applyNlQuestion('${escapeHtml(q)}')">
+                                <i class="fa-solid fa-wand-magic-sparkles text-primary"></i> ${escapeHtml(q)}
+                            </button>
+                        `;
+                    });
+                    chipsBox.innerHTML = chipsHtml;
+                }
+            }
+        }
+
+        function populateStudioDropdowns(columns) {
+            const groupSelect = document.getElementById('sheet-group-col');
+            const metricSelect = document.getElementById('sheet-metric-col');
+            const filterColSelect = document.getElementById('sheet-filter-col');
+            const sortColSelect = document.getElementById('sheet-sort-col');
+            const anomTargetSelect = document.getElementById('sheet-anomaly-target-col');
+            const anomDimSelect = document.getElementById('sheet-anomaly-dim-col');
+            const varBaseSelect = document.getElementById('sheet-var-base-col');
+            const varCompSelect = document.getElementById('sheet-var-comp-col');
+            const varDimSelect = document.getElementById('sheet-var-dim-col');
+
+            const allCols = columns.map(c => c.name);
+            const numCols = columns.filter(c => c.data_type === 'number').map(c => c.name);
+            const effectiveNum = numCols.length > 0 ? numCols : allCols;
+
+            const populate = (sel, items) => {
+                if (!sel) return;
+                sel.innerHTML = '';
+                items.forEach(it => {
+                    const opt = document.createElement('option');
+                    opt.value = it;
+                    opt.textContent = it;
+                    sel.appendChild(opt);
+                });
+            };
+
+            populate(groupSelect, allCols);
+            populate(filterColSelect, allCols);
+            populate(sortColSelect, allCols);
+            populate(anomDimSelect, allCols);
+            populate(varDimSelect, allCols);
+
+            populate(metricSelect, effectiveNum);
+            populate(anomTargetSelect, effectiveNum);
+            populate(varBaseSelect, effectiveNum);
+            populate(varCompSelect, effectiveNum);
+
+            if (varCompSelect && varCompSelect.options.length > 1) {
+                varCompSelect.selectedIndex = 1;
+            }
+        }
+
+        function renderLiveSamplePreviewTable(headers, rows) {
+            const container = document.getElementById('sheet-preview-table-container');
+            if (!container) return;
+            if (!headers || headers.length === 0 || !rows || rows.length === 0) {
+                container.innerHTML = '<div style="text-align:center; padding:24px; color:#94a3b8;">No preview rows available for this worksheet.</div>';
+                return;
+            }
+
+            let html = '<table class="table" style="width:100%; border-collapse:collapse; font-size:0.8rem;"><thead><tr>';
+            html += '<th style="background:#1e293b; color:#fff; padding:6px 10px; width:45px; text-align:center;">#</th>';
+            headers.forEach(h => {
+                html += `<th style="background:#1e293b; color:#fff; padding:6px 10px; font-weight:700;">${escapeHtml(h)}</th>`;
+            });
+            html += '</tr></thead><tbody>';
+
+            rows.slice(0, 25).forEach((r, idx) => {
+                const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
+                html += `<tr style="background:${bg}; border-bottom:1px solid #e2e8f0;">`;
+                html += `<td style="padding:6px 10px; text-align:center; color:#94a3b8; font-size:0.75rem;">${idx + 1}</td>`;
+                r.forEach(val => {
+                    let display = val === null || val === undefined ? '-' : String(val);
+                    if (typeof val === 'number') {
+                        display = Math.abs(val) < 1 && val !== 0 ? (val * 100).toFixed(2) + '%' : val.toLocaleString();
+                    }
+                    html += `<td style="padding:6px 10px; font-variant-numeric:tabular-nums;">${escapeHtml(display)}</td>`;
+                });
+                html += '</tr>';
+            });
+
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+
+        function setSpreadsheetOp(op) {
+            sheetState.currentOp = op;
+            document.querySelectorAll('#panel-spreadsheets .auth-tab-btn').forEach(b => b.classList.remove('active'));
+            const activeBtn = document.getElementById('tab-op-' + op);
+            if (activeBtn) activeBtn.classList.add('active');
+
+            ['preview', 'nl', 'groupby', 'filter', 'variance', 'anomaly'].forEach(mode => {
+                const cfg = document.getElementById('op-config-' + mode);
+                if (cfg) cfg.style.display = mode === op ? 'block' : 'none';
+            });
+        }
+
+        async function runActiveSpreadsheetOp() {
+            if (sheetState.currentOp === 'nl') {
+                return executeNlQuery();
+            } else if (sheetState.currentOp === 'preview') {
+                return onSpreadsheetDocSelected();
+            } else {
+                return runSpreadsheetAnalysis();
+            }
+        }
+
+        async function exportSpreadsheetDeliverable(format) {
+            if (!sheetState.docId) {
+                alert('Select an uploaded spreadsheet first.');
+                return;
+            }
+
+            const alertBox = document.getElementById('sheet-status-alert');
+            if (alertBox) {
+                alertBox.style.display = 'block';
+                alertBox.style.background = '#eff6ff';
+                alertBox.style.color = '#1e40af';
+                alertBox.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Compiling ${format.toUpperCase()} deliverable...`;
+            }
+
+            try {
+                const res = await api('POST', '/api/v1/spreadsheets/export', {
+                    document_id: sheetState.docId,
+                    sheet_name: sheetState.currentSheet || undefined,
+                    export_format: format,
+                    title: sheetState.filename || 'Spreadsheet Executive Deliverable',
+                    table_headers: sheetState.lastHeaders || [],
+                    table_rows: sheetState.lastRows || [],
+                    executive_insights: sheetState.lastInsights || ''
+                });
+
+                if (!res.ok) throw new Error(res.data?.detail || 'Export failed');
+
+                const dlUrl = res.data.download_url;
+                if (dlUrl) {
+                    const a = document.createElement('a');
+                    a.href = dlUrl;
+                    a.download = '';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                }
+
+                if (alertBox) {
+                    alertBox.style.background = '#f0fdf4';
+                    alertBox.style.color = '#15803d';
+                    alertBox.innerHTML = `<i class="fa-solid fa-circle-check"></i> ${format.toUpperCase()} deliverable downloaded successfully.`;
+                }
+            } catch (err) {
+                if (alertBox) {
+                    alertBox.style.background = '#fef2f2';
+                    alertBox.style.color = '#991b1b';
+                    alertBox.innerHTML = `<i class="fa-solid fa-triangle-exclamation"></i> Export error: ${escapeHtml(err.message)}`;
+                }
+            }
+        }
+
 
         // ── EXCEL & SPREADSHEET ANALYTICS STUDIO JAVASCRIPT ──────────────
         const sheetState = {
