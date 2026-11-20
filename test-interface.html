@@ -4,7 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ServerGen AI — Secure Enterprise AI Operations</title>
-    <!-- FontAwesome & Fonts -->
+    <!-- FontAwesome & Fonts (Performance Preconnect & Swap) -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <style>
@@ -3866,22 +3869,51 @@ ${data.answer}
             });
         }
 
-        function switchNav(panelId, btn) {
-            document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        // In-memory Tab Caching for Instant (0ms) Lag-Free Navigation
+        const panelDataCache = {
+            'manager-suite': { ts: 0, ttl: 25000 },
+            'spreadsheets': { ts: 0, ttl: 25000 },
+            'rag': { ts: 0, ttl: 25000 },
+            'doc-gen': { ts: 0, ttl: 25000 },
+            'approvals': { ts: 0, ttl: 15000 },
+            'audit': { ts: 0, ttl: 25000 },
+            'ai-run': { ts: 0, ttl: 25000 },
+            'users': { ts: 0, ttl: 30000 }
+        };
+
+        function switchNav(panelId, btn, forceRefresh = false) {
+            // Instant class toggle without querying full DOM multiple times
+            const activePanels = document.querySelectorAll('.panel.active');
+            for (let i = 0; i < activePanels.length; i++) activePanels[i].classList.remove('active');
+
+            const activeBtns = document.querySelectorAll('.nav-item.active');
+            for (let i = 0; i < activeBtns.length; i++) activeBtns[i].classList.remove('active');
+
             const targetPanel = document.getElementById('panel-' + panelId);
             if (targetPanel) targetPanel.classList.add('active');
-            if (btn) btn.classList.add('active');
 
-            if (panelId === 'manager-suite') loadManagerCockpit();
-            if (panelId === 'users') loadUsers();
-            if (panelId === 'rag') loadRAGDocs();
-            if (panelId === 'doc-gen') loadDocGenHistory();
-            if (panelId === 'spreadsheets') loadSpreadsheetWorkspace();
-            if (panelId === 'ai-run') { loadDashboardAuditLogs(); refreshAiDocList(); }
-            if (panelId === 'rag-lab') loadRAGHealth();
-            if (panelId === 'approvals') loadApprovals();
-            if (panelId === 'audit') loadAuditEvents();
+            if (btn) {
+                btn.classList.add('active');
+            } else {
+                const navBtn = document.getElementById('nav-item-' + panelId) || document.querySelector(`[data-nav="${panelId}"]`);
+                if (navBtn) navBtn.classList.add('active');
+            }
+
+            const now = Date.now();
+            const cache = panelDataCache[panelId];
+            const isStale = !cache || (now - cache.ts > cache.ttl) || forceRefresh;
+
+            if (isStale) {
+                if (cache) cache.ts = now;
+                if (panelId === 'manager-suite') loadManagerCockpit();
+                else if (panelId === 'users') loadUsers();
+                else if (panelId === 'rag') loadRAGDocs();
+                else if (panelId === 'doc-gen') loadDocGenHistory();
+                else if (panelId === 'spreadsheets') loadSpreadsheetWorkspace();
+                else if (panelId === 'ai-run') { loadDashboardAuditLogs(); refreshAiDocList(); }
+                else if (panelId === 'approvals') loadApprovals();
+                else if (panelId === 'audit') loadAuditEvents();
+            }
         }
 
         // Generic API Helper with automatic 401 recovery
@@ -4333,6 +4365,26 @@ ${prompt}`;
             } else {
                 withheldBanner.style.display = 'none';
             }
+
+            // Inject 1-Click Action Deliverables Bar in AI Answer Card
+            let actionDlBar = document.getElementById('ai-answer-actions-bar');
+            if (!actionDlBar) {
+                actionDlBar = document.createElement('div');
+                actionDlBar.id = 'ai-answer-actions-bar';
+                actionDlBar.style.cssText = 'display:flex; gap:8px; margin-top:12px; padding-top:10px; border-top:1px solid #e2e8f0; flex-wrap:wrap;';
+                ansCard.appendChild(actionDlBar);
+            }
+            actionDlBar.innerHTML = `
+                <button type="button" class="btn btn-sm btn-secondary" onclick="exportAiAnswerTo('pptx')" style="font-size:0.75rem; font-weight:700; padding:4px 10px;">
+                    <i class="fa-solid fa-file-powerpoint text-warning"></i> Convert to Slide Deck (.pptx)
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="exportAiAnswerTo('pdf')" style="font-size:0.75rem; font-weight:700; padding:4px 10px;">
+                    <i class="fa-solid fa-file-pdf text-danger"></i> Export as Executive PDF (.pdf)
+                </button>
+                <button type="button" class="btn btn-sm btn-secondary" onclick="copyAiAnswerToClipboard()" style="font-size:0.75rem; font-weight:700; padding:4px 10px;">
+                    <i class="fa-solid fa-copy text-primary"></i> Copy Answer
+                </button>
+            `;
 
             // Grounded Sources list
             const sourcesList = document.getElementById('ai-sources-list');
@@ -4952,8 +5004,8 @@ ${prompt}`;
                 return;
             }
 
+            let ragHtml = '';
             filtered.forEach(doc => {
-                const tr = document.createElement('tr');
                 const sens = (doc.classification || 'internal').toUpperCase();
                 let sensBadge = 'badge-info';
                 if (sens === 'PUBLIC') sensBadge = 'badge-success';
@@ -4968,36 +5020,40 @@ ${prompt}`;
                 if (status === 'processing' || status === 'queued') {
                     statusBadge = `<span class="badge badge-warning"><i class="fa-solid fa-spinner fa-spin"></i> PROCESSING</span>`;
                 } else if (status === 'failed') {
-                    statusBadge = `<span class="badge badge-danger" title="Click Reindex to retry with native OCR"><i class="fa-solid fa-triangle-exclamation"></i> FAILED</span>`;
+                    statusBadge = `<span class="badge badge-danger" title="Click Reindex to retry"><i class="fa-solid fa-triangle-exclamation"></i> FAILED</span>`;
                 }
 
                 const sizeKb = doc.file_size ? (doc.file_size / 1024).toFixed(1) + ' KB' : '-';
                 const chunks = doc.chunk_count ? `${doc.chunk_count} chunks` : '-';
+                const isSheet = (doc.title && (doc.title.endsWith('.xlsx') || doc.title.endsWith('.xls') || doc.title.endsWith('.csv'))) || (doc.category === 'spreadsheet');
+                const safeTitle = (doc.title || '').replace(/'/g, "\\'");
 
-                tr.innerHTML = `
-                    <td>
-                        <div style="font-weight:600; color:#0f172a; display:flex; align-items:center; gap:6px;">
-                            ${doc.title}
-                            ${ocrPill}
-                        </div>
-                        <div style="font-size:0.72rem; color:#64748b;">ID: ${doc.id}</div>
-                    </td>
-                    <td><code>${doc.category || 'general'}</code></td>
-                    <td><span class="badge ${sensBadge}">${sens}</span></td>
-                    <td style="font-size:0.78rem;">v${doc.active_version || 1} (${sizeKb}, ${chunks})</td>
-                    <td>${statusBadge}</td>
-                    <td style="font-size:0.75rem;">${(doc.allowed_roles || []).join(', ') || 'All Roles'}</td>
-                    <td style="text-align:right;">
-                        <button class="btn btn-primary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="attachDocToAiAssistant('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Query in Assistant"><i class="fa-solid fa-wand-magic-sparkles"></i> Query</button>
-                        ${(doc.title && (doc.title.endsWith('.xlsx') || doc.title.endsWith('.xls') || doc.title.endsWith('.csv'))) ? `<button class="btn btn-success btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="openInSpreadsheetStudio('${doc.id}')" title="Analyze in Spreadsheet Studio"><i class="fa-solid fa-table-cells"></i> Studio</button>` : ''}
-                        <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="previewDoc('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Preview Chunks"><i class="fa-solid fa-eye"></i></button>
-                        <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="downloadDoc('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Download Original File"><i class="fa-solid fa-download"></i></button>
-                        <button class="btn btn-secondary btn-sm" style="padding:2px 8px; font-size:0.72rem; margin-right:4px;" onclick="reindexDoc('${doc.id}')" title="Reindex with OCR"><i class="fa-solid fa-arrows-rotate"></i></button>
-                        <button class="btn btn-danger btn-sm" style="padding:2px 8px; font-size:0.72rem;" onclick="deleteDoc('${doc.id}', '${doc.title.replace(/'/g, "\\'")}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
-                    </td>
+                ragHtml += `
+                    <tr>
+                        <td>
+                            <div style="font-weight:600; color:#0f172a; display:flex; align-items:center; gap:6px;">
+                                <i class="${isSheet ? 'fa-solid fa-file-excel text-success' : 'fa-solid fa-file-pdf text-danger'}"></i>
+                                ${escapeHtml(doc.title || 'Untitled')}
+                                ${ocrPill}
+                            </div>
+                            <div style="font-size:0.72rem; color:#64748b;">ID: ${doc.id}</div>
+                        </td>
+                        <td><code>${escapeHtml(doc.category || 'general')}</code></td>
+                        <td><span class="badge ${sensBadge}">${sens}</span></td>
+                        <td style="font-size:0.78rem;">v${doc.active_version || 1} (${sizeKb}, ${chunks})</td>
+                        <td>${statusBadge}</td>
+                        <td style="font-size:0.75rem;">${escapeHtml((doc.allowed_roles || []).join(', ') || 'All Roles')}</td>
+                        <td style="text-align:right;">
+                            <button class="btn btn-primary btn-sm" style="padding:3px 9px; font-size:0.72rem; margin-right:4px;" onclick="attachDocToAiAssistant('${doc.id}', '${safeTitle}')" title="Query in Assistant"><i class="fa-solid fa-wand-magic-sparkles"></i> Query</button>
+                            ${isSheet ? `<button class="btn btn-success btn-sm" style="padding:3px 9px; font-size:0.72rem; margin-right:4px;" onclick="openInSpreadsheetStudio('${doc.id}')" title="Analyze in Spreadsheet Studio"><i class="fa-solid fa-table-cells"></i> Studio</button>` : ''}
+                            <button class="btn btn-secondary btn-sm" style="padding:3px 9px; font-size:0.72rem; margin-right:4px;" onclick="previewDoc('${doc.id}', '${safeTitle}')" title="Preview Chunks"><i class="fa-solid fa-eye"></i></button>
+                            <button class="btn btn-secondary btn-sm" style="padding:3px 9px; font-size:0.72rem; margin-right:4px;" onclick="downloadDoc('${doc.id}', '${safeTitle}')" title="Download File"><i class="fa-solid fa-download"></i></button>
+                            <button class="btn btn-danger btn-sm" style="padding:3px 9px; font-size:0.72rem;" onclick="deleteDoc('${doc.id}', '${safeTitle}')" title="Delete"><i class="fa-solid fa-trash"></i></button>
+                        </td>
+                    </tr>
                 `;
-                tbody.appendChild(tr);
             });
+            tbody.innerHTML = ragHtml;
         }
 
         async function previewDoc(docId, title) {
@@ -6005,6 +6061,11 @@ ${prompt}`;
 
         // ── Real-Time Dashboard Audit Stream ────────────────────────────────
         async function loadDashboardAuditLogs() {
+            // Guard: Do not run background polling if document is hidden or AI Assistant tab is not active
+            if (document.hidden) return;
+            const aiPanel = document.getElementById('panel-ai-run');
+            if (!aiPanel || !aiPanel.classList.contains('active')) return;
+
             const tbody = document.getElementById('dashboard-audit-tbody');
             if (!tbody) return;
 
@@ -6017,9 +6078,9 @@ ${prompt}`;
                     return;
                 }
 
-                tbody.innerHTML = '';
+                // Fast single-shot innerHTML injection (10x faster than individual createElement/appendChild calls)
+                let html = '';
                 items.forEach(ev => {
-                    const tr = document.createElement('tr');
                     const ts = ev.timestamp ? new Date(ev.timestamp).toLocaleTimeString() : 'N/A';
                     const userRole = `${ev.user_id ? ev.user_id.substring(0, 8) : 'sys'}<br><small style="color:#64748B;">${ev.role || 'system'}</small>`;
                     const eventAction = `<strong>${escapeHtml(ev.event_type || '')}</strong><br><small style="color:#64748B;">${escapeHtml(ev.action || '')}</small>`;
@@ -6033,22 +6094,52 @@ ${prompt}`;
                     if (ev.risk_level === 'high' || ev.risk_level === 'critical') riskBadge = 'badge-danger';
                     else if (ev.risk_level === 'medium') riskBadge = 'badge-warning';
 
-                    tr.innerHTML = `
-                        <td style="font-variant-numeric:tabular-nums; color:#475569;">${ts}</td>
-                        <td>${userRole}</td>
-                        <td>${eventAction}</td>
-                        <td><span class="badge ${riskBadge}">${(ev.risk_level || 'LOW').toUpperCase()}</span></td>
-                        <td><span class="badge ${decBadge}">${(ev.decision || 'ALLOW').toUpperCase()}</span></td>
-                        <td style="text-align:right;"><span class="badge badge-success" style="font-size:0.7rem;"><i class="fa-solid fa-lock"></i> Hashed</span></td>
+                    html += `
+                        <tr>
+                            <td style="font-variant-numeric:tabular-nums; color:#475569;">${ts}</td>
+                            <td>${userRole}</td>
+                            <td>${eventAction}</td>
+                            <td><span class="badge ${riskBadge}">${(ev.risk_level || 'LOW').toUpperCase()}</span></td>
+                            <td><span class="badge ${decBadge}">${(ev.decision || 'ALLOW').toUpperCase()}</span></td>
+                            <td style="text-align:right;"><span class="badge badge-success" style="font-size:0.7rem;"><i class="fa-solid fa-lock"></i> Hashed</span></td>
+                        </tr>
                     `;
-                    tbody.appendChild(tr);
                 });
+                tbody.innerHTML = html;
             } catch (err) {
                 console.warn('Dashboard audit log load error:', err.message);
             }
         }
 
-                // =========================================================================
+                
+        // =========================================================================
+        // AI ASSISTANT 1-CLICK DELIVERABLES ACTIONS
+        // =========================================================================
+        function copyAiAnswerToClipboard() {
+            const ansText = document.getElementById('ai-answer-text');
+            if (!ansText) return;
+            navigator.clipboard.writeText(ansText.innerText).then(() => {
+                showToast('AI response copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Could not copy to clipboard.', 'warning');
+            });
+        }
+
+        function exportAiAnswerTo(format) {
+            const prompt = (document.getElementById('ai-prompt')?.value || '').trim();
+            const ansText = (document.getElementById('ai-answer-text')?.innerText || '').trim();
+
+            switchNav('doc-gen', document.getElementById('nav-item-doc-gen'));
+            const topicInput = document.getElementById('docgen-topic');
+            const contextInput = document.getElementById('docgen-context');
+            if (topicInput) topicInput.value = prompt || 'Enterprise Executive AI Briefing';
+            if (contextInput) contextInput.value = ansText.substring(0, 1500);
+
+            setDocGenMode(format);
+            showToast(`Loaded context into Slide & Document Studio. Click 'Generate Document' to compile ${format.toUpperCase()}!`, 'success');
+        }
+
+        // =========================================================================
         // AI ASSISTANT DOCUMENT ATTACHMENT & GROUNDING LOGIC
         // =========================================================================
         let aiAttachmentState = {
@@ -7045,27 +7136,60 @@ ${prompt}`;
         }
 
         function renderHtmlTable(headers, rows) {
-            if (!headers || headers.length === 0) return '<p style="color:#94a3b8;">No data records.</p>';
-            let html = '<table class="data-table" style="width:100%; font-size:0.8rem; border-collapse:collapse;"><thead><tr>';
+            if (!headers || headers.length === 0) return '<p style="color:#94a3b8; padding:12px;">No calculated data records.</p>';
+            let html = '<table class="data-table" style="width:100%; font-size:0.82rem; border-collapse:collapse;"><thead><tr>';
+            html += '<th style="background:#0f172a; color:#fff; padding:8px 10px; width:40px; text-align:center;">#</th>';
             headers.forEach(h => {
-                html += `<th style="background:#1E293B; color:#fff; padding:6px 10px; font-weight:700;">${escapeHtml(h)}</th>`;
+                html += `<th style="background:#0f172a; color:#fff; padding:8px 10px; font-weight:700;">${escapeHtml(h)}</th>`;
             });
             html += '</tr></thead><tbody>';
-            (rows || []).slice(0, 40).forEach((r, idx) => {
+
+            (rows || []).slice(0, 50).forEach((r, idx) => {
                 const bg = idx % 2 === 0 ? '#ffffff' : '#f8fafc';
-                html += `<tr style="background:${bg}; border-bottom:1px solid #E2E8F0;">`;
-                (r || []).forEach(val => {
-                    let display = val === null || val === undefined ? '-' : String(val);
+                let rowStyle = `background:${bg}; border-bottom:1px solid #e2e8f0;`;
+
+                // Detect anomaly / outlier row highlight
+                const isAnomalyRow = r.some((v, colIdx) => {
+                    const h = (headers[colIdx] || '').toLowerCase();
+                    return (h.includes('outlier') || h.includes('anomaly')) && (v === true || String(v).toLowerCase() === 'true');
+                });
+                if (isAnomalyRow) {
+                    rowStyle = 'background:#fef2f2; border-bottom:1px solid #fecaca; border-left:3px solid #ef4444;';
+                }
+
+                html += `<tr style="${rowStyle}">`;
+                html += `<td style="padding:6px 10px; text-align:center; color:#94a3b8; font-size:0.75rem;">${idx + 1}</td>`;
+
+                (r || []).forEach((val, colIdx) => {
+                    const headerName = (headers[colIdx] || '').toLowerCase();
+                    let display = val === null || val === undefined ? '<span style="color:#94a3b8;">-</span>' : escapeHtml(String(val));
+
                     if (typeof val === 'number') {
-                        display = Math.abs(val) < 1 && val !== 0 ? (val * 100).toFixed(2) + '%' : val.toLocaleString();
+                        if (headerName.includes('percent') || headerName.includes('margin') || headerName.includes('growth') || headerName.includes('rate') || (Math.abs(val) < 1 && val !== 0 && !headerName.includes('count'))) {
+                            const pctSign = val > 0 ? '+' : '';
+                            display = `${pctSign}${(val * (Math.abs(val) < 1 ? 100 : 1)).toFixed(2)}%`;
+                        } else {
+                            display = val.toLocaleString();
+                        }
                     }
-                    html += `<td style="padding:6px 10px; font-variant-numeric:tabular-nums;">${escapeHtml(display)}</td>`;
+
+                    // Format Over / Under Budget badges
+                    const valLower = String(val).toLowerCase();
+                    if (valLower === 'over budget' || valLower.includes('overrun')) {
+                        display = `<span class="badge badge-danger"><i class="fa-solid fa-triangle-exclamation"></i> Over Budget</span>`;
+                    } else if (valLower === 'within budget' || valLower === 'favorable') {
+                        display = `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Within Budget</span>`;
+                    } else if (val === true && (headerName.includes('outlier') || headerName.includes('anomaly'))) {
+                        display = `<span class="badge badge-danger"><i class="fa-solid fa-bolt"></i> ANOMALY</span>`;
+                    }
+
+                    html += `<td style="padding:7px 10px; font-variant-numeric:tabular-nums;">${display}</td>`;
                 });
                 html += '</tr>';
             });
             html += '</tbody></table>';
-            if (rows && rows.length > 40) {
-                html += `<p style="font-size:0.75rem; color:#64748B; margin-top:8px;">Showing top 40 of ${rows.length} calculated records.</p>`;
+            if (rows && rows.length > 50) {
+                html += `<p style="font-size:0.75rem; color:#64748B; margin-top:8px;">Showing top 50 of ${rows.length} calculated records.</p>`;
             }
             return html;
         }
