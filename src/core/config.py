@@ -66,14 +66,17 @@ class Settings(BaseSettings):
 
     # ── Database ─────────────────────────────────────────────────────────
     DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://servergen:changeme@localhost:5432/servergen",
-        description="Async database URL. PostgreSQL is the supported target.",
+        default="sqlite+aiosqlite:///./servergen-ai.db",
+        description="Async database URL. SQLite default for local dev; PostgreSQL supported.",
     )
     DB_POOL_SIZE: int = Field(default=10, ge=1)
     DB_MAX_OVERFLOW: int = Field(default=20, ge=0)
 
     # ── JWT Security ─────────────────────────────────────────────────────
-    JWT_SECRET_KEY: SecretStr = Field(..., description="Secret key for JWT signing.")
+    JWT_SECRET_KEY: SecretStr = Field(
+        default=SecretStr("CHANGE_ME_GENERATE_A_STRONG_SECRET_KEY"),
+        description="Secret key for JWT signing.",
+    )
     JWT_ALGORITHM: Literal["HS256"] = "HS256"  # fixed — never taken from token headers
     ACCESS_TOKEN_EXPIRE_MINUTES: int = Field(default=15, ge=1)
     REFRESH_TOKEN_EXPIRE_MINUTES: int = Field(default=10080, ge=1)  # 7 days
@@ -148,6 +151,12 @@ class Settings(BaseSettings):
                     "http://127.0.0.1:5173",
                     "http://localhost:3000",
                     "http://127.0.0.1:3000",
+                    "http://localhost:8080",
+                    "http://127.0.0.1:8080",
+                    "http://localhost:4200",
+                    "http://127.0.0.1:4200",
+                    "http://localhost:8000",
+                    "http://127.0.0.1:8000",
                 ]
             if secret_value in _WEAK_JWT_SECRETS:
                 warnings.warn(

@@ -26,13 +26,16 @@ python -m venv .venv
 .\.venv\Scripts\Activate.ps1
 
 # 3. Install dependencies
-pip install -r requirements.txt  # or: pip install -e .
+pip install -r requirements.txt
 
-# 4. Start Ollama (in a separate terminal)
-ollama serve
+# 4. Launch Backend (1-Click)
+# Windows:
+.\run.bat
+# Linux / macOS:
+# chmod +x run.sh && ./run.sh
 
-# 5. Start FastAPI Backend Server
-uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
+# Or launch manually:
+# uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 ```
 
 ### Verify Running Services

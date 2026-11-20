@@ -63,24 +63,20 @@ python -m venv .venv
 # source .venv/bin/activate
 
 # Install dependencies
-pip install -e ".[dev]"
+pip install -r requirements.txt
 ```
 
-### 3. Configure Environment
+### 3. Launch Local Backend (1-Click)
 ```bash
-# Copy template configuration
-copy .env.example .env    # Windows
-# cp .env.example .env    # Linux/macOS
-```
-*The default `.env` is pre-configured with SQLite WAL mode for instant, zero-setup local development.*
+# On Windows:
+.\run.bat
 
-### 4. Start Local Services
-In terminal 1 (Start Ollama LLM):
-```bash
-ollama serve
+# On Linux / macOS:
+chmod +x run.sh && ./run.sh
 ```
+*The startup runner automatically initializes `.env`, launches local Ollama if installed, creates SQLite tables with WAL mode, and seeds default test roles and accounts.*
 
-In terminal 2 (Start ServerGen AI API):
+Alternatively, run manually:
 ```bash
 uvicorn src.app:app --host 127.0.0.1 --port 8000 --reload
 ```
