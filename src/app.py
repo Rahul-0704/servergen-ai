@@ -32,6 +32,13 @@ async def lifespan(app: FastAPI):
     """Application lifespan: startup and shutdown hooks."""
     logger.info("Application starting up")
     try:
+        from src.core.database import initialize_and_seed_database
+        await initialize_and_seed_database()
+        logger.info("Database initialized, schema synchronized, and seeded successfully")
+    except Exception as exc:
+        logger.error("Database initialization failed during startup: %s", exc, exc_info=True)
+
+    try:
         from src.core.database import get_session_factory
         from src.rag.indexer import DocumentIndexer
 

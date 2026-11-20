@@ -300,9 +300,10 @@ async def decide_approval(
     auth: Annotated[AuthContext, Depends(_require_manager)],
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> dict[str, Any]:
-    """Approve or reject a pending request with executive notes and audit recording."""
+    """Approve or reject a pending request with executive notes, closed-loop execution, and audit recording."""
     svc = ApprovalService(db)
 
+    exec_summary: dict[str, Any] | None = None
     if body.decision == "approve":
         approval = await svc.approve(
             approval_id=approval_id,
@@ -311,6 +312,58 @@ async def decide_approval(
             notes=body.notes or "Approved via Manager Command Suite",
         )
         status_msg = "approved"
+
+        # Closed-loop execution: Resume task if operation_payload is present
+        if approval.operation_payload:
+            try:
+                from src.auth.rbac import resolve_permissions
+                from src.orchestrator.engine import OrchestratorEngine
+                from src.orchestrator.sensitivity import DataSensitivity
+                from src.schemas.orchestrator import ToolRequest
+
+                req_auth = AuthContext(
+                    user_id=str(approval.requester_user_id),
+                    role=approval.requester_role,
+                    permissions=resolve_permissions(approval.requester_role),
+                )
+                payload = approval.operation_payload
+                tool_req = None
+                if payload.get("tool"):
+                    tool_req = ToolRequest(
+                        tool=payload["tool"],
+                        parameters=payload.get("tool_parameters") or {},
+                    )
+
+                sens_val = payload.get("data_sensitivity", "internal")
+                try:
+                    sens = DataSensitivity(sens_val)
+                except ValueError:
+                    sens = DataSensitivity.INTERNAL
+
+                engine = OrchestratorEngine(db)
+                exec_result = await engine.execute(
+                    auth=req_auth,
+                    user_input=payload.get("input", approval.operation_summary),
+                    data_sensitivity=sens,
+                    tool_request=tool_req,
+                    request_id=approval.request_id,
+                    structured=payload.get("structured", False),
+                    requested_model=payload.get("model"),
+                    approval_id=str(approval.id),
+                )
+                exec_summary = {
+                    "success": exec_result.success,
+                    "output": exec_result.output,
+                    "tool_used": exec_result.tool_used,
+                    "model_used": exec_result.model_used,
+                }
+                try:
+                    await svc.consume(approval)
+                except Exception as cons_err:
+                    logger.debug("Approval consume notice: %s", cons_err)
+            except Exception as ex_err:
+                logger.error("Failed to auto-resume approved operation: %s", ex_err, exc_info=True)
+                exec_summary = {"success": False, "error": str(ex_err)}
     else:
         approval = await svc.reject(
             approval_id=approval_id,
@@ -327,6 +380,7 @@ async def decide_approval(
         "operation_summary": approval.operation_summary,
         "reviewer_notes": approval.reviewer_notes,
         "resolved_at": approval.resolved_at.isoformat() if approval.resolved_at else None,
+        "execution_result": exec_summary,
     }
 
 

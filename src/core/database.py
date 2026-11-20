@@ -52,6 +52,7 @@ def get_engine() -> AsyncEngine:
                 cursor = dbapi_connection.cursor()
                 cursor.execute("PRAGMA journal_mode=WAL")
                 cursor.execute("PRAGMA busy_timeout=60000")
+                cursor.execute("PRAGMA foreign_keys=ON")
                 cursor.close()
         else:
             _engine = create_async_engine(
@@ -113,3 +114,174 @@ def reset_engine() -> None:
     global _engine, _session_factory
     _engine = None
     _session_factory = None
+
+
+async def initialize_and_seed_database() -> None:
+    """
+    Automatic zero-setup startup hook:
+    1. Creates all database tables if missing.
+    2. Runs schema synchronizations (e.g. SQLite vault_scope columns).
+    3. Seeds default permissions, system roles, and test users if empty.
+    """
+    import logging
+    import uuid
+
+    from src.auth.permissions import (
+        DEFAULT_ROLE_PERMISSIONS,
+        SystemRole,
+        get_permission_resource_action,
+    )
+    from src.core.config import get_settings
+    from src.core.security import hash_password
+    from src.models import Base
+    from src.models.role import Permission, Role, RolePermission
+    from src.models.user import User
+
+    log = logging.getLogger("servergen.database")
+    engine = get_engine()
+    settings = get_settings()
+
+    # 1. Create tables & execute schema synchronizations
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+        # SQLite schema patches (role vault column propagation)
+        if settings.is_sqlite:
+            try:
+                res = await conn.execute(text("PRAGMA table_info(documents)"))
+                doc_cols = [r[1] for r in res.fetchall()]
+                if "vault_scope" not in doc_cols:
+                    await conn.execute(
+                        text(
+                            "ALTER TABLE documents ADD COLUMN vault_scope VARCHAR(50) "
+                            "NOT NULL DEFAULT 'all'"
+                        )
+                    )
+                    log.info("SQLite patch: Added 'vault_scope' to 'documents'")
+            except Exception as e:
+                log.debug("SQLite documents patch check skipped: %s", e)
+
+            try:
+                res_c = await conn.execute(text("PRAGMA table_info(document_chunks)"))
+                chunk_cols = [r[1] for r in res_c.fetchall()]
+                if "vault_scope" not in chunk_cols:
+                    await conn.execute(
+                        text(
+                            "ALTER TABLE document_chunks ADD COLUMN vault_scope VARCHAR(50) "
+                            "NOT NULL DEFAULT 'all'"
+                        )
+                    )
+                    log.info("SQLite patch: Added 'vault_scope' to 'document_chunks'")
+            except Exception as e:
+                log.debug("SQLite chunks patch check skipped: %s", e)
+
+    # 2. Seed initial roles & accounts if empty
+    factory = get_session_factory()
+    async with factory() as db:
+        try:
+            from sqlalchemy import select
+
+            res_roles = await db.execute(select(Role).limit(1))
+            if res_roles.scalar_one_or_none() is None:
+                log.info("Database roles table is empty. Executing initial system seed...")
+
+                # Seed permissions
+                permissions_map: dict[str, Permission] = {}
+                all_perm_codes: set[str] = set()
+                for perms in DEFAULT_ROLE_PERMISSIONS.values():
+                    for p in perms:
+                        all_perm_codes.add(str(p))
+
+                for codename in sorted(all_perm_codes):
+                    resource, action = get_permission_resource_action(codename)
+                    perm = Permission(
+                        id=uuid.uuid4(),
+                        codename=codename,
+                        description=f"{resource} {action}",
+                        resource=resource,
+                        action=action,
+                    )
+                    db.add(perm)
+                    permissions_map[codename] = perm
+                await db.flush()
+
+                # Seed roles
+                roles_map: dict[str, Role] = {}
+                for sys_role in SystemRole:
+                    role_obj = Role(
+                        id=uuid.uuid4(),
+                        name=sys_role.value,
+                        description=f"System role: {sys_role.value}",
+                        is_system=True,
+                    )
+                    db.add(role_obj)
+                    roles_map[sys_role.value] = role_obj
+                await db.flush()
+
+                # Seed assignments
+                for sys_role, perm_codes in DEFAULT_ROLE_PERMISSIONS.items():
+                    role_obj = roles_map[sys_role.value]
+                    for perm_code in perm_codes:
+                        perm_obj = permissions_map[str(perm_code)]
+                        db.add(RolePermission(role_id=role_obj.id, permission_id=perm_obj.id))
+                await db.flush()
+
+                # Seed default users
+                test_users = [
+                    (
+                        "admin",
+                        "admin@servergen.local",
+                        "System Administrator",
+                        SystemRole.ADMIN,
+                        settings.ADMIN_PASSWORD.get_secret_value(),
+                    ),
+                    (
+                        "manager",
+                        "manager@servergen.local",
+                        "Department Manager",
+                        SystemRole.MANAGER,
+                        "Manager1!",
+                    ),
+                    (
+                        "operator",
+                        "operator@servergen.local",
+                        "IT Operator",
+                        SystemRole.IT_OPERATOR,
+                        "Operator1!",
+                    ),
+                    (
+                        "analyst",
+                        "analyst@servergen.local",
+                        "Security Analyst",
+                        SystemRole.SECURITY_ANALYST,
+                        "Analyst1!",
+                    ),
+                    (
+                        "employee",
+                        "employee@servergen.local",
+                        "General Employee",
+                        SystemRole.GENERAL_EMPLOYEE,
+                        "Employee1!",
+                    ),
+                ]
+                for uname, email, fullname, sys_role, pwd in test_users:
+                    role_obj = roles_map[sys_role.value]
+                    db.add(
+                        User(
+                            id=uuid.uuid4(),
+                            username=uname,
+                            email=email,
+                            hashed_password=hash_password(pwd),
+                            full_name=fullname,
+                            role_id=role_obj.id,
+                            is_active=True,
+                        )
+                    )
+                await db.commit()
+                log.info(
+                    "Initial system seed completed: 5 default roles, permissions, "
+                    "and test accounts active."
+                )
+        except Exception as exc:
+            await db.rollback()
+            log.warning("Database seeding check warning: %s", exc)
