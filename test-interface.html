@@ -868,6 +868,9 @@
         
         <!-- Sidebar Navigation -->
         <aside id="sidebar-nav">
+            <div class="nav-category" data-cat="executive" id="cat-executive" style="color:#0284c7; font-weight:700;"><i class="fa-solid fa-crown text-warning"></i> Executive Suite</div>
+            <button class="nav-item active" data-nav="manager-suite" id="nav-item-manager-suite" onclick="switchNav('manager-suite', this)"><i class="fa-solid fa-briefcase" style="color:#0284c7;"></i> Manager Command Center</button>
+
             <div class="nav-category" data-cat="workspace">Workspace</div>
             <button class="nav-item active" data-nav="ai-run" onclick="switchNav('ai-run', this)"><i class="fa-solid fa-robot"></i> AI Assistant &amp; Grounding</button>
             <button class="nav-item" data-nav="rag" onclick="switchNav('rag', this)"><i class="fa-solid fa-book-bookmark"></i> Enterprise Documents</button>
@@ -887,6 +890,221 @@
 
         <!-- Main Content Area -->
         <main>
+
+            <!-- EXECUTIVE MANAGER COMMAND CENTER PANEL -->
+            <div id="panel-manager-suite" class="panel active">
+                <div class="card" style="background: linear-gradient(135deg, #f0fdf4 0%, #eff6ff 100%); border: 1px solid #bfdbfe;">
+                    <div class="card-header" style="border-bottom:1px solid #dbeafe;">
+                        <div class="card-title" style="color:#0f172a; font-size:1.15rem;">
+                            <i class="fa-solid fa-briefcase" style="color:#0284c7;"></i> Executive Manager Command Center
+                        </div>
+                        <span class="badge" style="background:#0284c7; color:#fff; font-size:0.75rem; padding:4px 10px; border-radius:12px;">
+                            Level 3 RESTRICTED · On-Premise Sovereign AI
+                        </span>
+                    </div>
+                    <div class="card-desc" style="color:#334155; margin-bottom:12px;">
+                        Simplified, high-leverage workspace tailored for Executive Managers. Access physical role-segregated vaults, review dual-custody team requests, generate board-ready presentation decks with 1 click, and query intelligence with zero cloud leaks.
+                    </div>
+                    
+                    <!-- 4 Executive KPI Badges -->
+                    <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:14px; margin-top:8px;" id="mgr-kpis-grid">
+                        <div class="card" style="margin:0; padding:14px; background:#fff; border-left:4px solid #7c3aed;">
+                            <div style="font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:700;">Confidential Manager Vault</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:#7c3aed; margin:4px 0;" id="mgr-kpi-confidential-docs">--</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Private to Manager & Admin</div>
+                        </div>
+                        <div class="card" style="margin:0; padding:14px; background:#fff; border-left:4px solid #0284c7;">
+                            <div style="font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:700;">Company-Wide Library</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:#0284c7; margin:4px 0;" id="mgr-kpi-all-docs">--</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Enterprise Shared Knowledge</div>
+                        </div>
+                        <div class="card" style="margin:0; padding:14px; background:#fff; border-left:4px solid #d97706;">
+                            <div style="font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:700;">Pending Approvals</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:#d97706; margin:4px 0;" id="mgr-kpi-pending-approvals">--</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Dual-Custody Decision Gate</div>
+                        </div>
+                        <div class="card" style="margin:0; padding:14px; background:#fff; border-left:4px solid #059669;">
+                            <div style="font-size:0.72rem; text-transform:uppercase; color:#64748b; font-weight:700;">Data Sovereignty</div>
+                            <div style="font-size:1.4rem; font-weight:800; color:#059669; margin:4px 0;">100% Local</div>
+                            <div style="font-size:0.72rem; color:#64748b;">Zero Cloud Egress · Audited</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2-COLUMN EXECUTIVE WORKSPACE -->
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px; margin-top:20px;">
+                    
+                    <!-- COLUMN 1: DUAL-VAULT DOCUMENT HUB -->
+                    <div class="card" style="margin:0;">
+                        <div class="card-header">
+                            <div class="card-title" style="font-size:0.95rem;">
+                                <i class="fa-solid fa-vault" style="color:#7c3aed;"></i> Dual-Vault Document Center
+                            </div>
+                            <div style="display:flex; gap:6px;">
+                                <button class="btn btn-sm btn-secondary" onclick="loadManagerDocuments('both')" id="mgr-doc-filter-both">All</button>
+                                <button class="btn btn-sm btn-secondary" onclick="loadManagerDocuments('manager')" id="mgr-doc-filter-mgr">Manager Vault</button>
+                                <button class="btn btn-sm btn-secondary" onclick="loadManagerDocuments('all')" id="mgr-doc-filter-all">Company Library</button>
+                            </div>
+                        </div>
+                        <p style="font-size:0.78rem; color:#64748b; margin-bottom:12px;">
+                            Documents are physically isolated under <code>storage/vaults/{scope}/</code> and filtered at the vector retrieval layer.
+                        </p>
+
+                        <!-- Direct Vault Upload Form -->
+                        <div style="background:#f8fafc; border:1px dashed #cbd5e1; border-radius:8px; padding:12px; margin-bottom:14px;">
+                            <div style="font-size:0.8rem; font-weight:700; color:#0f172a; margin-bottom:8px;">
+                                <i class="fa-solid fa-cloud-arrow-up text-primary"></i> 1-Click Vault Upload
+                            </div>
+                            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-bottom:8px;">
+                                <div>
+                                    <label style="font-size:0.72rem;">Target Vault Destination</label>
+                                    <select id="mgr-upload-vault-scope" style="padding:6px 10px; font-size:0.8rem;">
+                                        <option value="manager" selected>🔒 Manager Confidential Vault (Private)</option>
+                                        <option value="all">🌐 Company-Wide Library (All Employees)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label style="font-size:0.72rem;">Document Title</label>
+                                    <input type="text" id="mgr-upload-title" placeholder="e.g. Q4 Executive Budget Audit" style="padding:6px 10px; font-size:0.8rem;">
+                                </div>
+                            </div>
+                            <div style="display:flex; gap:10px; align-items:center;">
+                                <input type="file" id="mgr-upload-file" style="padding:4px; font-size:0.78rem;">
+                                <button class="btn btn-primary btn-sm" onclick="uploadManagerDocumentDirect()" style="white-space:nowrap;">
+                                    <i class="fa-solid fa-upload"></i> Upload & Index
+                                </button>
+                            </div>
+                            <div id="mgr-upload-status" style="font-size:0.78rem; margin-top:6px; display:none;"></div>
+                        </div>
+
+                        <!-- Documents List Table -->
+                        <div style="max-height: 280px; overflow-y: auto;" id="mgr-docs-table-container">
+                            <table class="data-table" style="width:100%; font-size:0.78rem;">
+                                <thead>
+                                    <tr>
+                                        <th>Document Title</th>
+                                        <th>Vault Scope</th>
+                                        <th>Classification</th>
+                                        <th>Size</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="mgr-docs-tbody">
+                                    <tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">Loading vault documents...</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- COLUMN 2: DUAL-CUSTODY APPROVALS GATEWAY -->
+                    <div class="card" style="margin:0;">
+                        <div class="card-header">
+                            <div class="card-title" style="font-size:0.95rem;">
+                                <i class="fa-solid fa-stamp" style="color:#d97706;"></i> Dual-Custody Approvals Queue
+                            </div>
+                            <button class="btn btn-sm btn-secondary" onclick="loadManagerApprovals()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                        </div>
+                        <p style="font-size:0.78rem; color:#64748b; margin-bottom:12px;">
+                            High-risk operations requiring executive manager sign-off. All decisions are stamped into the SHA-256 tamper-evident ledger.
+                        </p>
+
+                        <div id="mgr-approvals-container" style="max-height: 400px; overflow-y: auto;">
+                            <div style="text-align:center; color:#94a3b8; padding:20px;">Loading pending approvals...</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ROW 2: 1-CLICK EXECUTIVE DATA ENGINE -->
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <div class="card-title" style="font-size:1.05rem;">
+                            <i class="fa-solid fa-file-excel" style="color:#059669;"></i> 1-Click Executive Analytics & Board-Ready Deliverables
+                        </div>
+                        <span class="badge" style="background:#ecfdf5; color:#059669; border:1px solid #a7f3d0;">Auto-Diagnosis + PPTX + PDF + XLSX</span>
+                    </div>
+                    <p style="font-size:0.82rem; color:#334155; margin-bottom:14px;">
+                        Drop any financial or operational spreadsheet (.xlsx, .csv). The autonomous routing engine detects outliers, variance, or aggregations, and instantly generates a 16:9 Presentation Deck, Executive PDF Report, and Cleansed Excel.
+                    </p>
+
+                    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:16px; margin-bottom:14px;">
+                        <div>
+                            <label style="font-size:0.78rem; font-weight:600;">Executive Strategic Goal / Focus</label>
+                            <input type="text" id="mgr-analytics-prompt" value="Analyze high-impact variances, cost outliers, and operational drivers for executive review" style="padding:8px 12px; font-size:0.82rem;">
+                        </div>
+                        <div>
+                            <label style="font-size:0.78rem; font-weight:600;">Select Spreadsheet File</label>
+                            <input type="file" id="mgr-analytics-file" accept=".xlsx,.xls,.xlsm,.csv,.tsv" style="padding:6px; font-size:0.8rem;">
+                        </div>
+                    </div>
+
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <label style="font-size:0.78rem; color:#64748b; display:flex; align-items:center; gap:6px; cursor:pointer;">
+                            <input type="checkbox" id="mgr-analytics-mask-pii" style="width:auto;"> Apply Zero-Trust PII Masking (Mask employee names, emails, card numbers)
+                        </label>
+                        <button class="btn btn-primary" onclick="runManagerExecutiveAnalytics()" id="mgr-analytics-run-btn">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i> Generate Board Deliverables
+                        </button>
+                    </div>
+
+                    <!-- Analytics Results Container -->
+                    <div id="mgr-analytics-results" style="display:none; margin-top:18px; border-top:1px solid #e2e8f0; padding-top:16px;">
+                        <!-- Deliverables Download Bar -->
+                        <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px; padding:14px 18px; display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;" id="mgr-deliverables-bar">
+                            <div>
+                                <div style="font-weight:700; color:#166534; font-size:0.95rem;"><i class="fa-solid fa-circle-check"></i> Executive Deliverables Ready</div>
+                                <div style="font-size:0.78rem; color:#15803d;" id="mgr-deliverables-subtitle">Board presentation deck, vector PDF report, and cleansed spreadsheet compiled.</div>
+                            </div>
+                            <div style="display:flex; gap:10px;" id="mgr-deliverables-buttons"></div>
+                        </div>
+
+                        <!-- KPI Badges row -->
+                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap:12px; margin-bottom:16px;" id="mgr-analytics-kpi-grid"></div>
+
+                        <!-- Executive Insights Narrative -->
+                        <div class="card" style="background:#ffffff; border:1px solid #e2e8f0; margin-bottom:16px;">
+                            <h4 style="font-size:0.9rem; color:#0f172a; margin-bottom:10px;"><i class="fa-solid fa-lightbulb" style="color:#d97706;"></i> Strategic Executive Synthesis</h4>
+                            <div id="mgr-analytics-insights-text" style="font-size:0.84rem; line-height:1.6; color:#334155; white-space:pre-wrap;"></div>
+                        </div>
+
+                        <!-- Sample Data Preview -->
+                        <div style="max-height:220px; overflow-y:auto;" id="mgr-analytics-table-container"></div>
+                    </div>
+                </div>
+
+                <!-- ROW 3: GROUNDED EXECUTIVE AI INTELLIGENCE -->
+                <div class="card" style="margin-top:20px;">
+                    <div class="card-header">
+                        <div class="card-title" style="font-size:1.05rem;">
+                            <i class="fa-solid fa-brain" style="color:#0284c7;"></i> Grounded Executive Intelligence Q&amp;A
+                        </div>
+                        <span class="badge badge-info">Zero Hallucination · Source Verified</span>
+                    </div>
+                    <p style="font-size:0.82rem; color:#334155; margin-bottom:12px;">
+                        Query business facts across the Manager Confidential Vault and Company-Wide Library. The system performs hybrid semantic-keyword retrieval and verifies all citations before answering.
+                    </p>
+
+                    <div style="display:flex; gap:12px; margin-bottom:12px;">
+                        <input type="text" id="mgr-ai-query-input" placeholder="e.g. What was our Q3 enterprise automation expenditure and approved variance?" style="flex:1; padding:9px 14px; font-size:0.85rem;" onkeydown="if(event.key==='Enter')askManagerExecutiveAI()">
+                        <select id="mgr-ai-target-vault" style="width:200px; padding:9px 12px; font-size:0.82rem;">
+                            <option value="both" selected>Both Vaults (Manager + Company)</option>
+                            <option value="manager">Manager Vault Only</option>
+                            <option value="all">Company Library Only</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="askManagerExecutiveAI()" id="mgr-ai-submit-btn">
+                            <i class="fa-solid fa-magnifying-glass"></i> Ask Intelligence
+                        </button>
+                    </div>
+
+                    <div id="mgr-ai-result-card" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:16px; margin-top:12px;">
+                        <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                            <span style="font-size:0.75rem; font-weight:700; color:#0284c7; text-transform:uppercase;" id="mgr-ai-status-tag">Verified Grounded Response</span>
+                            <span style="font-size:0.75rem; color:#64748b;" id="mgr-ai-meta"></span>
+                        </div>
+                        <div id="mgr-ai-answer" style="font-size:0.86rem; color:#0f172a; line-height:1.6; margin-bottom:12px;"></div>
+                        <div id="mgr-ai-citations" style="border-top:1px solid #e2e8f0; padding-top:8px;"></div>
+                    </div>
+                </div>
+
+            </div>
 
             <!-- TAB 1: AUTHENTICATION & SIGN UP -->
             <div id="panel-auth" class="panel">
@@ -2605,6 +2823,7 @@
             if (targetPanel) targetPanel.classList.add('active');
             if (btn) btn.classList.add('active');
 
+            if (panelId === 'manager-suite') loadManagerCockpit();
             if (panelId === 'users') loadUsers();
             if (panelId === 'rag') loadRAGDocs();
             if (panelId === 'doc-gen') loadDocGenHistory();
@@ -2797,10 +3016,10 @@
         }
 
         const ROLE_NAV_PERMS = {
-            administrator: ['auth', 'users', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification', 'approvals', 'audit', 'rbac-matrix'],
+            administrator: ['manager-suite', 'auth', 'users', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification', 'approvals', 'audit', 'rbac-matrix'],
             it_operator: ['auth', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification'],
             security_analyst: ['auth', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification', 'audit', 'rbac-matrix'],
-            manager: ['auth', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification', 'approvals'],
+            manager: ['manager-suite', 'auth', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification', 'approvals'],
             general_employee: ['auth', 'ai-run', 'rag', 'doc-gen', 'spreadsheets', 'verification'],
         };
 
@@ -5276,6 +5495,314 @@
                 `;
             } catch (err) {
                 statusEl.innerHTML = `<div style="color:#ef4444; font-size:0.85rem;"><i class="fa-solid fa-circle-exclamation"></i> Export error: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+
+        // ── EXECUTIVE MANAGER SUITE JAVASCRIPT FUNCTIONS ─────────────────────────
+
+        async function loadManagerCockpit() {
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('manager', false);
+                } catch (e) {
+                    console.warn('Auto-auth manager:', e);
+                }
+            }
+
+            try {
+                const res = await api('GET', '/api/v1/manager/cockpit');
+                if (res.ok && res.data) {
+                    const d = res.data;
+                    const kpis = d.kpis || [];
+                    if (kpis[0]) document.getElementById('mgr-kpi-confidential-docs').textContent = kpis[0].value;
+                    if (kpis[1]) document.getElementById('mgr-kpi-all-docs').textContent = kpis[1].value;
+                    if (kpis[2]) document.getElementById('mgr-kpi-pending-approvals').textContent = kpis[2].value;
+                }
+            } catch (err) {
+                console.warn('Manager cockpit fetch error:', err);
+            }
+
+            loadManagerDocuments('both');
+            loadManagerApprovals();
+        }
+
+        async function loadManagerDocuments(vaultFilter = 'both') {
+            const tbody = document.getElementById('mgr-docs-tbody');
+            if (tbody) tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading vault documents...</td></tr>';
+
+            // Update filter button styles
+            ['both', 'manager', 'all'].forEach(v => {
+                const b = document.getElementById(`mgr-doc-filter-${v === 'both' ? 'both' : (v === 'manager' ? 'mgr' : 'all')}`);
+                if (b) {
+                    if (v === vaultFilter) {
+                        b.classList.remove('btn-secondary');
+                        b.classList.add('btn-primary');
+                    } else {
+                        b.classList.remove('btn-primary');
+                        b.classList.add('btn-secondary');
+                    }
+                }
+            });
+
+            try {
+                const res = await api('GET', `/api/v1/manager/documents?vault=${vaultFilter}`);
+                if (!res.ok) throw new Error(res.data?.detail || 'Failed to list documents');
+                const docs = res.data || [];
+
+                if (docs.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#94a3b8; padding:16px;">No documents found in selected vault.</td></tr>';
+                    return;
+                }
+
+                let rowsHtml = '';
+                docs.forEach(doc => {
+                    const isMgr = doc.vault_scope === 'manager';
+                    const vaultBadge = isMgr
+                        ? '<span class="badge" style="background:#f3e8ff; color:#7c3aed; border:1px solid #d8b4fe;"><i class="fa-solid fa-lock"></i> Manager Vault</span>'
+                        : '<span class="badge badge-info"><i class="fa-solid fa-globe"></i> Company Library</span>';
+                    const classBadge = doc.classification === 'restricted'
+                        ? '<span class="badge badge-danger">RESTRICTED</span>'
+                        : '<span class="badge badge-neutral">' + escapeHtml(doc.classification.toUpperCase()) + '</span>';
+                    const sizeKb = doc.file_size ? (doc.file_size / 1024).toFixed(1) + ' KB' : 'Seeded';
+
+                    rowsHtml += `
+                        <tr style="border-bottom:1px solid #f1f5f9;">
+                            <td style="font-weight:600; color:#0f172a; padding:8px 10px;">${escapeHtml(doc.title)}</td>
+                            <td style="padding:8px 10px;">${vaultBadge}</td>
+                            <td style="padding:8px 10px;">${classBadge}</td>
+                            <td style="padding:8px 10px; color:#64748b;">${sizeKb}</td>
+                        </tr>
+                    `;
+                });
+                tbody.innerHTML = rowsHtml;
+            } catch (err) {
+                if (tbody) tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#ef4444; padding:12px;">Error: ${escapeHtml(err.message)}</td></tr>`;
+            }
+        }
+
+        async function uploadManagerDocumentDirect() {
+            const fileInput = document.getElementById('mgr-upload-file');
+            const statusEl = document.getElementById('mgr-upload-status');
+            const vaultScope = document.getElementById('mgr-upload-vault-scope')?.value || 'manager';
+            const title = (document.getElementById('mgr-upload-title')?.value || '').trim();
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please select a file to upload.');
+                return;
+            }
+
+            statusEl.style.display = 'block';
+            statusEl.innerHTML = '<span style="color:#0284c7;"><i class="fa-solid fa-spinner fa-spin"></i> Uploading and indexing to vault...</span>';
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('target_vault', vaultScope);
+            if (title) formData.append('title', title);
+            formData.append('classification', vaultScope === 'manager' ? 'restricted' : 'internal');
+
+            try {
+                const res = await fetch('/api/v1/manager/documents/upload', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + state.token },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Upload failed');
+
+                statusEl.innerHTML = `<span style="color:#059669; font-weight:600;"><i class="fa-solid fa-circle-check"></i> ${escapeHtml(data.message)}</span>`;
+                fileInput.value = '';
+                document.getElementById('mgr-upload-title').value = '';
+                setTimeout(() => { statusEl.style.display = 'none'; }, 5000);
+                loadManagerCockpit();
+            } catch (err) {
+                statusEl.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> ${escapeHtml(err.message)}</span>`;
+            }
+        }
+
+        async function loadManagerApprovals() {
+            const container = document.getElementById('mgr-approvals-container');
+            if (container) container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:16px;"><i class="fa-solid fa-spinner fa-spin"></i> Loading pending approvals...</div>';
+
+            try {
+                const res = await api('GET', '/api/v1/manager/approvals');
+                if (!res.ok) throw new Error(res.data?.detail || 'Failed to load approvals');
+                const list = res.data || [];
+
+                if (list.length === 0) {
+                    container.innerHTML = '<div style="text-align:center; color:#059669; padding:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:6px;"><i class="fa-solid fa-circle-check" style="font-size:1.4rem;"></i><div style="font-weight:700; margin-top:6px;">All Clear</div><div style="font-size:0.78rem; color:#15803d;">No pending requests requiring your approval.</div></div>';
+                    return;
+                }
+
+                let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+                list.forEach(item => {
+                    html += `
+                        <div style="background:#fff; border:1px solid #e2e8f0; border-radius:6px; padding:12px; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:6px;">
+                                <div>
+                                    <span style="font-weight:700; color:#0f172a; font-size:0.85rem;">${escapeHtml(item.operation_summary)}</span>
+                                    <div style="font-size:0.74rem; color:#64748b;">Requester Role: <strong>${escapeHtml(item.requester_role.toUpperCase())}</strong></div>
+                                </div>
+                                <span class="badge badge-warning">PENDING</span>
+                            </div>
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
+                                <span style="font-size:0.72rem; color:#94a3b8;">Created: ${new Date(item.created_at).toLocaleString()}</span>
+                                <div style="display:flex; gap:6px;">
+                                    <button class="btn btn-sm btn-success" onclick="decideManagerApproval('${item.id}', 'approve')"><i class="fa-solid fa-check"></i> Approve</button>
+                                    <button class="btn btn-sm btn-danger" onclick="decideManagerApproval('${item.id}', 'reject')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (err) {
+                if (container) container.innerHTML = `<div style="color:#ef4444; font-size:0.8rem; text-align:center;">Error: ${escapeHtml(err.message)}</div>`;
+            }
+        }
+
+        async function decideManagerApproval(approvalId, decision) {
+            const notes = prompt(`Enter optional executive justification notes for ${decision.toUpperCase()}:`, `Manager decision: ${decision}`) || '';
+            try {
+                const res = await api('POST', `/api/v1/manager/approvals/${approvalId}/decision`, {
+                    decision: decision,
+                    notes: notes
+                });
+                if (!res.ok) throw new Error(res.data?.detail || 'Decision failed');
+                showToast(`Request successfully ${decision}d.`, 'success');
+                loadManagerCockpit();
+            } catch (err) {
+                showToast(`Failed: ${err.message}`, 'danger');
+            }
+        }
+
+        async function runManagerExecutiveAnalytics() {
+            const fileInput = document.getElementById('mgr-analytics-file');
+            const promptVal = (document.getElementById('mgr-analytics-prompt')?.value || '').trim();
+            const maskPii = document.getElementById('mgr-analytics-mask-pii')?.checked || false;
+            const runBtn = document.getElementById('mgr-analytics-run-btn');
+            const resultsCard = document.getElementById('mgr-analytics-results');
+
+            if (!fileInput.files || fileInput.files.length === 0) {
+                alert('Please choose a spreadsheet file (.xlsx, .csv).');
+                return;
+            }
+
+            runBtn.disabled = true;
+            runBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Diagnosing & Compiling Deliverables...';
+            resultsCard.style.display = 'block';
+            resultsCard.scrollIntoView({ behavior: 'smooth' });
+
+            const formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('goal_prompt', promptVal);
+            formData.append('mask_pii', maskPii);
+
+            try {
+                const res = await fetch('/api/v1/manager/analytics/run', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + state.token },
+                    body: formData
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Analytics run failed');
+
+                // Deliverables buttons
+                const d = data.deliverables || {};
+                let dlButtonsHtml = '';
+                if (d.pptx) {
+                    dlButtonsHtml += `<a href="${d.pptx.download_url}" class="btn btn-warning btn-sm" download><i class="fa-solid fa-file-powerpoint"></i> 16:9 Presentation (.pptx)</a>`;
+                }
+                if (d.pdf) {
+                    dlButtonsHtml += `<a href="${d.pdf.download_url}" class="btn btn-danger btn-sm" download><i class="fa-solid fa-file-pdf"></i> Vector Audit PDF (.pdf)</a>`;
+                }
+                if (d.xlsx) {
+                    dlButtonsHtml += `<a href="${d.xlsx.download_url}" class="btn btn-success btn-sm" download><i class="fa-solid fa-file-excel"></i> Cleaned Excel (.xlsx)</a>`;
+                }
+                document.getElementById('mgr-deliverables-buttons').innerHTML = dlButtonsHtml;
+
+                // KPI grid
+                let kpiHtml = '';
+                (data.kpi_metrics || []).forEach(k => {
+                    const color = k.status === 'alert' ? '#dc2626' : (k.status === 'success' ? '#059669' : '#0284c7');
+                    kpiHtml += `
+                        <div class="card" style="margin:0; padding:12px; background:#f8fafc; border-top:3px solid ${color};">
+                            <div style="font-size:0.72rem; color:#64748b; font-weight:700; text-transform:uppercase;">${escapeHtml(k.label)}</div>
+                            <div style="font-size:1.25rem; font-weight:800; color:${color}; margin:3px 0;">${escapeHtml(k.value)}</div>
+                            <div style="font-size:0.72rem; color:#64748b;">${escapeHtml(k.change || '')}</div>
+                        </div>
+                    `;
+                });
+                document.getElementById('mgr-analytics-kpi-grid').innerHTML = kpiHtml;
+
+                // Executive insights text
+                document.getElementById('mgr-analytics-insights-text').textContent = data.executive_insights || 'No narrative insights generated.';
+
+                // Sample table preview
+                document.getElementById('mgr-analytics-table-container').innerHTML = renderHtmlTable(data.table_headers || [], data.table_rows || []);
+                showToast('Executive board deliverables compiled successfully!', 'success');
+            } catch (err) {
+                alert('Analytics Error: ' + err.message);
+            } finally {
+                runBtn.disabled = false;
+                runBtn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Generate Board Deliverables';
+            }
+        }
+
+        async function askManagerExecutiveAI() {
+            const input = document.getElementById('mgr-ai-query-input');
+            const vaultScope = document.getElementById('mgr-ai-target-vault')?.value || 'both';
+            const btn = document.getElementById('mgr-ai-submit-btn');
+            const resultCard = document.getElementById('mgr-ai-result-card');
+            const answerEl = document.getElementById('mgr-ai-answer');
+            const citationsEl = document.getElementById('mgr-ai-citations');
+            const metaEl = document.getElementById('mgr-ai-meta');
+
+            const query = (input?.value || '').trim();
+            if (!query) {
+                alert('Please enter an executive business question.');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Grounding...';
+            resultCard.style.display = 'block';
+            answerEl.innerHTML = '<i class="fa-solid fa-spinner fa-spin text-primary"></i> Retrieving verified facts from authorized vaults and validating citations...';
+            citationsEl.innerHTML = '';
+
+            try {
+                const res = await api('POST', '/api/v1/manager/ai/query', {
+                    query: query,
+                    target_vault: vaultScope,
+                    top_k: 4
+                });
+                if (!res.ok) throw new Error(res.data?.detail || 'Query failed');
+                const data = res.data;
+
+                metaEl.textContent = `Vault: ${data.vault_searched.toUpperCase()} · Latency: ${data.execution_time_ms}ms · Grounded: ${data.is_grounded ? '100% Verified' : 'Partial'}`;
+                answerEl.innerHTML = data.answer.replace(/\n/g, '<br>');
+
+                // Render verified citations
+                let citHtml = '<div style="font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:6px;"><i class="fa-solid fa-shield-check text-success"></i> Grounding Source Citations:</div><div style="display:flex; flex-direction:column; gap:4px;">';
+                (data.citations || []).forEach(c => {
+                    const vLabel = c.vault_scope === 'manager' ? '🔒 Manager Vault' : '🌐 Company Library';
+                    citHtml += `
+                        <div style="font-size:0.75rem; color:#334155; background:#fff; border:1px solid #e2e8f0; border-radius:4px; padding:6px 10px;">
+                            <strong>[Source ${c.citation_index}] ${escapeHtml(c.document_title)}</strong>
+                            <span class="badge badge-info" style="font-size:0.68rem; margin-left:6px;">${vLabel}</span>
+                            <span class="badge badge-neutral" style="font-size:0.68rem;">${escapeHtml(c.classification.toUpperCase())}</span>
+                            <div style="color:#64748b; font-size:0.72rem; margin-top:2px;">"${escapeHtml(c.excerpt)}"</div>
+                        </div>
+                    `;
+                });
+                citHtml += '</div>';
+                citationsEl.innerHTML = citHtml;
+            } catch (err) {
+                answerEl.innerHTML = `<span style="color:#ef4444;"><i class="fa-solid fa-circle-exclamation"></i> Error: ${escapeHtml(err.message)}</span>`;
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-magnifying-glass"></i> Ask Intelligence';
             }
         }
 

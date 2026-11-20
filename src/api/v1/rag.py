@@ -132,6 +132,7 @@ async def upload_document(
     title: str | None = Form(None),
     category: str = Form("general"),
     classification: str = Form("internal"),
+    vault_scope: str = Form("all"),
     allowed_roles: str = Form(""),
     department: str | None = Form(None),
     description: str = Form(""),
@@ -151,9 +152,6 @@ async def upload_document(
         except Exception:
             roles_list = [r.strip().lower() for r in allowed_roles.split(",") if r.strip()]
 
-    if not roles_list:
-        roles_list = [auth.role.lower()]
-
     content = await file.read()
     if not content:
         raise ValidationError("Uploaded file is empty (0 bytes)")
@@ -166,7 +164,8 @@ async def upload_document(
         title=title,
         category=category,
         classification=classification,
-        allowed_roles=roles_list,
+        vault_scope=vault_scope,
+        allowed_roles=roles_list or None,
         department=department,
         description=description,
         auto_index=True,
@@ -180,6 +179,7 @@ async def upload_document(
         "title": doc.title,
         "category": doc.category,
         "classification": doc.classification,
+        "vault_scope": doc.vault_scope,
         "indexing_status": version.indexing_status,
         "file_size": version.file_size,
         "checksum_sha256": version.checksum_sha256,
@@ -193,6 +193,7 @@ async def list_documents(
     db: Annotated[AsyncSession, Depends(get_db)],
     category: str | None = Query(None),
     classification: str | None = Query(None),
+    vault_scope: str | None = Query(None),
     search: str | None = Query(None),
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
@@ -203,6 +204,7 @@ async def list_documents(
         auth=auth,
         category=category,
         classification=classification,
+        vault_scope=vault_scope,
         search_query=search,
         limit=limit,
         offset=offset,
@@ -217,6 +219,7 @@ async def list_documents(
             "description": d.description,
             "category": d.category,
             "classification": d.classification,
+            "vault_scope": d.vault_scope,
             "status": d.status,
             "active_version": active_ver.version_number if active_ver else 1,
             "file_size": active_ver.file_size if active_ver else 0,
@@ -236,14 +239,23 @@ async def list_documents(
 
         for sd in store.list_documents():
             sd_rank = RoleFilteredRetriever._SENSITIVITY_ORDER[sd.classification]
+            sd_vault = (getattr(sd, "vault_scope", "all") or "all").lower()
+            is_sd_vault_accessible = (
+                user_role == "administrator"
+                or sd_vault == "all"
+                or sd_vault == user_role
+            )
+            if vault_scope and sd_vault != vault_scope.lower():
+                continue
             has_role = not sd.allowed_roles or user_role in [r.lower() for r in sd.allowed_roles]
-            if (sd_rank <= max_rank and has_role) or user_role == "administrator":
+            if (sd_rank <= max_rank and has_role and is_sd_vault_accessible) or user_role == "administrator":
                 result.append({
                     "id": str(sd.id),
                     "title": sd.title,
                     "description": "Canonical organizational record",
                     "category": sd.category.value,
                     "classification": sd.classification.value,
+                    "vault_scope": sd_vault,
                     "status": "indexed",
                     "active_version": 1,
                     "file_size": len(sd.content.encode("utf-8")),
@@ -334,6 +346,7 @@ async def get_document(
         "description": doc.description,
         "category": doc.category,
         "classification": doc.classification,
+        "vault_scope": doc.vault_scope,
         "status": doc.status,
         "active_version_id": str(doc.active_version_id) if doc.active_version_id else None,
         "allowed_roles": doc.allowed_roles,

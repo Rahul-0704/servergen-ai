@@ -61,18 +61,27 @@ class DocumentService:
         self, doc: Document, auth: AuthContext, require_write: bool = False
     ) -> bool:
         """Evaluate if user's role and clearance permit access to the document."""
-        if auth.role.lower() == "administrator":
+        user_role = auth.role.lower()
+        if user_role == "administrator":
             return True
 
+        # Role Vault boundary check:
+        # A document in vault 'all' is accessible by all roles (subject to clearance).
+        # A document in a role vault (e.g. 'manager', 'it_operator') is strictly isolated
+        # and only accessible to users with that exact role.
+        doc_vault = (getattr(doc, "vault_scope", "all") or "all").lower()
+        if doc_vault != "all" and doc_vault != user_role:
+            return False
+
         # Clearance check
-        user_max_sens = _ROLE_MAX_CLEARANCE.get(auth.role.lower(), DataSensitivity.INTERNAL)
+        user_max_sens = _ROLE_MAX_CLEARANCE.get(user_role, DataSensitivity.INTERNAL)
         doc_sens = DataSensitivity(doc.classification.lower())
         if _SENSITIVITY_ORDER[doc_sens] > _SENSITIVITY_ORDER[user_max_sens]:
             return False
 
         # Role list check
         doc_roles = [r.lower() for r in (doc.allowed_roles or [])]
-        is_allowed_role = not doc_roles or auth.role.lower() in doc_roles
+        is_allowed_role = not doc_roles or user_role in doc_roles
         is_owner = doc.owner_id is not None and str(doc.owner_id) == auth.user_id
 
         if not (is_allowed_role or is_owner):
@@ -86,7 +95,7 @@ class DocumentService:
             )
             allowed_mgmt_roles = {"administrator", "manager", "it_operator"}
             return bool(
-                has_write_perm and (is_owner or auth.role.lower() in allowed_mgmt_roles)
+                has_write_perm and (is_owner or user_role in allowed_mgmt_roles)
             )
 
         return True
@@ -99,6 +108,7 @@ class DocumentService:
         title: str | None = None,
         category: str = "general",
         classification: str = "internal",
+        vault_scope: str = "all",
         allowed_roles: list[str] | None = None,
         department: str | None = None,
         description: str = "",
@@ -113,6 +123,16 @@ class DocumentService:
             PermissionCode.DOCUMENT_WRITE, PermissionCode.DOCUMENT_UPLOAD
         )
 
+        user_role = auth.role.lower()
+        target_vault = (vault_scope or "all").strip().lower()
+
+        # Validate target vault permissions:
+        # Non-admins cannot upload to arbitrary role vaults (only 'all' or their own role)
+        if user_role != "administrator" and target_vault != "all" and target_vault != user_role:
+            raise AuthorizationError(
+                f"Role '{auth.role}' cannot upload into '{target_vault}' vault"
+            )
+
         # Validate classification
         clean_class = classification.strip().lower()
         valid_classes = [s.value for s in DataSensitivity]
@@ -121,7 +141,7 @@ class DocumentService:
             raise ValidationError(err)
 
         # Check user clearance cannot create documents beyond their own clearance
-        user_max = _ROLE_MAX_CLEARANCE.get(auth.role.lower(), DataSensitivity.INTERNAL)
+        user_max = _ROLE_MAX_CLEARANCE.get(user_role, DataSensitivity.INTERNAL)
         if _SENSITIVITY_ORDER[DataSensitivity(clean_class)] > _SENSITIVITY_ORDER[user_max]:
             raise AuthorizationError(
                 f"Your role ({auth.role}) cannot classify documents as {clean_class.upper()}"
@@ -129,14 +149,24 @@ class DocumentService:
 
         doc_id = uuid.uuid4()
         doc_title = title.strip() if title and title.strip() else filename.rsplit(".", 1)[0]
-        roles_assigned = allowed_roles or [auth.role.lower()]
 
-        # 1. Save original file durably
+        # Default allowed roles based on vault scope
+        if allowed_roles:
+            roles_assigned = [r.lower() for r in allowed_roles]
+        elif target_vault == "all":
+            roles_assigned = [
+                "administrator", "manager", "it_operator", "security_analyst", "general_employee"
+            ]
+        else:
+            roles_assigned = ["administrator", target_vault]
+
+        # 1. Save original file durably in role-scoped vault
         stored_info = self.storage.save_file(
             document_id=doc_id,
             version_number=1,
             filename=filename,
             content=content,
+            vault_scope=target_vault,
         )
 
         owner_uuid = None
@@ -153,6 +183,7 @@ class DocumentService:
             description=description,
             category=category.lower(),
             classification=clean_class,
+            vault_scope=target_vault,
             owner_id=owner_uuid,
             department=department,
             allowed_roles=roles_assigned,
@@ -246,11 +277,13 @@ class DocumentService:
         current_max = (await self.db.execute(stmt)).scalar() or 0
         new_version_num = current_max + 1
 
+        doc_vault = (getattr(doc, "vault_scope", "all") or "all").lower()
         stored_info = self.storage.save_file(
             document_id=doc.id,
             version_number=new_version_num,
             filename=filename,
             content=content,
+            vault_scope=doc_vault,
         )
 
         version = DocumentVersion(
@@ -300,6 +333,7 @@ class DocumentService:
         auth: AuthContext,
         category: str | None = None,
         classification: str | None = None,
+        vault_scope: str | None = None,
         search_query: str | None = None,
         limit: int = 50,
         offset: int = 0,
@@ -320,6 +354,18 @@ class DocumentService:
             Document.is_deleted.is_(False),
             Document.classification.in_(allowed_classifications),
         )
+
+        # Enforce role-vault scoping
+        if vault_scope:
+            v_clean = vault_scope.strip().lower()
+            if user_role != "administrator" and v_clean != "all" and v_clean != user_role:
+                raise AuthorizationError(
+                    f"Access denied: role '{auth.role}' cannot view '{v_clean}' vault"
+                )
+            stmt = stmt.where(Document.vault_scope == v_clean)
+        elif user_role != "administrator":
+            # Non-admins only see company-wide 'all' and their own role vault
+            stmt = stmt.where(Document.vault_scope.in_(["all", user_role]))
 
         if category:
             stmt = stmt.where(Document.category == category.lower())
@@ -382,8 +428,9 @@ class DocumentService:
                 "Only the document owner or an Administrator can delete documents"
             )
 
-        # Physical file removal
-        self.storage.delete_document_tree(document_id)
+        # Physical file removal across vaults
+        doc_vault = getattr(doc, "vault_scope", None)
+        self.storage.delete_document_tree(document_id, vault_scope=doc_vault)
 
         # Database cascade delete
         await self.db.delete(doc)

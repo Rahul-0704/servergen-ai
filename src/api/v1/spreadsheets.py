@@ -175,6 +175,8 @@ async def analyze_spreadsheet(
         doc_dir = storage_backend.base_dir / str(doc_uuid) / "1"
         files = list(doc_dir.glob("*")) if doc_dir.exists() else []
         if not files:
+            files = list((storage_backend.base_dir / "vaults").glob(f"*/{doc_uuid}/1/*"))
+        if not files:
             raise FileNotFoundError("No files in document directory")
         file_path = files[0]
     except Exception as exc:
@@ -395,6 +397,8 @@ async def execute_autonomous_spreadsheet_workflow(
             doc_uuid = uuid.UUID(document_id)
             doc_dir = storage_backend.base_dir / str(doc_uuid) / "1"
             files = list(doc_dir.glob("*")) if doc_dir.exists() else []
+            if not files:
+                files = list((storage_backend.base_dir / "vaults").glob(f"*/{doc_uuid}/1/*"))
             if not files:
                 raise FileNotFoundError("No files in document directory")
             file_path = files[0]

@@ -121,11 +121,13 @@ class DocumentIndexer:
             )
 
             # 6. Insert new chunks and embeddings
+            doc_vault = (getattr(doc, "vault_scope", "all") or "all").lower()
             for idx, (chunk_item, vec) in enumerate(zip(chunks, vectors, strict=False)):
                 chunk_record = DocumentChunk(
                     id=uuid.uuid4(),
                     document_id=doc.id,
                     version_id=version.id,
+                    vault_scope=doc_vault,
                     chunk_index=idx,
                     content=chunk_item.content,
                     token_count=chunk_item.token_count,

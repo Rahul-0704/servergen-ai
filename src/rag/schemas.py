@@ -34,6 +34,9 @@ class KnowledgeDocument(BaseModel):
     content: str
     category: DocumentCategory = DocumentCategory.GENERAL
     classification: DataSensitivity = DataSensitivity.INTERNAL
+    vault_scope: str = Field(
+        default="all", description="Target vault scope ('all', 'manager', etc.)"
+    )
     allowed_roles: list[str] = Field(
         default_factory=list,
         description="Roles permitted to access this document",
@@ -51,6 +54,9 @@ class KnowledgeChunk(BaseModel):
     content: str
     category: DocumentCategory = DocumentCategory.GENERAL
     classification: DataSensitivity = DataSensitivity.INTERNAL
+    vault_scope: str = Field(
+        default="all", description="Target vault scope ('all', 'manager', etc.)"
+    )
     allowed_roles: list[str] = Field(default_factory=list)
     relevance_score: float = 0.0
     semantic_score: float = 0.0
@@ -72,6 +78,7 @@ class CitationItem(BaseModel):
     page_number: int | None = None
     section_heading: str | None = None
     classification: str
+    vault_scope: str = "all"
     relevance_score: float = 0.0
     excerpt: str = ""
     is_verified: bool = True

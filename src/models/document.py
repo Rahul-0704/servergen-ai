@@ -74,6 +74,9 @@ class Document(TimestampMixin, Base):
     )
     department: Mapped[str | None] = mapped_column(String(100), nullable=True)
     allowed_roles: Mapped[list[str]] = mapped_column(JSON, nullable=False, default=list)
+    vault_scope: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="all", index=True
+    )
     active_version_id: Mapped[uuid.UUID | None] = mapped_column(UUID(as_uuid=True), nullable=True)
     status: Mapped[str] = mapped_column(
         String(50), nullable=False, default=DocumentStatus.PENDING, index=True
@@ -202,6 +205,9 @@ class DocumentChunk(Base):
     page_number: Mapped[int | None] = mapped_column(Integer, nullable=True)
     section_heading: Mapped[str | None] = mapped_column(String(255), nullable=True)
     chunk_metadata: Mapped[dict[str, Any]] = mapped_column(JSON, nullable=False, default=dict)
+    vault_scope: Mapped[str] = mapped_column(
+        String(50), nullable=False, default="all", index=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         default=lambda: datetime.now(UTC),

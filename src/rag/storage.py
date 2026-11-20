@@ -162,17 +162,19 @@ class DocumentStorage:
         version_number: int,
         filename: str,
         content: bytes | BinaryIO,
+        vault_scope: str = "all",
     ) -> StoredFileInfo:
         """
-        Persist a document file atomically inside storage/<doc_id>/<version_number>/.
+        Persist a document file atomically inside
+        storage/vaults/<vault_scope>/<doc_id>/<version_number>/.
         Computes SHA-256 checksum and returns StoredFileInfo.
         """
         data_bytes = content if isinstance(content, bytes) else content.read()
 
         sanitized_name, mime_type = self.validate_upload(filename, data_bytes)
 
-        # Target directory: storage/documents/<doc_id>/<version_number>/
-        target_dir = self.base_dir / str(document_id) / str(version_number)
+        clean_vault = re.sub(r"[^\w\-]", "", (vault_scope or "all").strip().lower()) or "all"
+        target_dir = self.base_dir / "vaults" / clean_vault / str(document_id) / str(version_number)
         target_dir.mkdir(parents=True, exist_ok=True)
 
         target_file = (target_dir / sanitized_name).resolve()
@@ -236,10 +238,24 @@ class DocumentStorage:
             logger.warning("Could not delete file %s: %s", relative_path, exc)
         return False
 
-    def delete_document_tree(self, document_id: uuid.UUID) -> bool:
-        """Safely remove the entire directory for a document and its versions."""
+    def delete_document_tree(
+        self, document_id: uuid.UUID, vault_scope: str | None = None
+    ) -> bool:
+        """Safely remove the entire directory for a document and its versions across vaults."""
+        deleted = False
         doc_dir = (self.base_dir / str(document_id)).resolve()
         if doc_dir.is_relative_to(self.base_dir) and doc_dir.is_dir():
             shutil.rmtree(doc_dir, ignore_errors=True)
-            return True
-        return False
+            deleted = True
+
+        vaults_dir = self.base_dir / "vaults"
+        if vaults_dir.is_dir():
+            for vault in vaults_dir.iterdir():
+                if vault.is_dir():
+                    if vault_scope and vault.name.lower() != vault_scope.lower():
+                        continue
+                    v_doc_dir = (vault / str(document_id)).resolve()
+                    if v_doc_dir.is_relative_to(self.base_dir) and v_doc_dir.is_dir():
+                        shutil.rmtree(v_doc_dir, ignore_errors=True)
+                        deleted = True
+        return deleted

@@ -121,8 +121,18 @@ class RoleFilteredRetriever:
                 doc_sens = DataSensitivity(doc.classification.lower())
                 doc_rank = self._SENSITIVITY_ORDER[doc_sens]
                 doc_roles = [r.lower() for r in (doc.allowed_roles or [])]
+                doc_vault = (getattr(doc, "vault_scope", "all") or "all").lower()
+
+                # Vault isolation check: doc must be in 'all' or match user's role (admin sees all)
+                is_vault_accessible = (
+                    user_role == "administrator"
+                    or doc_vault == "all"
+                    or doc_vault == user_role
+                )
+
                 is_permitted = (
-                    doc_rank <= max_allowed_rank
+                    is_vault_accessible
+                    and doc_rank <= max_allowed_rank
                     and (
                         user_role == "administrator"
                         or (
@@ -151,7 +161,14 @@ class RoleFilteredRetriever:
                 total_searched += len(chunk_rows)
 
                 for chunk, embedding in chunk_rows:
-                    if not is_permitted:
+                    chunk_vault = (getattr(chunk, "vault_scope", doc_vault) or doc_vault).lower()
+                    is_chunk_vault_accessible = (
+                        user_role == "administrator"
+                        or chunk_vault == "all"
+                        or chunk_vault == user_role
+                    )
+
+                    if not is_permitted or not is_chunk_vault_accessible:
                         denied_count += 1
                         continue
 
@@ -167,6 +184,7 @@ class RoleFilteredRetriever:
                         "content": chunk.content,
                         "category": cat,
                         "classification": doc_sens,
+                        "vault_scope": chunk_vault,
                         "allowed_roles": doc.allowed_roles or [],
                         "page_number": chunk.page_number,
                         "section_heading": chunk.section_heading,
@@ -180,11 +198,19 @@ class RoleFilteredRetriever:
 
         for sc in seeded_chunks:
             sc_rank = self._SENSITIVITY_ORDER[sc.classification]
+            sc_vault = (getattr(sc, "vault_scope", "all") or "all").lower()
+            is_sc_vault_accessible = (
+                user_role == "administrator"
+                or sc_vault == "all"
+                or sc_vault == user_role
+            )
             has_role_permission = (
                 not sc.allowed_roles or user_role in [r.lower() for r in sc.allowed_roles]
             )
-            if sc_rank > max_allowed_rank or (
-                not has_role_permission and user_role != "administrator"
+            if (
+                sc_rank > max_allowed_rank
+                or not is_sc_vault_accessible
+                or (not has_role_permission and user_role != "administrator")
             ):
                 denied_count += 1
                 continue
@@ -196,6 +222,7 @@ class RoleFilteredRetriever:
                 "content": sc.content,
                 "category": sc.category,
                 "classification": sc.classification,
+                "vault_scope": sc_vault,
                 "allowed_roles": sc.allowed_roles,
                 "page_number": None,
                 "section_heading": None,
@@ -293,6 +320,7 @@ class RoleFilteredRetriever:
                 content=cand["content"],
                 category=cand["category"],
                 classification=cand["classification"],
+                vault_scope=cand.get("vault_scope", "all"),
                 allowed_roles=cand["allowed_roles"],
                 relevance_score=blended,
                 semantic_score=s_score,
@@ -342,6 +370,7 @@ class RoleFilteredRetriever:
                     page_number=c.page_number,
                     section_heading=c.section_heading,
                     classification=c.classification.value,
+                    vault_scope=c.vault_scope,
                     relevance_score=c.relevance_score,
                     excerpt=c.content[:200] + ("..." if len(c.content) > 200 else ""),
                     is_verified=True,

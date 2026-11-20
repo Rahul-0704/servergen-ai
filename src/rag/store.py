@@ -50,6 +50,7 @@ class KnowledgeStore:
                 content=para,
                 category=doc.category,
                 classification=doc.classification,
+                vault_scope=getattr(doc, "vault_scope", "all") or "all",
                 allowed_roles=doc.allowed_roles,
             )
             self._chunks.append(chunk)
@@ -67,6 +68,7 @@ class KnowledgeStore:
                 title="ServerGen AI System Overview & Core Capabilities",
                 category=DocumentCategory.ARCHITECTURE,
                 classification=DataSensitivity.INTERNAL,
+                vault_scope="all",
                 allowed_roles=["administrator", "it_operator", "security_analyst", "manager", "general_employee"],
                 content="""ServerGen AI is a secure prototype foundation for controlled on-premise enterprise AI automation using local LLM inference, policy-controlled orchestration, RBAC, human approval, and tamper-evident auditing.
 
@@ -78,6 +80,7 @@ The primary stack consists of Python 3.11+, FastAPI, SQLAlchemy 2.x async, Postg
                 title="Enterprise Role Permissions & Clearance Standards",
                 category=DocumentCategory.POLICY,
                 classification=DataSensitivity.INTERNAL,
+                vault_scope="all",
                 allowed_roles=["administrator", "it_operator", "security_analyst", "manager", "general_employee"],
                 content="""The organization enforces strict Role-Based Access Control (RBAC) across five system roles:
 1. Administrator: Full system administration, user provisioning, audit read, and AI execution.
@@ -90,6 +93,7 @@ The primary stack consists of Python 3.11+, FastAPI, SQLAlchemy 2.x async, Postg
                 title="IT Operations & Server Diagnostic Runbook",
                 category=DocumentCategory.OPERATIONS,
                 classification=DataSensitivity.CONFIDENTIAL,
+                vault_scope="it_operator",
                 allowed_roles=["administrator", "it_operator"],
                 content="""Server maintenance operations require verification of system health via the /health and /api/v1/health readiness probes.
 When server degradation is detected, IT Operators should inspect database connection pools and verify PostgreSQL service status on port 5432.
@@ -99,6 +103,7 @@ For local LLM inference, verify that Ollama daemon is active on port 11434 and h
                 title="Defensive Security & Audit Integrity Verification Playbook",
                 category=DocumentCategory.SECURITY,
                 classification=DataSensitivity.CONFIDENTIAL,
+                vault_scope="security_analyst",
                 allowed_roles=["administrator", "security_analyst"],
                 content="""The ServerGen AI audit ledger utilizes a SHA-256 cryptographic hash chain where each event hash is computed over the previous event's hash, sequence number, timestamp, user ID, action, decision, and risk level.
 Security Analysts must execute periodic chain integrity verifications via the /api/v1/audit/verify endpoint.
@@ -109,6 +114,7 @@ All failed authentication attempts and permission denials are automatically reco
                 title="Executive Policy & Q3 Enterprise Financial Audit",
                 category=DocumentCategory.EXECUTIVE,
                 classification=DataSensitivity.RESTRICTED,
+                vault_scope="manager",
                 allowed_roles=["administrator", "manager"],
                 content="""RESTRICTED EXECUTIVE RECORD:
 The Q3 enterprise automation expenditure totaled $145,000, achieving a 65% reduction in manual server maintenance overhead.
