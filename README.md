@@ -130,25 +130,28 @@ servergen-ai/
 │   ├── ARCHITECTURE.md
 │   ├── FRONTEND_GUIDE.md
 │   └── SECURITY.md
-├── scripts/             # Operational scripts
-│   ├── generate_diagrams.py   # High-resolution architectural diagram generator
-│   ├── seed_db.py             # Database initializer (roles, permissions, accounts)
-│   └── verify_all_5_tests.py  # 5-stage automated verification runner
+├── scripts/             # Operational & verification scripts
+│   ├── generate_diagrams.py          # High-resolution architectural diagram generator
+│   ├── seed_db.py                    # Database initializer (roles, permissions, accounts)
+│   ├── verify_all_5_tests.py         # 5-stage core verification runner
+│   ├── verify_approvals.py           # Dual-custody approval queue verification runner
+│   └── verify_nl_and_notifications.py # NL analytics & notifications verification runner
 ├── src/                 # Application source code
 │   ├── ai/              # Local LLM orchestration (Ollama provider, model registry)
-│   ├── api/v1/          # REST API endpoints (Auth, RAG, AI, Approvals, Generate)
+│   ├── api/v1/          # REST API endpoints (Auth, RAG, AI, Approvals, Manager, Notifications)
 │   ├── auth/            # Zero-trust RBAC/ABAC and Argon2id security
 │   ├── core/            # Database engine, config, and exceptions
 │   ├── models/          # SQLAlchemy async models
 │   ├── orchestrator/    # 10-stage execution pipeline and risk engine
 │   ├── rag/             # Multi-format ingestion, chunking, and hybrid search
-│   └── services/        # Business services (Auth, DocGen, Approvals, Audit)
+│   └── services/        # Business services (Auth, DocGen, Approvals, Analytics, Notifications)
 ├── storage/             # Managed document repository and generated PPTX/PDFs
-├── tests/               # Automated unit and integration test suite (162 tests)
+├── tests/               # Automated unit test suite (199 tests, 100% pass)
 ├── test-interface.html  # Live browser test dashboard and interactive playground
 ├── pyproject.toml       # Dependencies, build system, and linter configuration
-├── run.bat              # Master runner script (checks & launcher)
-└── start.bat            # Quick local services launcher (Ollama + Uvicorn)
+├── requirements.txt     # Standard pip dependency manifest
+├── run.bat              # Windows 1-click launcher and verification runner
+└── run.sh               # Linux & macOS 1-click launcher and verification runner
 ```
 
 
