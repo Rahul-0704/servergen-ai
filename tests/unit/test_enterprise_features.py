@@ -284,3 +284,89 @@ async def test_api_anomaly_and_variance_lifecycle(client: AsyncClient, db_sessio
     res_ex = await client.post("/api/v1/spreadsheets/export", json=export_payload, headers=auth_headers)
     assert res_ex.status_code == 200
     assert res_ex.json()["format"] == "pptx"
+
+
+def test_auto_analyze_and_route_unit():
+    """Unit test for autonomous prompt routing across anomaly, variance, and aggregation."""
+    service = SpreadsheetAnalyticsService()
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Finance"
+    ws.append(["Region", "Budget_Amount", "Actual_Amount"])
+    ws.append(["North", 100000.0, 115000.0])
+    ws.append(["South", 85000.0, 82000.0])
+    ws.append(["East", 120000.0, 550000.0])  # outlier
+    ws.append(["West", 95000.0, 93000.0])
+    ws.append(["Central", 110000.0, 108000.0])
+    ws.append(["Midwest", 105000.0, 102000.0])
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    wb_data = service.parse_content(buf.getvalue(), "fin.xlsx")
+    sheet = wb_data.sheets["Finance"]
+
+    # 1. Anomaly Prompt
+    res_anom = service.auto_analyze_and_route(sheet, prompt="Audit abnormal spikes and anomalies in Actual_Amount")
+    assert res_anom["mode"] == "anomaly"
+    assert len(res_anom["kpis"]) == 3
+    assert "chart_spec" in res_anom
+    assert res_anom["metrics"]["anomalies_detected"] >= 1
+
+    # 2. Variance Prompt
+    res_var = service.auto_analyze_and_route(sheet, prompt="Compare budget vs actual amount performance")
+    assert res_var["mode"] == "variance"
+    assert len(res_var["kpis"]) == 3
+    assert "Variance ($)" in res_var["headers"]
+
+    # 3. GroupBy / Breakdown Prompt
+    res_grp = service.auto_analyze_and_route(sheet, prompt="Breakdown and aggregate by region")
+    assert res_grp["mode"] == "groupby"
+    assert len(res_grp["kpis"]) == 3
+    assert "Region" in res_grp["headers"]
+
+
+@pytest.mark.asyncio
+async def test_auto_workflow_api_end_to_end(client: AsyncClient, db_session: AsyncSession):
+    """End-to-end API test for the unified 1-click autonomous workflow."""
+    token, _ = await _setup_admin(db_session)
+    auth_headers = {"Authorization": f"Bearer {token}"}
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Sales_Q3"
+    ws.append(["Territory", "Target_Quota", "Actual_Revenue", "Rep_Email"])
+    ws.append(["EMEA", 200000.0, 215000.0, "emea@test.local"])
+    ws.append(["APAC", 180000.0, 192000.0, "apac@test.local"])
+    ws.append(["AMER", 350000.0, 840000.0, "amer@test.local"])  # outlier
+    ws.append(["LATAM", 120000.0, 118000.0, "latam@test.local"])
+    ws.append(["NORAM", 250000.0, 248000.0, "noram@test.local"])
+    buf = io.BytesIO()
+    wb.save(buf)
+
+    files = {
+        "file": ("q3_sales.xlsx", io.BytesIO(buf.getvalue()), "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    }
+    form_data = {
+        "prompt": "Highlight critical budget variance and executive metrics",
+        "mask_pii": "true",
+        "title": "Q3 Global Sales Autonomous Review",
+    }
+
+    res = await client.post("/api/v1/spreadsheets/auto-workflow", data=form_data, files=files, headers=auth_headers)
+    assert res.status_code == 200
+    data = res.json()
+
+    assert data["status"] == "success"
+    assert data["headline"] == "Q3 Global Sales Autonomous Review"
+    assert len(data["kpi_metrics"]) == 3
+    assert "chart_spec" in data
+    assert len(data["table_headers"]) > 0
+    assert len(data["table_rows"]) > 0
+    assert "deliverables" in data
+    assert "pptx" in data["deliverables"]
+    assert "pdf" in data["deliverables"]
+    assert "xlsx" in data["deliverables"]
+    assert data["deliverables"]["pptx"]["download_url"].startswith("/api/v1/generate/download/")
+    assert data["deliverables"]["pdf"]["download_url"].startswith("/api/v1/generate/download/")
+    assert data["deliverables"]["xlsx"]["download_url"].startswith("/api/v1/generate/download/")
+

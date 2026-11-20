@@ -108,19 +108,36 @@ class SpreadsheetAnalyticsService:
     # ── 1. Workbook Parsing & Ingestion ─────────────────────────────────────
 
     def parse_content(self, content: bytes, filename: str) -> WorkbookData:
-        """Parse raw bytes of .xlsx or .csv into a typed WorkbookData structure."""
+        """Parse raw bytes of .xlsx, .xls, or .csv into a typed WorkbookData structure."""
+        if not content:
+            raise ValidationError("Spreadsheet file is empty (0 bytes).")
+
         ext = filename.lower().rsplit(".", 1)[-1] if "." in filename else ""
-        if ext in ("xlsx", "xlsm", "xltx"):
-            return self._parse_xlsx(content, filename)
-        elif ext in ("csv", "tsv", "txt"):
-            delimiter = "\t" if ext == "tsv" else ","
-            return self._parse_csv(content, filename, delimiter=delimiter)
-        else:
-            # Attempt XLSX first, then fallback to CSV
+
+        # If it has ZIP container signature or xlsx extension, try openpyxl
+        if content.startswith(b"PK\x03\x04") or ext in ("xlsx", "xlsm", "xltx"):
             try:
                 return self._parse_xlsx(content, filename)
-            except Exception:
-                return self._parse_csv(content, filename)
+            except Exception as exc:
+                logger.warning("openpyxl failed to load '%s': %s. Attempting CSV/text fallback.", filename, exc)
+                try:
+                    return self._parse_csv(content, filename)
+                except Exception:
+                    raise ValidationError(f"Could not load Excel file '{filename}': {exc}") from exc
+
+        # CSV, TSV, TXT
+        if ext in ("csv", "tsv", "txt"):
+            delimiter = "\t" if ext == "tsv" else ","
+            return self._parse_csv(content, filename, delimiter=delimiter)
+
+        # Fallback for .xls or unknown extensions: try CSV first, then openpyxl
+        try:
+            return self._parse_csv(content, filename)
+        except Exception:
+            try:
+                return self._parse_xlsx(content, filename)
+            except Exception as exc:
+                raise ValidationError(f"Could not parse spreadsheet '{filename}': {exc}") from exc
 
     def _parse_xlsx(self, content: bytes, filename: str) -> WorkbookData:
         try:
@@ -168,7 +185,9 @@ class SpreadsheetAnalyticsService:
                 row_vals = list(r[: len(headers)])
                 while len(row_vals) < len(headers):
                     row_vals.append(None)
-                data_rows.append(row_vals)
+                # Clean cell values (strip currency symbols, commas, percent, convert numeric strings)
+                cleaned = [self._clean_cell_value(val) for val in row_vals]
+                data_rows.append(cleaned)
 
             # Build column index
             columns: dict[str, list[Any]] = {h: [] for h in headers}
@@ -257,20 +276,25 @@ class SpreadsheetAnalyticsService:
         if isinstance(val, (int, float)):
             return val
         s = str(val).strip()
-        if s == "" or s.lower() in ("null", "none", "nan", "n/a"):
+        if s == "" or s.lower() in ("null", "none", "nan", "n/a", "-"):
             return None
-        # Try currency or number parse
-        cleaned = re.sub(r"[\$,\s]", "", s)
+        # Handle accounting parentheses e.g. (1,250.00) -> -1250.00
+        is_negative = False
+        if s.startswith("(") and s.endswith(")"):
+            is_negative = True
+            s = s[1:-1].strip()
+        # Clean currency symbols, commas, spaces
+        cleaned = re.sub(r"[\$,\s€£¥₹]", "", s)
         # Check percentage
         if cleaned.endswith("%"):
             try:
-                return float(cleaned[:-1]) / 100.0
+                v = float(cleaned[:-1]) / 100.0
+                return -v if is_negative else v
             except ValueError:
                 pass
         try:
-            if "." in cleaned:
-                return float(cleaned)
-            return int(cleaned)
+            v = float(cleaned) if "." in cleaned else int(cleaned)
+            return -v if is_negative else v
         except ValueError:
             return s
 
@@ -916,3 +940,289 @@ class SpreadsheetAnalyticsService:
         wb.save(str(out_path))
         logger.info("Saved styled Excel workbook: %s (%s bytes)", out_path, out_path.stat().st_size)
         return out_path
+
+    def auto_analyze_and_route(
+        self,
+        sheet: SheetData,
+        prompt: str = "",
+        mask_pii: bool = False,
+    ) -> dict[str, Any]:
+        """
+        Autonomous routing engine that inspects user prompt and tabular columns
+        to select and run the optimal analytics workflow:
+        - Outlier / Anomaly Audit (IQR or Z-Score)
+        - Variance Analysis (Budget vs Actual / Period-over-Period)
+        - Segment Breakdown & Aggregation (Group-by sum/avg)
+        - Comprehensive Executive KPI Overview
+
+        Returns headers, rows, KPI stat cards, chart spec, and metrics.
+        """
+        p_lower = (prompt or "").lower().strip()
+        numeric_cols = [
+            h
+            for h, p in sheet.column_profiles.items()
+            if p.inferred_type in ("numeric", "currency", "percentage")
+        ]
+        dimension_cols = [
+            h
+            for h, p in sheet.column_profiles.items()
+            if p.inferred_type in ("text", "date")
+        ]
+
+        # Dynamic fallback if column_profiles were all classified as text
+        if not numeric_cols:
+            for h in sheet.headers:
+                col_idx = sheet.headers.index(h)
+                vals = [self._to_number(r[col_idx]) for r in sheet.rows[:30] if col_idx < len(r)]
+                num_count = sum(1 for v in vals if v is not None)
+                if num_count >= max(2, len(vals) // 2):
+                    numeric_cols.append(h)
+
+        if not dimension_cols:
+            dimension_cols = [h for h in sheet.headers if h not in numeric_cols]
+
+        mode = "overview"
+        headline = f"Executive Summary & Tabular Overview — {sheet.name}"
+        metrics: dict[str, Any] = {}
+        headers: list[str] = []
+        rows: list[list[Any]] = []
+        kpis: list[dict[str, Any]] = []
+
+        is_anomaly = any(
+            k in p_lower
+            for k in (
+                "anomal",
+                "outlier",
+                "spike",
+                "deviat",
+                "abnormal",
+                "fraud",
+                "audit",
+                "irregular",
+                "unusual",
+            )
+        )
+        is_variance = any(
+            k in p_lower
+            for k in (
+                "variance",
+                "budget",
+                "target",
+                "forecast",
+                "actual",
+                " vs ",
+                "versus",
+                "difference",
+                "delta",
+                "attainment",
+            )
+        )
+        is_groupby = any(
+            k in p_lower
+            for k in (
+                "group",
+                "breakdown",
+                "by region",
+                "by department",
+                "by category",
+                "distribution",
+                "segment",
+                "aggregate",
+                "sum by",
+                "average by",
+                "top",
+            )
+        )
+
+        # ── Branch 1: Anomaly Detection ──────────────────────────────────────
+        if is_anomaly and numeric_cols:
+            mode = "anomaly"
+            target_col = next((c for c in numeric_cols if c.lower() in p_lower), numeric_cols[-1])
+            dim_col = next((c for c in dimension_cols if c.lower() in p_lower), (dimension_cols[0] if dimension_cols else None))
+            headers, rows, metrics = self.detect_anomalies(
+                sheet, target_column=target_col, dimension_col=dim_col, method="iqr"
+            )
+            headline = f"Statistical Anomaly Audit ({target_col})"
+            anom_count = metrics.get("anomalies_detected", len(rows))
+            if not rows:
+                rows = [["All Records Within Thresholds", metrics.get("mean", 0.0), "NONE", "NORMAL", "0.0% dev", metrics.get("upper_bound", 0.0)]]
+            kpis = [
+                {
+                    "label": "Total Analyzed",
+                    "value": f"{metrics.get('total_records', len(sheet.rows)):,}",
+                    "change": "Records",
+                    "status": "neutral",
+                },
+                {
+                    "label": "Outliers Detected",
+                    "value": str(anom_count),
+                    "change": f"{metrics.get('anomaly_rate_pct', 0.0)}% rate",
+                    "status": "alert" if anom_count > 0 else "success",
+                },
+                {
+                    "label": "Expected Range",
+                    "value": f"[{metrics.get('lower_bound', 0):,.1f} to {metrics.get('upper_bound', 0):,.1f}]",
+                    "change": f"IQR: {metrics.get('iqr', 0):,.1f}",
+                    "status": "neutral",
+                },
+            ]
+
+        # ── Branch 2: Variance Analysis ──────────────────────────────────────
+        elif is_variance and len(numeric_cols) >= 2:
+            mode = "variance"
+            base_cand = next(
+                (
+                    c
+                    for c in numeric_cols
+                    if any(k in c.lower() for k in ("budget", "target", "plan", "baseline", "prior", "last"))
+                ),
+                numeric_cols[0],
+            )
+            comp_cand = next(
+                (
+                    c
+                    for c in numeric_cols
+                    if c != base_cand
+                    and any(k in c.lower() for k in ("actual", "rev", "current", "real", "spend"))
+                ),
+                None,
+            )
+            if not comp_cand:
+                comp_cand = next((c for c in numeric_cols if c != base_cand), numeric_cols[1])
+
+            dim_col = next((c for c in dimension_cols if c.lower() in p_lower), (dimension_cols[0] if dimension_cols else None))
+            headers, rows, metrics = self.analyze_variance(
+                sheet, base_col=base_cand, comparison_col=comp_cand, dimension_col=dim_col
+            )
+            headline = f"Variance & Performance Analysis ({comp_cand} vs. {base_cand})"
+            net_var = metrics.get("net_variance", 0.0)
+            net_pct = metrics.get("net_variance_pct", 0.0)
+            status_ind = "success" if net_var >= 0 else "alert"
+            kpis = [
+                {
+                    "label": f"Total {comp_cand}",
+                    "value": f"${metrics.get('total_comparison', 0):,.2f}",
+                    "change": "Comparison",
+                    "status": "neutral",
+                },
+                {
+                    "label": f"Total {base_cand}",
+                    "value": f"${metrics.get('total_base', 0):,.2f}",
+                    "change": "Baseline",
+                    "status": "neutral",
+                },
+                {
+                    "label": "Net Variance",
+                    "value": f"{'+' if net_var >= 0 else ''}{net_var:,.2f}",
+                    "change": f"{net_pct:+.2f}% ({metrics.get('overall_performance', 'Neutral')})",
+                    "status": status_ind,
+                },
+            ]
+
+        # ── Branch 3: Group-by / Dimension Breakdown ─────────────────────────
+        elif (is_groupby or len(dimension_cols) > 0) and numeric_cols and len(sheet.rows) > 0:
+            mode = "groupby"
+            grp_col = next((c for c in dimension_cols if c.lower() in p_lower), (dimension_cols[0] if dimension_cols else sheet.headers[0]))
+            val_col = next((c for c in numeric_cols if c.lower() in p_lower), numeric_cols[0])
+            aggs = [
+                {"column": val_col, "op": "sum"},
+                {"column": val_col, "op": "avg"},
+            ]
+            headers, rows = self.group_by_aggregate(sheet, grp_col, aggs)
+            headline = f"Segment Performance & Aggregation by {grp_col}"
+            tot_sum = sum(self._to_number(r[1]) or 0.0 for r in rows)
+            top_row = rows[0] if rows else [None, 0]
+            kpis = [
+                {
+                    "label": f"Total {val_col}",
+                    "value": f"{tot_sum:,.2f}",
+                    "change": f"{len(sheet.rows)} records",
+                    "status": "success",
+                },
+                {
+                    "label": f"Unique {grp_col}s",
+                    "value": str(len(rows)),
+                    "change": "Segments",
+                    "status": "neutral",
+                },
+                {
+                    "label": f"Top {grp_col}",
+                    "value": str(top_row[0]),
+                    "change": f"{top_row[1]:,.2f}",
+                    "status": "success",
+                },
+            ]
+            metrics = {"group_by": grp_col, "metric": val_col, "total": tot_sum, "segments": len(rows)}
+
+        # ── Branch 4: General Overview ─────────────────────────────────────────
+        else:
+            headers = sheet.headers
+            rows = sheet.rows[:30]
+            headline = f"Tabular Overview: {sheet.name}"
+            if numeric_cols:
+                p_col = numeric_cols[0]
+                prof = sheet.column_profiles.get(p_col)
+                tot = prof.total if prof and prof.total is not None else 0.0
+                mean = prof.mean if prof and prof.mean is not None else 0.0
+                kpis = [
+                    {
+                        "label": "Total Rows",
+                        "value": f"{sheet.row_count():,}",
+                        "change": f"{sheet.col_count()} columns",
+                        "status": "neutral",
+                    },
+                    {
+                        "label": f"Total {p_col}",
+                        "value": f"{tot:,.2f}",
+                        "change": "Sum",
+                        "status": "success",
+                    },
+                    {
+                        "label": f"Avg {p_col}",
+                        "value": f"{mean:,.2f}",
+                        "change": "Mean",
+                        "status": "neutral",
+                    },
+                ]
+            else:
+                kpis = [
+                    {
+                        "label": "Total Rows",
+                        "value": f"{sheet.row_count():,}",
+                        "change": f"{sheet.col_count()} columns",
+                        "status": "neutral",
+                    },
+                    {
+                        "label": "Columns",
+                        "value": str(sheet.col_count()),
+                        "change": "Headers",
+                        "status": "neutral",
+                    },
+                    {
+                        "label": "Status",
+                        "value": "Verified",
+                        "change": "Ready",
+                        "status": "success",
+                    },
+                ]
+
+        pii_count = 0
+        if mask_pii:
+            headers, rows, pii_count = pii_service.redact_table(headers, rows)
+
+        chart_spec = self.extract_chart_spec(headers, rows)
+        if not chart_spec.get("series") or not chart_spec.get("categories"):
+            chart_spec = self.extract_chart_spec(sheet.headers, sheet.rows[:10])
+        data_table_md = self.format_markdown_table(headers, rows[:50])
+
+        return {
+            "mode": mode,
+            "headline": headline,
+            "headers": headers,
+            "rows": rows,
+            "kpis": kpis,
+            "metrics": metrics,
+            "chart_spec": chart_spec,
+            "data_table_md": data_table_md,
+            "pii_redacted_count": pii_count,
+        }

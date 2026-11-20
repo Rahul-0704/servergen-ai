@@ -42,9 +42,12 @@ _ALLOWED_EXTENSIONS: set[str] = {
     "md",
     "markdown",
     "csv",
+    "tsv",
     "pdf",
     "docx",
     "xlsx",
+    "xls",
+    "xlsm",
     "pptx",
     "html",
     "htm",
@@ -62,9 +65,12 @@ _MIME_MAP: dict[str, str] = {
     "md": "text/markdown",
     "markdown": "text/markdown",
     "csv": "text/csv",
+    "tsv": "text/tab-separated-values",
     "pdf": "application/pdf",
     "docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    "xls": "application/vnd.ms-excel",
+    "xlsm": "application/vnd.ms-excel.sheet.macroEnabled.12",
     "pptx": "application/vnd.openxmlformats-officedocument.presentationml.presentation",
     "html": "text/html",
     "htm": "text/html",
@@ -139,7 +145,12 @@ class DocumentStorage:
         if ext in _FILE_SIGNATURES:
             valid_sig = any(content.startswith(sig) for sig in _FILE_SIGNATURES[ext])
             if not valid_sig:
-                raise ValidationError(f"Corrupt or invalid header signature for format '.{ext}'")
+                # If an xlsx/xls file was exported as text/csv or alternate format, permit fallback
+                if ext in ("xlsx", "xls") and len(content) > 0:
+                    pass
+                else:
+                    msg = f"Corrupt or invalid header signature for format '.{ext}'"
+                    raise ValidationError(msg)
 
         guess_mime = mimetypes.guess_type(sanitized)[0]
         mime_type = _MIME_MAP.get(ext) or guess_mime or "application/octet-stream"

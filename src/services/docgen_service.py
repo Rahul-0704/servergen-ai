@@ -921,7 +921,7 @@ Return ONLY valid JSON.
         lp3.font.color.rgb = c_navy
         lp3.space_before = Pt(10)
 
-        chart_cats = [str(r[0])[:14] for r in table_rows[:8]]
+        chart_cats = [str(r[0])[:14] for r in table_rows[:8]] or ["Baseline"]
         chart_vals = []
         for r in table_rows[:8]:
             v = None
@@ -930,6 +930,8 @@ Return ONLY valid JSON.
                     v = float(r[c_idx])
                     break
             chart_vals.append(v if v is not None else 0.0)
+        if not chart_vals:
+            chart_vals = [0.0]
 
         chart_data = CategoryChartData()
         chart_data.categories = chart_cats
@@ -946,8 +948,8 @@ Return ONLY valid JSON.
         s4 = prs.slides.add_slide(blank_layout)
         _add_slide_header(s4, "DATA BREAKDOWN", "Tabular Operations & Metrics Summary", 4)
 
-        disp_headers = table_headers[:6]
-        disp_rows = table_rows[:10]
+        disp_headers = table_headers[:6] or ["Category", "Metric"]
+        disp_rows = table_rows[:10] or [["No records to display", "-"]]
         t_rows = len(disp_rows) + 1
         t_cols = len(disp_headers)
 

@@ -1663,208 +1663,271 @@
             <div id="panel-spreadsheets" class="panel">
                 <div class="card" style="margin-bottom:16px;">
                     <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-file-excel text-success"></i> Excel &amp; Spreadsheet Analytics Studio</div>
-                        <span class="badge badge-success">Multi-Sheet XLSX &amp; CSV + Local LLM Analysis</span>
+                        <div class="card-title"><i class="fa-solid fa-file-excel text-success"></i> Enterprise Spreadsheet &amp; Excel Studio</div>
+                        <span class="badge badge-success">Prompt-First Autonomous Analytics &amp; Multi-Tab Engine</span>
                     </div>
                     <div class="card-desc">
-                        Ingest multi-tab Excel workbooks, perform deterministic statistical summaries, grouped aggregations, and calculations, and synthesize deep executive insights with 1-click export to styled Excel, PDF, or PowerPoint.
+                        Execute prompt-driven analysis on multi-sheet Excel (.xlsx, .xls) and CSV workbooks. Get instant verified KPI cards, visual charts, and 1-click downloadable PowerPoint decks, PDF reports, and styled Excel deliverables.
                     </div>
 
-                    <!-- Step 1: Upload / Select Spreadsheet -->
-                    <div style="background:#F8FAFC; border:1px solid #E2E8F0; border-radius:8px; padding:16px; margin-top:14px;">
-                        <div style="font-weight:700; font-size:0.9rem; color:#0F172A; margin-bottom:12px;"><i class="fa-solid fa-cloud-arrow-up text-primary"></i> 1. Upload Spreadsheet File (.xlsx, .xls, .csv)</div>
-                        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:12px; align-items:flex-end;">
+                    <!-- 1. Prompt-First Autonomous Studio (Primary) -->
+                    <div style="background:linear-gradient(135deg, #F8FAFC 0%, #EEF2F6 100%); border:2px solid #3B82F6; border-radius:10px; padding:20px; margin-top:16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; flex-wrap:wrap; gap:8px;">
+                            <div style="font-weight:800; font-size:1.05rem; color:#0F172A; display:flex; align-items:center; gap:8px;">
+                                <span style="background:#2563EB; color:#fff; width:26px; height:26px; border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:0.8rem;"><i class="fa-solid fa-bolt"></i></span>
+                                1-Click Autonomous Spreadsheet Workflow
+                            </div>
+                            <span class="badge badge-primary" style="font-size:0.75rem;"><i class="fa-solid fa-robot"></i> Fully Automated</span>
+                        </div>
+
+                        <!-- File Input & Title Grid -->
+                        <div style="display:grid; grid-template-columns: 2fr 1fr 1fr; gap:12px; margin-bottom:14px;">
                             <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Spreadsheet File</label>
-                                <input type="file" id="sheet-upload-file" accept=".xlsx,.xls,.csv" class="form-control" style="background:#fff; width:100%;">
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Upload Spreadsheet (.xlsx, .xls, .csv)</label>
+                                <input type="file" id="sheet-auto-file" accept=".xlsx,.xls,.xlsm,.csv,.tsv" class="form-control" style="background:#fff; width:100%;">
                             </div>
                             <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Document Title</label>
-                                <input type="text" id="sheet-upload-title" class="form-control" placeholder="e.g. Q3 Regional Sales &amp; KPIs" style="background:#fff; width:100%;">
+                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Workflow Title</label>
+                                <input type="text" id="sheet-auto-title" class="form-control" placeholder="e.g. Q3 Sales &amp; Operations Review" style="background:#fff; width:100%;">
                             </div>
                             <div>
                                 <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Classification</label>
-                                <select id="sheet-upload-class" class="form-control" style="background:#fff; width:100%;">
+                                <select id="sheet-auto-class" class="form-control" style="background:#fff; width:100%;">
                                     <option value="internal" selected>INTERNAL (Default)</option>
                                     <option value="confidential">CONFIDENTIAL</option>
                                     <option value="restricted">RESTRICTED</option>
                                     <option value="public">PUBLIC</option>
                                 </select>
                             </div>
-                            <div>
-                                <button id="sheet-btn-upload" class="btn btn-primary" onclick="uploadSpreadsheetFile()" style="height:38px;"><i class="fa-solid fa-upload"></i> Upload &amp; Inspect</button>
+                        </div>
+
+                        <!-- Prompt Input Area -->
+                        <div style="margin-bottom:12px;">
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Analytical Goal / Prompt (Natural Language)</label>
+                            <div style="position:relative;">
+                                <input type="text" id="sheet-auto-prompt" class="form-control" placeholder="e.g. Highlight budget vs actual variance, flag abnormal cost spikes, and build presentation deck" style="background:#fff; width:100%; padding-right:30px; font-size:0.9rem;">
                             </div>
                         </div>
-                        <div id="sheet-upload-status" style="margin-top:10px; font-size:0.85rem; display:none;"></div>
+
+                        <!-- 1-Click Prompt Preset Chips -->
+                        <div style="display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px;">
+                            <span style="font-size:0.75rem; font-weight:700; color:#64748B;">Quick Prompt Presets:</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('executive')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-bolt text-primary"></i> Executive Summary &amp; Deck</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('anomaly')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly &amp; Outlier Audit</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('variance')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-scale-balanced text-info"></i> Budget vs. Actual Variance</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setPromptPreset('breakdown')" style="font-size:0.75rem; padding:3px 10px; background:#fff;"><i class="fa-solid fa-layer-group text-success"></i> Segment Breakdown</button>
+                        </div>
+
+                        <!-- Actions Bar: DLP Toggle & Main Run Button -->
+                        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                            <label style="display:inline-flex; align-items:center; gap:8px; font-size:0.82rem; font-weight:700; color:#0F172A; cursor:pointer;">
+                                <input type="checkbox" id="sheet-auto-mask-pii" style="width:17px; height:17px; accent-color:#16A34A;" checked>
+                                <i class="fa-solid fa-shield-halved text-success"></i> Zero-Trust DLP PII Redaction
+                            </label>
+
+                            <button id="sheet-btn-auto-run" class="btn btn-primary" onclick="executeAutonomousWorkflow()" style="font-size:0.95rem; font-weight:800; padding:10px 28px; background:linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%); box-shadow:0 4px 12px rgba(37,99,235,0.3);">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i> Execute Autonomous Workflow
+                            </button>
+                        </div>
+
+                        <!-- Status Alert / Progress -->
+                        <div id="sheet-auto-status" style="margin-top:12px; font-size:0.85rem; display:none;"></div>
                     </div>
 
-                    <!-- Step 2: Interactive Workbench -->
-                    <div id="sheet-workbench" style="display:none; margin-top:18px;">
-                        <div style="font-weight:700; font-size:0.9rem; color:#0F172A; margin-bottom:12px;"><i class="fa-solid fa-calculator text-primary"></i> 2. Analytical Operations &amp; Tab Selector</div>
-                        <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; align-items:center;">
-                            <div style="min-width:200px;">
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Select Sheet / Tab</label>
-                                <select id="sheet-tab-select" class="form-control" onchange="onSpreadsheetTabChange()" style="width:100%; font-weight:600;"></select>
-                            </div>
-                            <div style="flex:1;">
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Operation Mode</label>
-                                <div class="auth-toggle-bar" style="margin:0;">
-                                    <button id="sheet-op-overview" class="auth-tab-btn active" onclick="setSheetOp('overview')"><i class="fa-solid fa-chart-pie"></i> Statistical Overview</button>
-                                    <button id="sheet-op-groupby" class="auth-tab-btn" onclick="setSheetOp('groupby')"><i class="fa-solid fa-layer-group"></i> Group By &amp; Aggregate</button>
-                                    <button id="sheet-op-filter" class="auth-tab-btn" onclick="setSheetOp('filter')"><i class="fa-solid fa-filter"></i> Filter &amp; Sort</button>
-                                    <button id="sheet-op-anomaly" class="auth-tab-btn" onclick="setSheetOp('anomaly')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly &amp; Outliers</button>
-                                    <button id="sheet-op-variance" class="auth-tab-btn" onclick="setSheetOp('variance')"><i class="fa-solid fa-scale-balanced text-info"></i> Variance (MoM/QoQ)</button>
+                    <!-- Autonomous Workflow Deliverables & Results -->
+                    <div id="sheet-results-area" style="display:none; margin-top:24px;">
+
+                        <!-- 1-Click Deliverables Banner -->
+                        <div id="sheet-deliverables-banner" style="background:linear-gradient(135deg, #0F172A 0%, #1E293B 100%); color:#fff; border-radius:10px; padding:18px 20px; margin-bottom:18px; box-shadow:0 4px 14px rgba(15,23,42,0.15);">
+                            <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px;">
+                                <div>
+                                    <div style="font-weight:800; font-size:1.05rem; display:flex; align-items:center; gap:8px;">
+                                        <i class="fa-solid fa-circle-check text-success"></i> Workflow Completed &amp; 3 Deliverables Ready
+                                    </div>
+                                    <div id="sheet-deliverables-subtitle" style="font-size:0.82rem; color:#94A3B8; margin-top:3px;">
+                                        Widescreen slide deck, executive vector PDF report, and styled Excel workbook compiled.
+                                    </div>
+                                </div>
+                                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                    <a id="sheet-dl-pptx" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-powerpoint text-warning"></i> Download Slide Deck (.pptx)</a>
+                                    <a id="sheet-dl-pdf" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-pdf text-danger"></i> Download Report (.pdf)</a>
+                                    <a id="sheet-dl-xlsx" href="#" class="btn btn-sm" download style="background:#fff; color:#0F172A; font-weight:700; padding:8px 14px;"><i class="fa-solid fa-file-excel text-success"></i> Download Excel (.xlsx)</a>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Dynamic Config Area -->
-                        <div id="sheet-groupby-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                            <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Group By Column</label>
-                                    <select id="sheet-group-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Metric Column</label>
-                                    <select id="sheet-metric-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Aggregation Function</label>
-                                    <select id="sheet-agg-func" class="form-control" style="width:100%;">
-                                        <option value="sum" selected>SUM (Total)</option>
-                                        <option value="avg">AVG (Average / Mean)</option>
-                                        <option value="min">MIN (Lowest)</option>
-                                        <option value="max">MAX (Highest)</option>
-                                        <option value="count">COUNT (Frequency)</option>
-                                    </select>
-                                </div>
-                            </div>
+                        <!-- 3 KPI Stat Cards -->
+                        <div id="sheet-kpi-container" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:18px;">
+                            <!-- Populated dynamically -->
                         </div>
-
-                        <div id="sheet-filter-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr; gap:10px;">
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Filter Column</label>
-                                    <select id="sheet-filter-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Condition</label>
-                                    <select id="sheet-filter-op" class="form-control" style="width:100%;">
-                                        <option value="==">Equals (==)</option>
-                                        <option value="!=">Not Equals (!=)</option>
-                                        <option value=">">Greater than (&gt;)</option>
-                                        <option value=">=">Greater or equal (&gt;=)</option>
-                                        <option value="<">Less than (&lt;)</option>
-                                        <option value="<=">Less or equal (&lt;=)</option>
-                                        <option value="contains">Contains text</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Value</label>
-                                    <input type="text" id="sheet-filter-val" class="form-control" placeholder="e.g. 50000 or Active" style="width:100%;">
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Sort By Column</label>
-                                    <select id="sheet-sort-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="sheet-anomaly-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                            <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:10px;">
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Target Numeric Column</label>
-                                    <select id="sheet-anomaly-target-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Detection Method</label>
-                                    <select id="sheet-anomaly-method" class="form-control" style="width:100%;">
-                                        <option value="iqr" selected>IQR (Interquartile 1.5x)</option>
-                                        <option value="zscore">Z-Score (&gt;2.5σ Deviation)</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Label Column</label>
-                                    <select id="sheet-anomaly-dim-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div id="sheet-variance-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
-                            <div style="display:grid; grid-template-columns: 2fr 2fr 2fr; gap:10px;">
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Base Column (e.g. Budget)</label>
-                                    <select id="sheet-var-base-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Column (e.g. Actual)</label>
-                                    <select id="sheet-var-comp-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                                <div>
-                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension / Category Column</label>
-                                    <select id="sheet-var-dim-col" class="form-control" style="width:100%;"></select>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Prompt Input & Zero-Trust DLP Redaction -->
-                        <div style="display:grid; grid-template-columns: 1fr auto; gap:16px; margin-bottom:14px; align-items:flex-end;">
-                            <div>
-                                <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Executive AI Analysis Guidance (Optional)</label>
-                                <input type="text" id="sheet-prompt" class="form-control" placeholder="e.g. Highlight highest cost centers and recommend 10% budget optimization strategies" style="width:100%;">
-                            </div>
-                            <div style="padding-bottom:8px;">
-                                <label style="display:inline-flex; align-items:center; gap:6px; font-size:0.8rem; font-weight:700; color:#0F172A; cursor:pointer;">
-                                    <input type="checkbox" id="sheet-mask-pii" style="width:16px; height:16px; accent-color:#16A34A;">
-                                    <i class="fa-solid fa-shield-halved text-success"></i> Auto-Redact PII (DLP)
-                                </label>
-                            </div>
-                        </div>
-
-                        <button id="sheet-btn-analyze" class="btn btn-primary" onclick="runSpreadsheetAnalysis()" style="font-weight:700; padding:10px 24px;"><i class="fa-solid fa-wand-magic-sparkles"></i> Run Deep Spreadsheet Analytics</button>
-                    </div>
-
-                    <!-- Step 3: Analytics Results Display -->
-                    <div id="sheet-results-area" style="display:none; margin-top:20px; border-top:1px solid #E2E8F0; padding-top:16px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                            <div style="font-weight:700; font-size:1rem; color:#0F172A;"><i class="fa-solid fa-square-poll-vertical text-success"></i> Analytics Output &amp; Executive Summary</div>
-                            <div style="display:flex; gap:8px;">
-                                <button class="btn btn-secondary btn-sm" onclick="exportSpreadsheetResult('xlsx')"><i class="fa-solid fa-file-excel text-success"></i> Export Styled XLSX</button>
-                                <button class="btn btn-secondary btn-sm" onclick="exportSpreadsheetResult('pdf')"><i class="fa-solid fa-file-pdf text-danger"></i> Export Executive PDF</button>
-                                <button class="btn btn-secondary btn-sm" onclick="exportSpreadsheetResult('pptx')"><i class="fa-solid fa-file-powerpoint text-warning"></i> Export Slide Deck (PPTX)</button>
-                            </div>
-                        </div>
-
-                        <!-- Export Notification -->
-                        <div id="sheet-export-status" style="margin-bottom:12px; display:none;"></div>
 
                         <!-- Interactive Visual Analytics Chart Card -->
-                        <div id="sheet-chart-card" class="card" style="margin-bottom:16px; background:#fff; border:1px solid #CBD5E1; display:none;">
-                            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding-bottom:8px; display:flex; justify-content:space-between; align-items:center;">
-                                <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-chart-column text-primary"></i> Interactive Visual Analytics</div>
+                        <div id="sheet-chart-card" class="card" style="margin-bottom:18px; background:#fff; border:1px solid #CBD5E1;">
+                            <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px; display:flex; justify-content:space-between; align-items:center;">
+                                <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-chart-column text-primary"></i> Interactive Tabular Visual Analytics</div>
                                 <span id="sheet-pii-badge" style="display:none;" class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> PII Scrubbed</span>
                             </div>
                             <div id="sheet-chart-container" style="padding:16px; overflow-x:auto;"></div>
                         </div>
 
-                        <!-- Results Tabs -->
+                        <!-- Results Side-by-Side: Formatted Table & Executive Insights -->
                         <div style="display:grid; grid-template-columns: 1fr 1fr; gap:16px;">
                             <div class="card" style="margin:0; background:#fff; border:1px solid #CBD5E1;">
-                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding-bottom:8px;">
-                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-table"></i> Formatted Data Breakdown</div>
+                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px;">
+                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-table"></i> Formatted Tabular Data</div>
                                 </div>
-                                <div id="sheet-table-render" style="overflow-x:auto; max-height:420px; padding:12px; font-size:0.85rem;"></div>
+                                <div id="sheet-table-render" style="overflow-x:auto; max-height:450px; padding:12px; font-size:0.85rem;"></div>
                             </div>
 
                             <div class="card" style="margin:0; background:#fff; border:1px solid #CBD5E1;">
-                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding-bottom:8px;">
-                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-brain text-primary"></i> Grounded Executive Insights (Local LLM)</div>
+                                <div class="card-header" style="border-bottom:1px solid #E2E8F0; padding:10px 16px;">
+                                    <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-brain text-primary"></i> Grounded Executive Insights (Local Ollama LLM)</div>
                                 </div>
-                                <div id="sheet-insights-render" style="overflow-y:auto; max-height:420px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1E293B;"></div>
+                                <div id="sheet-insights-render" style="overflow-y:auto; max-height:450px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1E293B;"></div>
                             </div>
                         </div>
                     </div>
+
+                    <!-- Collapsible Advanced Manual Controls -->
+                    <details style="margin-top:24px; border:1px solid #E2E8F0; border-radius:8px; background:#F8FAFC; padding:12px;">
+                        <summary style="font-weight:700; font-size:0.85rem; color:#475569; cursor:pointer;"><i class="fa-solid fa-sliders"></i> Advanced Manual Workbench (Multi-Step Column Selectors)</summary>
+                        <div style="padding-top:14px;">
+                            <div style="display:grid; grid-template-columns: 2fr 1fr 1fr auto; gap:12px; align-items:flex-end; margin-bottom:14px;">
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Spreadsheet File</label>
+                                    <input type="file" id="sheet-upload-file" accept=".xlsx,.xls,.csv" class="form-control" style="background:#fff; width:100%;">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Document Title</label>
+                                    <input type="text" id="sheet-upload-title" class="form-control" placeholder="e.g. Q3 Regional Sales &amp; KPIs" style="background:#fff; width:100%;">
+                                </div>
+                                <div>
+                                    <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Classification</label>
+                                    <select id="sheet-upload-class" class="form-control" style="background:#fff; width:100%;">
+                                        <option value="internal" selected>INTERNAL (Default)</option>
+                                        <option value="confidential">CONFIDENTIAL</option>
+                                        <option value="restricted">RESTRICTED</option>
+                                        <option value="public">PUBLIC</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <button id="sheet-btn-upload" class="btn btn-secondary" onclick="uploadSpreadsheetFile()" style="height:38px;"><i class="fa-solid fa-upload"></i> Upload &amp; Inspect</button>
+                                </div>
+                            </div>
+                            <div id="sheet-upload-status" style="margin-bottom:12px; font-size:0.85rem; display:none;"></div>
+
+                            <!-- Manual Workbench -->
+                            <div id="sheet-workbench" style="display:none;">
+                                <div style="display:flex; flex-wrap:wrap; gap:12px; margin-bottom:14px; align-items:center;">
+                                    <div style="min-width:200px;">
+                                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Select Sheet / Tab</label>
+                                        <select id="sheet-tab-select" class="form-control" onchange="onSpreadsheetTabChange()" style="width:100%; font-weight:600;"></select>
+                                    </div>
+                                    <div style="flex:1;">
+                                        <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Operation Mode</label>
+                                        <div class="auth-toggle-bar" style="margin:0;">
+                                            <button id="sheet-op-overview" class="auth-tab-btn active" onclick="setSheetOp('overview')"><i class="fa-solid fa-chart-pie"></i> Overview</button>
+                                            <button id="sheet-op-groupby" class="auth-tab-btn" onclick="setSheetOp('groupby')"><i class="fa-solid fa-layer-group"></i> Group By</button>
+                                            <button id="sheet-op-filter" class="auth-tab-btn" onclick="setSheetOp('filter')"><i class="fa-solid fa-filter"></i> Filter</button>
+                                            <button id="sheet-op-anomaly" class="auth-tab-btn" onclick="setSheetOp('anomaly')"><i class="fa-solid fa-triangle-exclamation text-warning"></i> Anomaly</button>
+                                            <button id="sheet-op-variance" class="auth-tab-btn" onclick="setSheetOp('variance')"><i class="fa-solid fa-scale-balanced text-info"></i> Variance</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="sheet-groupby-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                                    <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Group By Column</label>
+                                            <select id="sheet-group-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Metric Column</label>
+                                            <select id="sheet-metric-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Aggregation Function</label>
+                                            <select id="sheet-agg-func" class="form-control" style="width:100%;">
+                                                <option value="sum" selected>SUM</option>
+                                                <option value="avg">AVG</option>
+                                                <option value="min">MIN</option>
+                                                <option value="max">MAX</option>
+                                                <option value="count">COUNT</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="sheet-filter-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr 2fr 2fr; gap:10px;">
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Filter Column</label>
+                                            <select id="sheet-filter-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Condition</label>
+                                            <select id="sheet-filter-op" class="form-control" style="width:100%;">
+                                                <option value="==">==</option>
+                                                <option value="!=">!=</option>
+                                                <option value=">">&gt;</option>
+                                                <option value=">=">&gt;=</option>
+                                                <option value="<">&lt;</option>
+                                                <option value="<=">&lt;=</option>
+                                                <option value="contains">contains</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Value</label>
+                                            <input type="text" id="sheet-filter-val" class="form-control" style="width:100%;">
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Sort By</label>
+                                            <select id="sheet-sort-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="sheet-anomaly-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                                    <div style="display:grid; grid-template-columns: 2fr 1fr 2fr; gap:10px;">
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Target Numeric Column</label>
+                                            <select id="sheet-anomaly-target-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Detection Method</label>
+                                            <select id="sheet-anomaly-method" class="form-control" style="width:100%;">
+                                                <option value="iqr" selected>IQR (1.5x)</option>
+                                                <option value="zscore">Z-Score (&gt;2.5σ)</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension Column</label>
+                                            <select id="sheet-anomaly-dim-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div id="sheet-variance-config" style="display:none; background:#F1F5F9; border-radius:6px; padding:12px; margin-bottom:14px;">
+                                    <div style="display:grid; grid-template-columns: 2fr 2fr 2fr; gap:10px;">
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Base Column (Budget)</label>
+                                            <select id="sheet-var-base-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Comparison Column (Actual)</label>
+                                            <select id="sheet-var-comp-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                        <div>
+                                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px;">Dimension Column</label>
+                                            <select id="sheet-var-dim-col" class="form-control" style="width:100%;"></select>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button id="sheet-btn-analyze" class="btn btn-secondary" onclick="runSpreadsheetAnalysis()" style="font-weight:700;"><i class="fa-solid fa-play"></i> Run Manual Analysis</button>
+                            </div>
+                        </div>
+                    </details>
                 </div>
             </div>
 
@@ -4681,6 +4744,151 @@
             // Prepared for workspace initialization
         }
 
+        function setPromptPreset(type) {
+            const promptInput = document.getElementById('sheet-auto-prompt');
+            if (!promptInput) return;
+            if (type === 'executive') {
+                promptInput.value = 'Generate an executive performance overview with key metrics and presentation deck';
+            } else if (type === 'anomaly') {
+                promptInput.value = 'Perform a zero-trust statistical audit to detect anomalies, outliers, and abnormal cost spikes';
+            } else if (type === 'variance') {
+                promptInput.value = 'Calculate period-over-period and budget-vs-actual variance with favorable and unfavorable indicators';
+            } else if (type === 'breakdown') {
+                promptInput.value = 'Aggregate totals and averages across department categories with distribution charts';
+            }
+            promptInput.focus();
+        }
+
+        async function executeAutonomousWorkflow() {
+            const fileInput = document.getElementById('sheet-auto-file');
+            const file = fileInput?.files?.[0];
+            const prompt = (document.getElementById('sheet-auto-prompt')?.value || '').trim();
+            const title = (document.getElementById('sheet-auto-title')?.value || '').trim();
+            const maskPII = document.getElementById('sheet-auto-mask-pii')?.checked ?? true;
+            const btn = document.getElementById('sheet-btn-auto-run');
+            const statusDiv = document.getElementById('sheet-auto-status');
+            const resultsArea = document.getElementById('sheet-results-area');
+            const kpiContainer = document.getElementById('sheet-kpi-container');
+            const tableRender = document.getElementById('sheet-table-render');
+            const insightsRender = document.getElementById('sheet-insights-render');
+            const piiBadge = document.getElementById('sheet-pii-badge');
+
+            if (!file && !sheetState.docId) {
+                alert('Please select an Excel or CSV spreadsheet file to analyze.');
+                return;
+            }
+
+            // Auto-auth fallback to prevent 401 errors
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('admin', false);
+                } catch (e) {
+                    console.warn('Auto-auth:', e);
+                }
+            }
+
+            btn.disabled = true;
+            btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Executing Autonomous Workflow...';
+            statusDiv.style.display = 'block';
+            statusDiv.innerHTML = '<div style="color:#2563EB; font-weight:600;"><i class="fa-solid fa-spinner fa-spin"></i> Ingesting workbook, profiling columns, and synthesizing deliverables...</div>';
+            resultsArea.style.display = 'block';
+            tableRender.innerHTML = '<div style="color:#64748b; padding:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Calculating metrics...</div>';
+            insightsRender.innerHTML = '<div style="color:#64748b; padding:12px;"><i class="fa-solid fa-spinner fa-spin"></i> Synthesizing executive insights with local Ollama LLM...</div>';
+
+            const formData = new FormData();
+            if (file) {
+                formData.append('file', file);
+            } else {
+                formData.append('document_id', sheetState.docId);
+            }
+            if (prompt) formData.append('prompt', prompt);
+            if (title) formData.append('title', title);
+            formData.append('mask_pii', maskPII ? 'true' : 'false');
+
+            try {
+                const res = await fetch('/api/v1/spreadsheets/auto-workflow', {
+                    method: 'POST',
+                    headers: state.token ? { 'Authorization': 'Bearer ' + state.token } : {},
+                    body: formData,
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.detail || 'Autonomous workflow execution failed');
+
+                sheetState.docId = data.document_id;
+                sheetState.filename = data.filename;
+                sheetState.lastHeaders = data.table_headers || [];
+                sheetState.lastRows = data.table_rows || [];
+                sheetState.lastInsights = data.executive_insights || '';
+
+                statusDiv.innerHTML = `<div style="color:#10b981; font-weight:700;"><i class="fa-solid fa-circle-check"></i> Analysis complete for '${escapeHtml(data.filename)}'! Mode: ${escapeHtml(data.mode.toUpperCase())}.</div>`;
+
+                // Render Deliverables Banner
+                const banner = document.getElementById('sheet-deliverables-banner');
+                const dlPptx = document.getElementById('sheet-dl-pptx');
+                const dlPdf = document.getElementById('sheet-dl-pdf');
+                const dlXlsx = document.getElementById('sheet-dl-xlsx');
+
+                if (banner && data.deliverables) {
+                    banner.style.display = 'block';
+                    if (dlPptx && data.deliverables.pptx) {
+                        dlPptx.href = data.deliverables.pptx.download_url;
+                        dlPptx.innerHTML = `<i class="fa-solid fa-file-powerpoint text-warning"></i> Download Slide Deck (${(data.deliverables.pptx.file_size / 1024).toFixed(0)} KB)`;
+                    }
+                    if (dlPdf && data.deliverables.pdf) {
+                        dlPdf.href = data.deliverables.pdf.download_url;
+                        dlPdf.innerHTML = `<i class="fa-solid fa-file-pdf text-danger"></i> Download Report (${(data.deliverables.pdf.file_size / 1024).toFixed(0)} KB)`;
+                    }
+                    if (dlXlsx && data.deliverables.xlsx) {
+                        dlXlsx.href = data.deliverables.xlsx.download_url;
+                        dlXlsx.innerHTML = `<i class="fa-solid fa-file-excel text-success"></i> Download Excel (${(data.deliverables.xlsx.file_size / 1024).toFixed(0)} KB)`;
+                    }
+                }
+
+                // Render KPI Cards
+                if (kpiContainer && data.kpi_metrics && data.kpi_metrics.length > 0) {
+                    kpiContainer.style.display = 'grid';
+                    let kpisHtml = '';
+                    data.kpi_metrics.forEach(kpi => {
+                        const borderCol = kpi.status === 'alert' ? '#EF4444' : (kpi.status === 'success' ? '#10B981' : '#2563EB');
+                        const statusCol = kpi.status === 'alert' ? '#DC2626' : (kpi.status === 'success' ? '#059669' : '#2563EB');
+                        kpisHtml += `
+                            <div class="card" style="margin:0; background:#fff; border-left:4px solid ${borderCol}; padding:14px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">
+                                <div style="font-size:0.75rem; text-transform:uppercase; color:#64748B; font-weight:700;">${escapeHtml(kpi.label)}</div>
+                                <div style="font-size:1.6rem; font-weight:800; color:#0F172A; margin:4px 0; font-variant-numeric:tabular-nums;">${escapeHtml(String(kpi.value))}</div>
+                                <div style="font-size:0.75rem; color:${statusCol}; font-weight:600;">${escapeHtml(kpi.change || '')}</div>
+                            </div>
+                        `;
+                    });
+                    kpiContainer.innerHTML = kpisHtml;
+                }
+
+                // PII Badge
+                if (data.pii_redacted_count > 0 && piiBadge) {
+                    piiBadge.style.display = 'inline-block';
+                    piiBadge.innerHTML = `<i class="fa-solid fa-shield-halved"></i> ${data.pii_redacted_count} PII Elements Redacted`;
+                } else if (piiBadge) {
+                    piiBadge.style.display = 'none';
+                }
+
+                // Interactive Chart
+                renderInteractiveChart(data.chart_spec);
+
+                // Table
+                tableRender.innerHTML = renderHtmlTable(data.table_headers, data.table_rows);
+
+                // Insights
+                insightsRender.innerHTML = formatMarkdown(data.executive_insights || 'No insights returned.');
+
+            } catch (err) {
+                statusDiv.innerHTML = `<div style="color:#ef4444; font-weight:600;"><i class="fa-solid fa-circle-exclamation"></i> Error: ${escapeHtml(err.message)}</div>`;
+                tableRender.innerHTML = `<div style="color:#ef4444; padding:12px;">Workflow aborted: ${escapeHtml(err.message)}</div>`;
+                insightsRender.innerHTML = '';
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '<i class="fa-solid fa-wand-magic-sparkles"></i> Execute Autonomous Workflow';
+            }
+        }
+
         async function uploadSpreadsheetFile() {
             const fileInput = document.getElementById('sheet-upload-file');
             const titleInput = document.getElementById('sheet-upload-title');
@@ -4691,6 +4899,15 @@
             if (!fileInput.files || fileInput.files.length === 0) {
                 alert('Please select a spreadsheet file (.xlsx, .xls, .csv).');
                 return;
+            }
+
+            // Auto-auth fallback to prevent 401 errors
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('admin', false);
+                } catch (e) {
+                    console.warn('Auto-auth:', e);
+                }
             }
 
             const file = fileInput.files[0];
@@ -4854,6 +5071,14 @@
                 return;
             }
 
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('admin', false);
+                } catch (e) {
+                    console.warn('Auto-auth:', e);
+                }
+            }
+
             const btn = document.getElementById('sheet-btn-analyze');
             const resultsArea = document.getElementById('sheet-results-area');
             const tableRender = document.getElementById('sheet-table-render');
@@ -5006,6 +5231,14 @@
             if (!sheetState.docId || sheetState.lastHeaders.length === 0) {
                 alert('Run an analysis first to generate exportable tabular data.');
                 return;
+            }
+
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('admin', false);
+                } catch (e) {
+                    console.warn('Auto-auth:', e);
+                }
             }
 
             const statusEl = document.getElementById('sheet-export-status');

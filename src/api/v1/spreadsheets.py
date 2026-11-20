@@ -342,3 +342,182 @@ async def export_spreadsheet_analysis(
 
     else:
         raise HTTPException(status_code=400, detail="Supported export formats: 'xlsx', 'pdf', 'pptx'.")
+
+
+# ── 4. Unified Prompt-First Autonomous Workflow ─────────────────────────────
+
+
+@router.post("/auto-workflow")
+async def execute_autonomous_spreadsheet_workflow(
+    file: UploadFile | None = File(None),
+    document_id: str | None = Form(None),
+    prompt: str = Form(""),
+    sheet_name: str | None = Form(None),
+    mask_pii: bool = Form(False),
+    title: str | None = Form(None),
+    auth: AuthContext = Depends(require_permission(PermissionCode.AI_EXECUTE)),
+    db: AsyncSession = Depends(get_db),
+) -> dict[str, Any]:
+    """
+    Unified Autonomous Prompt-First Spreadsheet Workflow.
+
+    In a single automated transaction:
+    1. Ingests or resolves the Excel/CSV spreadsheet.
+    2. Dynamically routes analytical operations based on user prompt (anomalies, variance, groupby, or overview).
+    3. Computes statistical metrics and builds 3 standardized KPI stat cards.
+    4. Extracts Chart.js compatible visual specifications.
+    5. Synthesizes grounded AI executive narrative insights via local LLM.
+    6. Automatically renders and delivers all 3 deliverables:
+       - 16:9 PowerPoint Presentation (.pptx) with native editable charts
+       - Executive Audit Report (.pdf) with vector charts
+       - Formatted, styled Excel Workbook (.xlsx)
+    """
+    audit = AuditService(db)
+
+    # 1. Resolve spreadsheet content & doc_id
+    if file and file.filename:
+        content = await file.read()
+        if not content:
+            raise HTTPException(status_code=400, detail="Uploaded spreadsheet file is empty.")
+        doc_uuid = uuid.uuid4()
+        try:
+            storage_backend.save_file(
+                document_id=doc_uuid,
+                version_number=1,
+                filename=file.filename,
+                content=content,
+            )
+        except ValidationError as exc:
+            raise HTTPException(status_code=400, detail=str(exc)) from exc
+        target_filename = file.filename
+    elif document_id:
+        try:
+            doc_uuid = uuid.UUID(document_id)
+            doc_dir = storage_backend.base_dir / str(doc_uuid) / "1"
+            files = list(doc_dir.glob("*")) if doc_dir.exists() else []
+            if not files:
+                raise FileNotFoundError("No files in document directory")
+            file_path = files[0]
+            content = file_path.read_bytes()
+            target_filename = file_path.name
+        except Exception as exc:
+            raise HTTPException(status_code=404, detail="Spreadsheet document not found in storage.") from exc
+    else:
+        raise HTTPException(
+            status_code=400,
+            detail="Must provide either a spreadsheet file upload or an existing document_id.",
+        )
+
+    # 2. Parse workbook
+    try:
+        wb_data = spreadsheet_service.parse_content(content, target_filename)
+    except ValidationError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    # 3. Select target sheet
+    target_sheet = (
+        wb_data.sheets.get(sheet_name)
+        if sheet_name and sheet_name in wb_data.sheets
+        else wb_data.sheets[wb_data.sheet_names[0]]
+    )
+
+    # 4. Autonomous analysis and routing
+    route_res = spreadsheet_service.auto_analyze_and_route(
+        sheet=target_sheet,
+        prompt=prompt,
+        mask_pii=mask_pii,
+    )
+
+    overview_md = spreadsheet_service.generate_overview_markdown(target_sheet)
+
+    # 5. Synthesize grounded executive insights with local Ollama LLM
+    insights = await spreadsheet_service.generate_executive_insights(
+        sheet_name=target_sheet.name,
+        overview_md=overview_md,
+        data_table_md=route_res["data_table_md"],
+        user_prompt=prompt,
+        mask_pii=mask_pii,
+    )
+
+    workflow_title = title or route_res["headline"]
+
+    # 6. Generate Deliverables: PPTX, PDF, and styled XLSX
+    _pptx_path, pptx_meta = docgen_service.render_executive_data_deck(
+        title=workflow_title,
+        subtitle=f"Autonomous Analysis — {target_sheet.name}",
+        table_headers=route_res["headers"],
+        table_rows=route_res["rows"],
+        executive_insights=insights,
+        classification="INTERNAL",
+    )
+
+    _pdf_path, pdf_meta = docgen_service.render_executive_data_report(
+        title=workflow_title,
+        subtitle=f"Autonomous Audit Report — {target_sheet.name}",
+        table_headers=route_res["headers"],
+        table_rows=route_res["rows"],
+        executive_insights=insights,
+        classification="INTERNAL",
+    )
+
+    xlsx_path = spreadsheet_service.export_styled_xlsx(
+        sheet_name=target_sheet.name,
+        headers=route_res["headers"],
+        rows=route_res["rows"],
+        title=workflow_title,
+    )
+    xlsx_file_id = xlsx_path.stem.split("_")[0]
+
+    # 7. Audit ledger
+    await audit.record(
+        event_type=AuditEventType.EXECUTION_COMPLETED,
+        action="spreadsheet.auto_workflow",
+        request_id=str(uuid.uuid4()),
+        user_id=auth.user_id,
+        role=auth.role,
+        resource=str(doc_uuid),
+        metadata={
+            "filename": target_filename,
+            "mode": route_res["mode"],
+            "sheet_name": target_sheet.name,
+            "prompt": prompt,
+            "pii_redacted": route_res["pii_redacted_count"],
+        },
+    )
+    await db.commit()
+
+    return {
+        "status": "success",
+        "document_id": str(doc_uuid),
+        "filename": target_filename,
+        "sheet_name": target_sheet.name,
+        "available_sheets": wb_data.sheet_names,
+        "mode": route_res["mode"],
+        "headline": workflow_title,
+        "row_count": target_sheet.row_count(),
+        "col_count": target_sheet.col_count(),
+        "kpi_metrics": route_res["kpis"],
+        "chart_spec": route_res["chart_spec"],
+        "table_headers": route_res["headers"],
+        "table_rows": route_res["rows"],
+        "executive_insights": insights,
+        "pii_redacted_count": route_res["pii_redacted_count"],
+        "deliverables": {
+            "pptx": {
+                "download_url": pptx_meta.download_url,
+                "filename": pptx_meta.filename,
+                "file_size": pptx_meta.file_size,
+            },
+            "pdf": {
+                "download_url": pdf_meta.download_url,
+                "filename": pdf_meta.filename,
+                "file_size": pdf_meta.file_size,
+            },
+            "xlsx": {
+                "download_url": f"/api/v1/generate/download/{xlsx_file_id}",
+                "filename": xlsx_path.name,
+                "file_size": xlsx_path.stat().st_size,
+            },
+        },
+    }
+
