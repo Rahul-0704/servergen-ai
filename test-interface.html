@@ -1022,6 +1022,187 @@
             border-color: #0284c7;
             background: #f0f9ff;
         }
+
+        /* Enterprise Markdown Tables & Rich Output */
+        .styled-md-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 12px 0;
+            font-size: 0.84rem;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+        .styled-md-table th {
+            background: #f1f5f9;
+            color: #0f172a;
+            font-weight: 700;
+            padding: 10px 14px;
+            border-bottom: 2px solid #cbd5e1;
+            border-right: 1px solid #e2e8f0;
+            font-size: 0.78rem;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .styled-md-table td {
+            padding: 9px 14px;
+            border-bottom: 1px solid #e2e8f0;
+            border-right: 1px solid #f1f5f9;
+            color: #334155;
+            line-height: 1.5;
+        }
+        .styled-md-table tr:nth-child(even) {
+            background: #f8fafc;
+        }
+        .styled-md-table tr:hover td {
+            background: #eff6ff;
+        }
+
+        /* Markdown Code Cards & Copy */
+        .code-card {
+            background: #0f172a;
+            border-radius: 8px;
+            margin: 14px 0;
+            overflow: hidden;
+            border: 1px solid #334155;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .code-card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 14px;
+            background: #1e293b;
+            color: #94a3b8;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 1px solid #334155;
+        }
+        .code-card pre {
+            margin: 0;
+            padding: 14px;
+            background: #0f172a;
+            color: #f8fafc;
+            font-family: var(--font-mono);
+            font-size: 0.82rem;
+            line-height: 1.5;
+            overflow-x: auto;
+        }
+        .copy-code-btn {
+            background: #334155;
+            color: #f8fafc;
+            border: none;
+            padding: 4px 10px;
+            font-size: 0.72rem;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+        }
+        .copy-code-btn:hover {
+            background: #475569;
+            color: #38bdf8;
+        }
+
+        /* Callout Quotes & Alerts */
+        .callout-quote {
+            margin: 12px 0;
+            padding: 12px 16px;
+            background: #eff6ff;
+            border-left: 4px solid #0284c7;
+            border-radius: 6px;
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            color: #1e3a8a;
+            font-size: 0.86rem;
+            line-height: 1.55;
+        }
+        .callout-quote.callout-warning {
+            background: #fffbeb;
+            border-left-color: #f59e0b;
+            color: #92400e;
+        }
+        .callout-quote.callout-danger {
+            background: #fef2f2;
+            border-left-color: #ef4444;
+            color: #991b1b;
+        }
+        .callout-quote.callout-success {
+            background: #f0fdf4;
+            border-left-color: #10b981;
+            color: #166534;
+        }
+
+        /* Markdown Typography Lists & Code */
+        .styled-md-list, .styled-md-ordered {
+            margin: 10px 0 12px 20px;
+            padding-left: 10px;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        .styled-md-list li, .styled-md-ordered li {
+            margin-bottom: 6px;
+        }
+        .inline-code {
+            background: #f1f5f9;
+            color: #0284c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: var(--font-mono);
+            font-size: 0.84em;
+            border: 1px solid #e2e8f0;
+        }
+        .md-spacer {
+            height: 10px;
+        }
+
+        /* Scenario Quick-Starter Chips */
+        .scenario-chips-row {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding-bottom: 6px;
+            margin-bottom: 12px;
+            scrollbar-width: thin;
+        }
+        .scenario-chip {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 20px;
+            padding: 6px 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+        .scenario-chip:hover {
+            border-color: #0284c7;
+            background: #f0f9ff;
+            color: #0284c7;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 4px rgba(2,132,199,0.12);
+        }
+        .scenario-chip.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #0284c7;
+        }
+        .scenario-chip.active i {
+            color: #ffffff !important;
+        }
     </style>
 
 </head>
@@ -1561,93 +1742,65 @@
             <!-- TAB 3: AI TASK EXECUTION -->
             <div id="panel-ai-run" class="panel active">
                 <div class="card">
-                    <div class="card-header">
-                        <div class="card-title"><i class="fa-solid fa-microchip"></i> AI Task Execution Engine</div>
-                        <span id="ai-active-model-tag" class="badge badge-info"><i class="fa-solid fa-brain"></i> Model: llama3.2:3b</span>
+                    <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:12px; margin-bottom:16px;">
+                        <div>
+                            <div class="card-title" style="font-size:1.15rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-wand-magic-sparkles text-primary"></i> Sovereign AI Assistant &amp; Orchestration Engine
+                            </div>
+                            <div style="font-size:0.82rem; color:#64748b; margin-top:2px;">
+                                100% on-premise zero-trust reasoning with local Ollama, multi-agent tools, cryptographic verification, and direct document grounding.
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <span id="ai-active-model-tag" class="badge badge-info"><i class="fa-solid fa-brain"></i> Model: llama3.2:3b</span>
+                            <span class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> Zero-Trust Secured</span>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="togglePipelineDrawer()" style="font-size:0.75rem; padding:4px 10px;">
+                                <i class="fa-solid fa-diagram-project text-primary"></i> Pipeline &amp; Stepper
+                            </button>
+                        </div>
                     </div>
-                    <div class="card-desc">
-                        Full zero-trust pipeline: RBAC Authorization &rarr; Task Classification &rarr; Sensitivity Rating &rarr; Composite Risk Scoring &rarr; Security Policy Check &rarr; Tool/Ollama Execution &rarr; Output Sanitization &rarr; Audit Ledger.
-                    </div>
-                    <!-- Project Architecture & System Workflow Banner -->
-                    <div style="background: linear-gradient(135deg, #eff6ff, #f0fdf4); border: 1px solid #bfdbfe; border-radius: 8px; padding: 16px 20px; margin-bottom: 18px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-                            <span style="font-weight:700; color:#0369a1; font-size:0.95rem;">
-                                <i class="fa-solid fa-circle-nodes"></i> How ServerGen AI Operates (End-to-End Enterprise Flow):
+
+                    <!-- Quick Enterprise Scenarios Chips -->
+                    <div style="margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                            <span style="font-size:0.75rem; font-weight:700; color:#475569; display:flex; align-items:center; gap:6px;">
+                                <i class="fa-solid fa-bolt text-warning"></i> One-Click Enterprise Scenarios:
                             </span>
-                            <span class="badge badge-success"><i class="fa-solid fa-lock"></i> 100% On-Premise &bull; Zero Cloud Leakage</span>
+                            <span style="font-size:0.72rem; color:#94a3b8;">Click any chip to load prompt &amp; context</span>
                         </div>
-                        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap:10px; font-size:0.8rem; color:#334155; margin-top:10px;">
-                            <div style="background:#ffffff; padding:12px; border-radius:6px; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
-                                <div style="font-weight:700; color:#0284c7; margin-bottom:4px;"><i class="fa-solid fa-file-import"></i> 1. Document Ingestion</div>
-                                <div style="color:#64748b; font-size:0.75rem;">Upload PDFs, scanned images (Native OCR), DOCX, TXT. Embedded locally.</div>
-                            </div>
-                            <div style="background:#ffffff; padding:12px; border-radius:6px; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
-                                <div style="font-weight:700; color:#0284c7; margin-bottom:4px;"><i class="fa-solid fa-shield-halved"></i> 2. Clearance Gate</div>
-                                <div style="color:#64748b; font-size:0.75rem;">RBAC strictly restricts retrieval by clearance (Public, Internal, Confidential, Restricted).</div>
-                            </div>
-                            <div style="background:#ffffff; padding:12px; border-radius:6px; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
-                                <div style="font-weight:700; color:#0284c7; margin-bottom:4px;"><i class="fa-solid fa-brain"></i> 3. Local LLM (Ollama)</div>
-                                <div style="color:#64748b; font-size:0.75rem;">Local llama3.2:3b synthesizes responses solely from retrieved evidence.</div>
-                            </div>
-                            <div style="background:#ffffff; padding:12px; border-radius:6px; border:1px solid #e2e8f0; box-shadow:0 1px 2px rgba(0,0,0,0.03);">
-                                <div style="font-weight:700; color:#0284c7; margin-bottom:4px;"><i class="fa-solid fa-fingerprint"></i> 4. Verified Citations & Audit</div>
-                                <div style="color:#64748b; font-size:0.75rem;">Every claim is matched against sources and hashed into an immutable SHA-256 audit ledger.</div>
-                            </div>
-                        </div>
-                    </div>
-
-
-                    <!-- Real-World Enterprise Problem-Solving Scenarios -->
-                    <div class="scenarios-container">
-                        <div class="scenarios-header">
-                            <span style="font-size:0.85rem; color:#0f172a; font-weight:700;"><i class="fa-solid fa-bolt-lightning text-warning"></i> Enterprise Operational Scenarios (Click to solve):</span>
-                            <span class="scenarios-hint">Real enterprise problems solved via grounding, local inference & verification</span>
-                        </div>
-                        <div class="scenarios-grid">
-                            <div class="scenario-card" onclick="loadScenario('it_runbook')">
-                                <div class="scenario-badge badge-warning"><i class="fa-solid fa-server"></i> IT Operations</div>
-                                <div class="scenario-title">Production Server Crashloop Runbook</div>
-                                <div class="scenario-desc">Retrieve OOM kill triggers, worker crash recovery, and emergency triage steps from confidential runbook.</div>
-                            </div>
-                            <div class="scenario-card" onclick="loadScenario('audit_tamper')">
-                                <div class="scenario-badge badge-danger"><i class="fa-solid fa-fingerprint"></i> Security & Audit</div>
-                                <div class="scenario-title">Ledger Integrity & Tamper Detection</div>
-                                <div class="scenario-desc">Query cryptographic verification playbook to check SHA-256 hash chains and unauthorized access patterns.</div>
-                            </div>
-                            <div class="scenario-card" onclick="loadScenario('financial_audit')">
-                                <div class="scenario-badge badge-restricted"><i class="fa-solid fa-file-invoice-dollar"></i> Executive</div>
-                                <div class="scenario-title">Q3 Financial Audit & Cloud Overruns</div>
-                                <div class="scenario-desc">Analyze restricted financial variance, unbudgeted GPU clusters, and executive sign-off policies.</div>
-                            </div>
-                            <div class="scenario-card" onclick="loadScenario('employee_onboard')">
-                                <div class="scenario-badge badge-info"><i class="fa-solid fa-user-shield"></i> Compliance</div>
-                                <div class="scenario-title">New Hire Onboarding & MFA Standards</div>
-                                <div class="scenario-desc">Extract mandatory 14-day compliance deadlines, MFA hardware keys, and security certifications.</div>
-                            </div>
-                            <div class="scenario-card" onclick="loadScenario('high_risk_restart')">
-                                <div class="scenario-badge badge-purple"><i class="fa-solid fa-triangle-exclamation"></i> Governance</div>
-                                <div class="scenario-title">High-Risk Service Restart (Approval Queue)</div>
-                                <div class="scenario-desc">Trigger automated Policy Engine block and human-in-the-loop approval escalation.</div>
-                            </div>
-                            <div class="scenario-card" onclick="loadScenario('hadoop_runbook')">
-                                <div class="scenario-badge badge-info"><i class="fa-solid fa-microchip"></i> Big Data &amp; Ingestion</div>
-                                <div class="scenario-title">Hadoop Cluster &amp; MapReduce Runbook</div>
-                                <div class="scenario-desc">Query OCR-extracted terminal screenshots: ResourceManager, NodeManager, DataNode, and Java 1.8 runtime.</div>
-                            </div>
+                        <div class="scenario-chips-row">
+                            <button type="button" class="scenario-chip" onclick="loadScenario('it_runbook', this)" title="Retrieve OOM kill triggers & emergency triage">
+                                <i class="fa-solid fa-server text-warning"></i> IT Crashloop
+                            </button>
+                            <button type="button" class="scenario-chip" onclick="loadScenario('audit_tamper', this)" title="Query cryptographic SHA-256 tamper verification">
+                                <i class="fa-solid fa-fingerprint text-danger"></i> Audit &amp; Tamper
+                            </button>
+                            <button type="button" class="scenario-chip" onclick="loadScenario('financial_audit', this)" title="Analyze restricted financial variance & cloud overruns">
+                                <i class="fa-solid fa-file-invoice-dollar text-primary"></i> Q3 Financials
+                            </button>
+                            <button type="button" class="scenario-chip" onclick="loadScenario('employee_onboard', this)" title="Extract compliance deadlines & MFA standards">
+                                <i class="fa-solid fa-user-shield text-info"></i> Onboarding Policy
+                            </button>
+                            <button type="button" class="scenario-chip" onclick="loadScenario('high_risk_restart', this)" title="Trigger Policy Engine block & approval escalation">
+                                <i class="fa-solid fa-triangle-exclamation text-warning"></i> Service Restart
+                            </button>
+                            <button type="button" class="scenario-chip" onclick="loadScenario('hadoop_runbook', this)" title="Query OCR-extracted terminal screenshots & Java runtime">
+                                <i class="fa-solid fa-microchip text-success"></i> Terminal Runbook
+                            </button>
                         </div>
                     </div>
 
                     <!-- Document Attachment & Direct Upload Context Bar -->
-                    <div class="card" style="margin-bottom:16px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:14px 18px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:8px;">
-                            <span style="font-size:0.85rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
+                    <div class="card" style="margin-bottom:16px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:8px; padding:12px 16px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:8px;">
+                            <span style="font-size:0.82rem; font-weight:700; color:#1e293b; display:flex; align-items:center; gap:8px;">
                                 <i class="fa-solid fa-paperclip text-primary"></i> Attached Document Context (Grounding &amp; Reasoning Focus)
                             </span>
                             <div style="display:flex; gap:6px;">
-                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('select')" id="ai-att-tab-select" style="font-size:0.76rem; padding:4px 10px; font-weight:700; background:#e2e8f0; color:#0f172a; border-radius:6px;">
+                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('select')" id="ai-att-tab-select" style="font-size:0.75rem; padding:3px 10px; font-weight:700; background:#e2e8f0; color:#0f172a; border-radius:6px;">
                                     <i class="fa-solid fa-folder-open"></i> Select Existing
                                 </button>
-                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('upload')" id="ai-att-tab-upload" style="font-size:0.76rem; padding:4px 10px; font-weight:700; background:#fff; color:#475569; border:1px solid #cbd5e1; border-radius:6px;">
+                                <button type="button" class="btn btn-sm" onclick="toggleAiDocMode('upload')" id="ai-att-tab-upload" style="font-size:0.75rem; padding:3px 10px; font-weight:700; background:#fff; color:#475569; border:1px solid #cbd5e1; border-radius:6px;">
                                     <i class="fa-solid fa-cloud-arrow-up"></i> Upload New Document Directly
                                 </button>
                             </div>
@@ -1701,88 +1854,128 @@
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group" style="grid-column: span 2;">
-                            <label>Task Input / Natural Language Prompt</label>
-                            <textarea id="ai-prompt" placeholder="Type prompt or question for local AI model...">Explain zero-trust security architecture and why tamper-evident audit logging is critical in enterprise automation systems.</textarea>
+                    <!-- Prompt & Query Input Box -->
+                    <div class="form-group" style="margin-bottom:12px;">
+                        <label style="font-weight:700; color:#0f172a; font-size:0.85rem; display:flex; justify-content:space-between; align-items:center;">
+                            <span><i class="fa-solid fa-terminal text-primary"></i> Task Input / Natural Language Prompt</span>
+                            <span style="font-size:0.75rem; color:#64748b; font-weight:normal;">Direct local reasoning with llama3.2:3b</span>
+                        </label>
+                        <textarea id="ai-prompt" placeholder="Type prompt or question for local AI model..." style="min-height:95px; font-size:0.92rem; line-height:1.5; padding:12px; border-radius:6px; border:1px solid #cbd5e1;">Explain zero-trust security architecture and why tamper-evident audit logging is critical in enterprise automation systems.</textarea>
+                    </div>
+
+                    <!-- Action Bar -->
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px; margin-bottom:14px;">
+                        <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
+                            <button id="btn-execute-ai" class="btn btn-primary" onclick="executeAITask()" style="min-width:170px; font-weight:700; padding:9px 20px;">
+                                <i class="fa-solid fa-play"></i> Execute Pipeline
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pptx')" title="Generate a 16:9 PowerPoint presentation deck from this prompt">
+                                <i class="fa-solid fa-file-powerpoint text-warning"></i> Generate PPTX
+                            </button>
+                            <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pdf')" title="Generate a corporate PDF report from this prompt">
+                                <i class="fa-solid fa-file-pdf text-danger"></i> Generate PDF
+                            </button>
+                            <span id="ai-timer-status" style="font-size:0.8rem; color:#475569; display:none; align-items:center; gap:8px; font-variant-numeric:tabular-nums; min-width:260px; flex-shrink:0;">
+                                <i class="fa-solid fa-spinner fa-spin"></i> <span id="ai-timer-text">Querying local LLM...</span>
+                            </span>
+                        </div>
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <input type="checkbox" id="ai-structured" style="width:auto; cursor:pointer;">
+                            <label for="ai-structured" style="cursor:pointer; font-size:0.82rem; color:#475569; margin-bottom:0;">
+                                <strong>Structured JSON Output</strong>
+                            </label>
                         </div>
                     </div>
 
-                    <div class="form-grid">
-                        <div class="form-group">
-                            <label>Target Local Model</label>
-                            <div style="display:flex; gap:8px;">
-                                <select id="ai-model-select" style="flex:1;">
-                                    <option value="llama3.2:3b" selected>llama3.2:3b (Active Ollama Model)</option>
+                    <!-- Advanced Parameters Accordion (Collapsible) -->
+                    <details style="margin-bottom:14px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:10px 14px;">
+                        <summary style="cursor:pointer; font-size:0.8rem; font-weight:700; color:#475569; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-sliders text-primary"></i> Advanced Execution Parameters (Model, Clearance Sensitivity, Tools)</span>
+                            <span style="font-size:0.72rem; color:#94a3b8; font-weight:normal;">Click to configure</span>
+                        </summary>
+                        <div class="form-grid" style="margin-top:12px; margin-bottom:0;">
+                            <div class="form-group">
+                                <label>Target Local Model</label>
+                                <div style="display:flex; gap:8px;">
+                                    <select id="ai-model-select" style="flex:1;">
+                                        <option value="llama3.2:3b" selected>llama3.2:3b (Active Ollama Model)</option>
+                                    </select>
+                                    <button type="button" class="btn btn-secondary btn-sm" onclick="checkSystemHealth()" title="Refresh models from local Ollama" style="padding:6px 12px;">
+                                        <i class="fa-solid fa-rotate"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label>Data Sensitivity Level</label>
+                                <select id="ai-sensitivity">
+                                    <option value="public">PUBLIC (Safe for general output)</option>
+                                    <option value="internal" selected>INTERNAL (Standard organizational data)</option>
+                                    <option value="confidential">CONFIDENTIAL (Requires elevated clearance)</option>
+                                    <option value="restricted">RESTRICTED (Triggers Human Approval)</option>
                                 </select>
-                                <button type="button" class="btn btn-secondary btn-sm" onclick="checkSystemHealth()" title="Refresh models from local Ollama" style="padding:6px 12px;">
-                                    <i class="fa-solid fa-rotate"></i>
-                                </button>
+                            </div>
+                            <div class="form-group">
+                                <label>Tool Invocation (Optional)</label>
+                                <select id="ai-tool">
+                                    <option value="" selected>None (Direct Local LLM Generation)</option>
+                                    <option value="calculator">Calculator (Safe Math Execution)</option>
+                                    <option value="system_info">System Info (Diagnostic Probe)</option>
+                                    <option value="pdf_generator">PDF Generator (Executive Report)</option>
+                                    <option value="presentation_generator">PowerPoint Generator (16:9 PPTX)</option>
+                                    <option value="shell_execute">Shell Command (Blocked High-Risk Tool)</option>
+                                </select>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Data Sensitivity Level</label>
-                            <select id="ai-sensitivity">
-                                <option value="public">PUBLIC (Safe for general output)</option>
-                                <option value="internal" selected>INTERNAL (Standard organizational data)</option>
-                                <option value="confidential">CONFIDENTIAL (Requires elevated clearance)</option>
-                                <option value="restricted">RESTRICTED (Triggers Human Approval)</option>
-                            </select>
+                    </details>
+
+                    <!-- Zero-Trust Architecture & Pipeline Stepper Accordion -->
+                    <details id="ai-pipeline-drawer" style="margin-bottom:14px; background:#f8fafc; border:1px solid #bfdbfe; border-radius:8px; padding:12px 16px;">
+                        <summary style="cursor:pointer; font-size:0.84rem; font-weight:700; color:#0369a1; display:flex; align-items:center; justify-content:space-between;">
+                            <span><i class="fa-solid fa-shield-halved"></i> Zero-Trust Inference &amp; 10-Stage Security Stepper</span>
+                            <span id="pipeline-status-badge" class="badge badge-info"><i class="fa-solid fa-circle-check"></i> Stepper Active</span>
+                        </summary>
+                        <div style="margin-top:12px;">
+                            <!-- 10-Stage Security & Execution Pipeline Stepper -->
+                            <div id="ai-pipeline-stepper" class="pipeline-stepper" style="margin-top:0;">
+                                <div class="stepper-title" style="margin-bottom:8px;"><i class="fa-solid fa-diagram-project"></i> Active Security &amp; Inference Verification Stages:</div>
+                                <div class="stepper-grid">
+                                    <div class="step-item" id="step-1"><span class="step-num">1</span><span class="step-lbl">Auth &amp; Token</span></div>
+                                    <div class="step-item" id="step-2"><span class="step-num">2</span><span class="step-lbl">Rate Limit</span></div>
+                                    <div class="step-item" id="step-3"><span class="step-num">3</span><span class="step-lbl">Sanitize Input</span></div>
+                                    <div class="step-item" id="step-4"><span class="step-num">4</span><span class="step-lbl">Clearance Gate</span></div>
+                                    <div class="step-item" id="step-5"><span class="step-num">5</span><span class="step-lbl">Hybrid Vector Search</span></div>
+                                    <div class="step-item" id="step-6"><span class="step-num">6</span><span class="step-lbl">Context Assemble</span></div>
+                                    <div class="step-item" id="step-7"><span class="step-num">7</span><span class="step-lbl">Risk &amp; Policy</span></div>
+                                    <div class="step-item" id="step-8"><span class="step-num">8</span><span class="step-lbl">Local LLM</span></div>
+                                    <div class="step-item" id="step-9"><span class="step-num">9</span><span class="step-lbl">Citation Verifier</span></div>
+                                    <div class="step-item" id="step-10"><span class="step-num">10</span><span class="step-lbl">Audit Ledger</span></div>
+                                </div>
+                            </div>
+
+                            <!-- 4-step Enterprise Flow -->
+                            <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:10px; font-size:0.78rem; color:#334155; margin-top:12px;">
+                                <div style="background:#ffffff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                                    <div style="font-weight:700; color:#0284c7; margin-bottom:2px;"><i class="fa-solid fa-file-import"></i> 1. Document Ingestion</div>
+                                    <div style="color:#64748b; font-size:0.72rem;">Upload PDFs, scanned images (Native OCR), DOCX, TXT. Embedded locally.</div>
+                                </div>
+                                <div style="background:#ffffff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                                    <div style="font-weight:700; color:#0284c7; margin-bottom:2px;"><i class="fa-solid fa-shield-halved"></i> 2. Clearance Gate</div>
+                                    <div style="color:#64748b; font-size:0.72rem;">RBAC strictly restricts retrieval by clearance (Public, Internal, Confidential, Restricted).</div>
+                                </div>
+                                <div style="background:#ffffff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                                    <div style="font-weight:700; color:#0284c7; margin-bottom:2px;"><i class="fa-solid fa-brain"></i> 3. Local LLM (Ollama)</div>
+                                    <div style="color:#64748b; font-size:0.72rem;">Local llama3.2:3b synthesizes responses solely from retrieved evidence.</div>
+                                </div>
+                                <div style="background:#ffffff; padding:10px; border-radius:6px; border:1px solid #e2e8f0;">
+                                    <div style="font-weight:700; color:#0284c7; margin-bottom:2px;"><i class="fa-solid fa-fingerprint"></i> 4. Verified Citations &amp; Audit</div>
+                                    <div style="color:#64748b; font-size:0.72rem;">Every claim is matched against sources and hashed into an immutable SHA-256 audit ledger.</div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Tool Invocation (Optional)</label>
-                            <select id="ai-tool">
-                                <option value="" selected>None (Direct Local LLM Generation)</option>
-                                <option value="calculator">Calculator (Safe Math Execution)</option>
-                                <option value="system_info">System Info (Diagnostic Probe)</option>
-                                <option value="pdf_generator">PDF Generator (Executive Report)</option>
-                                <option value="presentation_generator">PowerPoint Generator (16:9 PPTX)</option>
-                                <option value="shell_execute">Shell Command (Blocked High-Risk Tool)</option>
-                            </select>
-                        </div>
-                    </div>
+                    </details>
 
-                    <div style="margin-top:4px; margin-bottom:14px; display:flex; align-items:center; gap:8px;">
-                        <input type="checkbox" id="ai-structured" style="width:auto; cursor:pointer;">
-                        <label for="ai-structured" style="cursor:pointer; font-size:0.82rem; color:#475569; margin-bottom:0;">
-                            <strong>Enforce Structured Output (JSON Schema)</strong> &mdash; Enforces JSON with summary, details, and action items
-                        </label>
-                    </div>
-
-                    <div style="display:flex; align-items:center; flex-wrap:wrap; gap:10px;">
-                        <button id="btn-execute-ai" class="btn btn-primary" onclick="executeAITask()" style="min-width:170px;">
-                            <i class="fa-solid fa-play"></i> Execute Pipeline
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pptx')" title="Generate a 16:9 PowerPoint presentation deck from this prompt">
-                            <i class="fa-solid fa-file-powerpoint text-warning"></i> Generate PPTX
-                        </button>
-                        <button type="button" class="btn btn-secondary" onclick="generateFromAIPrompt('pdf')" title="Generate a corporate PDF report from this prompt">
-                            <i class="fa-solid fa-file-pdf text-danger"></i> Generate PDF
-                        </button>
-                        <span id="ai-timer-status" style="font-size:0.8rem; color:#475569; display:none; align-items:center; gap:8px; font-variant-numeric:tabular-nums; min-width:280px; flex-shrink:0;">
-                            <i class="fa-solid fa-spinner fa-spin"></i> <span id="ai-timer-text">Querying local LLM...</span>
-                        </span>
-                    </div>
-
-                    <!-- 10-Stage Security & Execution Pipeline Stepper -->
-                    <div id="ai-pipeline-stepper" class="pipeline-stepper" style="margin-top:16px;">
-                        <div class="stepper-title"><i class="fa-solid fa-diagram-project"></i> Zero-Trust Inference &amp; Security Pipeline (10 Active Stages)</div>
-                        <div class="stepper-grid">
-                            <div class="step-item" id="step-1"><span class="step-num">1</span><span class="step-lbl">Auth &amp; Token</span></div>
-                            <div class="step-item" id="step-2"><span class="step-num">2</span><span class="step-lbl">Rate Limit</span></div>
-                            <div class="step-item" id="step-3"><span class="step-num">3</span><span class="step-lbl">Sanitize Input</span></div>
-                            <div class="step-item" id="step-4"><span class="step-num">4</span><span class="step-lbl">Clearance Gate</span></div>
-                            <div class="step-item" id="step-5"><span class="step-num">5</span><span class="step-lbl">Hybrid Vector Search</span></div>
-                            <div class="step-item" id="step-6"><span class="step-num">6</span><span class="step-lbl">Context Assemble</span></div>
-                            <div class="step-item" id="step-7"><span class="step-num">7</span><span class="step-lbl">Risk &amp; Policy</span></div>
-                            <div class="step-item" id="step-8"><span class="step-num">8</span><span class="step-lbl">Local LLM</span></div>
-                            <div class="step-item" id="step-9"><span class="step-num">9</span><span class="step-lbl">Citation Verifier</span></div>
-                            <div class="step-item" id="step-10"><span class="step-num">10</span><span class="step-lbl">Audit Ledger</span></div>
-                        </div>
-                    </div>
-
-                    <!-- Pipeline Diagnostic Visualizer -->
-                    <div id="ai-result-box" style="display:none; margin-top:20px;">
+                    <!-- Pipeline Execution Result Display -->
+                    <div id="ai-result-box" style="display:none; margin-top:18px;">
                         <h4 style="font-size:0.88rem; margin-bottom:10px; color:#0f172a;"><i class="fa-solid fa-square-poll-vertical"></i> Pipeline Execution Result</h4>
                         <div id="ai-summary-chips" style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;"></div>
 
@@ -1815,12 +2008,13 @@
                             </div>
                             <div id="ai-answer-text" class="markdown-rendered"></div>
 
-                            <!-- Export AI Response to Document -->
+                            <!-- 1-Click Action & Deliverables Toolbar -->
                             <div style="margin-top:16px; padding-top:12px; border-top:1px solid #e2e8f0; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
-                                <span style="font-size:0.8rem; font-weight:600; color:#475569;"><i class="fa-solid fa-file-export text-primary"></i> Export this answer to an official document:</span>
-                                <div style="display:flex; gap:8px;">
-                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pptx')"><i class="fa-solid fa-file-powerpoint text-warning"></i> Export to PowerPoint (.pptx)</button>
-                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pdf')"><i class="fa-solid fa-file-pdf text-danger"></i> Export to PDF (.pdf)</button>
+                                <span style="font-size:0.8rem; font-weight:600; color:#475569;"><i class="fa-solid fa-share-nodes text-primary"></i> 1-Click Deliverables &amp; Export:</span>
+                                <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                                    <button id="btn-copy-ai-answer" class="btn btn-secondary btn-sm" onclick="copyCurrentAIAnswer()"><i class="fa-regular fa-copy"></i> Copy Answer</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pptx')"><i class="fa-solid fa-file-powerpoint text-warning"></i> Convert to Slide Deck (.pptx)</button>
+                                    <button class="btn btn-secondary btn-sm" onclick="exportCurrentAIResponse('pdf')"><i class="fa-solid fa-file-pdf text-danger"></i> Export as Executive PDF (.pdf)</button>
                                 </div>
                             </div>
                             <div id="ai-export-result" style="display:none; margin-top:12px; padding:10px 14px; background:#f0fdf4; border:1px solid #86efac; border-radius:6px; font-size:0.85rem; color:#166534;"></div>
@@ -2511,7 +2705,7 @@
                                     <div class="card-title" style="font-size:0.85rem;"><i class="fa-solid fa-brain text-primary"></i> Grounded Executive Insights (Local Ollama)</div>
                                     <span id="sheet-pii-badge" style="display:none;" class="badge badge-success"><i class="fa-solid fa-shield-halved"></i> PII Scrubbed</span>
                                 </div>
-                                <div id="sheet-insights-render" style="overflow-y:auto; max-height:420px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1e293b;"></div>
+                                <div id="sheet-insights-render" class="markdown-rendered" style="overflow-y:auto; max-height:420px; padding:14px; font-size:0.85rem; line-height:1.6; color:#1e293b;"></div>
                             </div>
                         </div>
 
@@ -3043,16 +3237,24 @@
             }
         }
 
-        function loadScenario(key) {
+        function loadScenario(key, btn) {
             const sc = ENTERPRISE_SCENARIOS[key];
             if (!sc) return;
             document.getElementById('ai-prompt').value = sc.prompt;
             document.getElementById('ai-sensitivity').value = sc.sensitivity;
             document.getElementById('ai-tool').value = sc.tool;
             document.getElementById('ai-structured').checked = sc.structured;
+
+            // Highlight the selected chip
+            document.querySelectorAll('.scenario-chip').forEach(c => c.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
             showToast(`Loaded Scenario: ${sc.title}`);
-            const execBtn = document.getElementById('btn-execute-ai');
-            if (execBtn) execBtn.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            const promptEl = document.getElementById('ai-prompt');
+            if (promptEl) {
+                promptEl.focus();
+                promptEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
         }
 
         function loadSampleDoc(type) {
@@ -3116,6 +3318,8 @@
         }
 
         function setStepperRunning() {
+            const badge = document.getElementById('pipeline-status-badge');
+            if (badge) badge.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Pipeline Running...';
             for (let i = 1; i <= 7; i++) {
                 const el = document.getElementById(`step-${i}`);
                 if (el) el.className = 'step-item done';
@@ -3143,6 +3347,8 @@
         }
 
         function completeStepper() {
+            const badge = document.getElementById('pipeline-status-badge');
+            if (badge) badge.innerHTML = '<i class="fa-solid fa-circle-check text-success"></i> Pipeline Verified';
             for (let i = 1; i <= 10; i++) {
                 const el = document.getElementById(`step-${i}`);
                 if (el) el.className = 'step-item done';
@@ -4181,76 +4387,227 @@ ${data.answer}
         }
 
         function renderMarkdown(text) {
-            if (!text) return '';
+    if (!text) return '';
 
-            // Check if text is structured JSON output (from StructuredTaskOutput)
-            const trimmed = text.trim();
-            if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
-                try {
-                    const parsed = JSON.parse(trimmed);
-                    if (parsed.summary || parsed.details || parsed.action_items) {
-                        let out = '<div class="structured-output-card">';
-                        if (parsed.summary) {
-                            out += `<div class="structured-summary-box">
-                                <div class="structured-heading"><i class="fa-solid fa-file-lines"></i> Executive Summary</div>
-                                <div class="structured-summary-text">${renderMarkdown(parsed.summary)}</div>
-                            </div>`;
-                        }
-                        if (parsed.details && Array.isArray(parsed.details) && parsed.details.length > 0) {
-                            out += `<div class="structured-section">
-                                <div class="structured-heading"><i class="fa-solid fa-list-check"></i> Key Details & Analysis</div>
-                                <ul class="structured-list">
-                                    ${parsed.details.map(d => `<li><i class="fa-solid fa-circle-check text-success" style="margin-top:3px;"></i> <span>${renderMarkdown(d)}</span></li>`).join('')}
-                                </ul>
-                            </div>`;
-                        }
-                        if (parsed.action_items && Array.isArray(parsed.action_items) && parsed.action_items.length > 0) {
-                            out += `<div class="structured-section">
-                                <div class="structured-heading"><i class="fa-solid fa-arrow-right-to-bracket text-primary"></i> Recommended Operational Actions</div>
-                                <ul class="structured-list actions">
-                                    ${parsed.action_items.map((a, i) => `<li><span class="step-badge">${i+1}</span> <span>${renderMarkdown(a)}</span></li>`).join('')}
-                                </ul>
-                            </div>`;
-                        }
-                        out += '</div>';
-                        return out;
-                    }
-                } catch (e) {
-                    // Fall back to standard markdown formatting
+    // Check if text is structured JSON output (from StructuredTaskOutput)
+    const trimmed = text.trim();
+    if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
+        try {
+            const parsed = JSON.parse(trimmed);
+            if (parsed.summary || parsed.details || parsed.action_items) {
+                let out = '<div class="structured-output-card">';
+                if (parsed.summary) {
+                    out += `<div class="structured-summary-box">
+                        <div class="structured-heading"><i class="fa-solid fa-file-lines"></i> Executive Summary</div>
+                        <div class="structured-summary-text">${renderMarkdown(parsed.summary)}</div>
+                    </div>`;
                 }
+                if (parsed.details && Array.isArray(parsed.details) && parsed.details.length > 0) {
+                    out += `<div class="structured-section">
+                        <div class="structured-heading"><i class="fa-solid fa-list-check"></i> Key Details & Analysis</div>
+                        <ul class="structured-list">
+                            ${parsed.details.map(d => `<li><i class="fa-solid fa-circle-check text-success" style="margin-top:3px;"></i> <span>${renderMarkdown(d)}</span></li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+                if (parsed.action_items && Array.isArray(parsed.action_items) && parsed.action_items.length > 0) {
+                    out += `<div class="structured-section">
+                        <div class="structured-heading"><i class="fa-solid fa-arrow-right-to-bracket text-primary"></i> Recommended Operational Actions</div>
+                        <ul class="structured-list actions">
+                            ${parsed.action_items.map((a, i) => `<li><span class="step-badge">${i+1}</span> <span>${renderMarkdown(a)}</span></li>`).join('')}
+                        </ul>
+                    </div>`;
+                }
+                out += '</div>';
+                return out;
             }
+        } catch (e) {
+            // Fall back to standard markdown formatting
+        }
+    }
 
-            let html = text
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;');
+    // 1. Extract fenced code blocks first so inner content is preserved untouched
+    const codeBlocks = [];
+    let processed = text.replace(/```([a-zA-Z0-9_-]*)\n([\s\S]*?)```/g, (match, lang, code) => {
+        const id = `@@@CODEBLOCK_${codeBlocks.length}@@@`;
+        const langLabel = lang ? lang.trim() : 'code';
+        const escapedCode = code
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;');
+        codeBlocks.push(`
+            <div class="code-card">
+                <div class="code-card-header">
+                    <span><i class="fa-solid fa-code"></i> ${langLabel}</span>
+                    <button class="btn btn-sm btn-secondary copy-code-btn" type="button" onclick="copyCodeSnippet(this)">
+                        <i class="fa-regular fa-copy"></i> Copy
+                    </button>
+                </div>
+                <pre><code class="language-${langLabel}">${escapedCode}</code></pre>
+            </div>
+        `);
+        return id;
+    });
 
-            // Headers
-            html = html.replace(/^### (.*$)/gim, '<h4>$1</h4>');
-            html = html.replace(/^## (.*$)/gim, '<h3>$1</h3>');
-            html = html.replace(/^# (.*$)/gim, '<h2>$1</h2>');
+    // 2. Escape HTML special characters for the rest of text
+    processed = processed
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
 
-            // Code blocks
-            html = html.replace(/```([a-z]*)\n([\s\S]*?)```/gim, '<pre><code>$2</code></pre>');
-            // Inline Code
-            html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+    // 3. Parse Markdown Tables
+    const tableRegex = /((?:^[ \t]*\|[^\n]+\|[ \t]*\n)+)/gm;
+    processed = processed.replace(tableRegex, (tableText) => {
+        const rawLines = tableText.trim().split('\n').map(l => l.trim()).filter(l => l.length > 0);
+        if (rawLines.length < 2) return tableText;
 
-            // Bold & Italic
-            html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
-            html = html.replace(/\*(.*?)\*/g, '<em>$1</em>');
+        const isSep = /^\|(?:\s*:?-+:?\s*\|)+$/.test(rawLines[1]);
+        if (!isSep) return tableText;
 
-            // Citations [Source: ...]
-            html = html.replace(/\[Source:\s*([^\]]+)\]/gi, '<span class="badge badge-success"><i class="fa-solid fa-book"></i> Source: $1</span>');
+        const headers = rawLines[0].split('|').slice(1, -1).map(h => h.trim());
+        const alignInfo = rawLines[1].split('|').slice(1, -1).map(s => {
+            const trimmed = s.trim();
+            if (trimmed.startsWith(':') && trimmed.endsWith(':')) return 'center';
+            if (trimmed.endsWith(':')) return 'right';
+            return 'left';
+        });
 
-            // Bullet points
-            html = html.replace(/^\s*[-*]\s+(.*$)/gim, '<li>$1</li>');
-            html = html.replace(/^\s*(\d+)\.\s+(.*$)/gim, '<li><strong>$1.</strong> $2</li>');
+        let tableHtml = '<div class="table-responsive my-2"><table class="table styled-md-table"><thead><tr>';
+        headers.forEach((h, idx) => {
+            const align = alignInfo[idx] || 'left';
+            tableHtml += `<th style="text-align:${align};">${h}</th>`;
+        });
+        tableHtml += '</tr></thead><tbody>';
 
-            // Line breaks
-            html = html.replace(/\n\n/g, '<div style="height:10px;"></div>');
-            html = html.replace(/\n(?![<\/?(h\d|li|div|pre|code)])/g, '<br>');
+        for (let r = 2; r < rawLines.length; r++) {
+            const cells = rawLines[r].split('|').slice(1, -1).map(c => c.trim());
+            tableHtml += '<tr>';
+            cells.forEach((c, idx) => {
+                const align = alignInfo[idx] || 'left';
+                tableHtml += `<td style="text-align:${align};">${c}</td>`;
+            });
+            tableHtml += '</tr>';
+        }
+        tableHtml += '</tbody></table></div>';
+        return tableHtml;
+    });
 
-            return html;
+    // 4. Blockquotes & Callouts (handles &gt; since > was escaped to &gt;)
+    processed = processed.replace(/(?:^[ \t]*&gt;[ \t]*(?:\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\])?[ \t]*(.*?)$(?:\n|$))+/gm, (block) => {
+        const lines = block.split('\n').map(l => l.replace(/^[ \t]*&gt;[ \t]*/, '').trim()).filter(Boolean);
+        const joined = lines.join(' ');
+        let badge = '<i class="fa-solid fa-quote-left text-primary"></i>';
+        let alertClass = 'callout-quote';
+        if (block.includes('[!WARNING]') || block.includes('[!CAUTION]')) {
+            badge = '<i class="fa-solid fa-triangle-exclamation text-warning"></i>';
+            alertClass = 'callout-quote callout-warning';
+        } else if (block.includes('[!IMPORTANT]')) {
+            badge = '<i class="fa-solid fa-circle-exclamation text-danger"></i>';
+            alertClass = 'callout-quote callout-danger';
+        } else if (block.includes('[!TIP]')) {
+            badge = '<i class="fa-solid fa-lightbulb text-success"></i>';
+            alertClass = 'callout-quote callout-success';
+        }
+        const cleanContent = joined.replace(/\[!(NOTE|TIP|IMPORTANT|WARNING|CAUTION)\]/, '').trim();
+        return `<blockquote class="${alertClass}">${badge} <div>${cleanContent}</div></blockquote>`;
+    });
+
+    // 5. Headings
+    processed = processed.replace(/^####[ \t]+(.*$)/gm, '<h5 style="margin:10px 0 4px; font-weight:700; color:#334155;">$1</h5>');
+    processed = processed.replace(/^###[ \t]+(.*$)/gm, '<h4 style="margin:12px 0 6px; font-weight:700; color:#0369a1;">$1</h4>');
+    processed = processed.replace(/^##[ \t]+(.*$)/gm, '<h3 style="margin:14px 0 8px; font-weight:700; color:#0f172a;">$1</h3>');
+    processed = processed.replace(/^#[ \t]+(.*$)/gm, '<h2 style="margin:16px 0 10px; font-weight:800; color:#0f172a;">$1</h2>');
+
+    // 6. Inline Code
+    processed = processed.replace(/`([^`]+)`/g, '<code class="inline-code">$1</code>');
+
+    // 7. Bold & Italic
+    processed = processed.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    processed = processed.replace(/__([^_]+)__/g, '<strong>$1</strong>');
+    processed = processed.replace(/\*([^*]+)\*/g, '<em>$1</em>');
+    processed = processed.replace(/_([^_]+)_/g, '<em>$1</em>');
+
+    // 8. Citations [Source: ...]
+    processed = processed.replace(/\[Source:\s*([^\]]+)\]/gi, '<span class="badge badge-success"><i class="fa-solid fa-book"></i> Source: $1</span>');
+
+    // 9. Markdown Links: [label](url)
+    processed = processed.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer" style="color:#0284c7; text-decoration:underline;">$1</a>');
+
+    // 10. Lists: Group consecutive unordered bullet lines into <ul> and ordered into <ol>
+    processed = processed.replace(/(?:^[ \t]*[-*+][ \t]+.*(?:\n|$))+/gm, (listBlock) => {
+        const items = listBlock.trim().split('\n').map(l => {
+            const itemText = l.replace(/^[ \t]*[-*+][ \t]+/, '').trim();
+            return `<li>${itemText}</li>`;
+        }).join('');
+        return `<ul class="styled-md-list">${items}</ul>`;
+    });
+
+    processed = processed.replace(/(?:^[ \t]*\d+\.[ \t]+.*(?:\n|$))+/gm, (listBlock) => {
+        const items = listBlock.trim().split('\n').map(l => {
+            const itemText = l.replace(/^[ \t]*\d+\.[ \t]+/, '').trim();
+            return `<li>${itemText}</li>`;
+        }).join('');
+        return `<ol class="styled-md-ordered">${items}</ol>`;
+    });
+
+    // 11. Paragraph breaks
+    processed = processed.replace(/\n\n+/g, '<div class="md-spacer"></div>');
+    processed = processed.replace(/\n(?![<\/?(h\d|li|ul|ol|div|pre|code|blockquote|table|thead|tbody|tr|th|td)])/g, '<br>');
+
+    // 12. Restore code blocks
+    codeBlocks.forEach((blockHtml, i) => {
+        processed = processed.replace(`@@@CODEBLOCK_${i}@@@`, blockHtml);
+    });
+
+    return processed;
+}
+
+        // Global alias for compatibility across all modules
+        window.formatMarkdown = renderMarkdown;
+        const formatMarkdown = renderMarkdown;
+
+        
+        function togglePipelineDrawer() {
+            const d = document.getElementById('ai-pipeline-drawer');
+            if (d) d.open = !d.open;
+        }
+
+        function copyCodeSnippet(btn) {
+            const codeEl = btn.closest('.code-card')?.querySelector('pre code');
+            if (!codeEl) return;
+            const text = codeEl.innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const orig = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-check text-success"></i> Copied!';
+                btn.style.borderColor = '#10b981';
+                setTimeout(() => {
+                    btn.innerHTML = orig;
+                    btn.style.borderColor = '';
+                }, 2000);
+            }).catch(() => {
+                showToast('Failed to copy code', 'error');
+            });
+        }
+
+        function copyCurrentAIAnswer() {
+            const answerEl = document.getElementById('ai-answer-text');
+            if (!answerEl || !answerEl.innerText.trim()) {
+                showToast('No generated answer to copy', 'warning');
+                return;
+            }
+            navigator.clipboard.writeText(answerEl.innerText).then(() => {
+                const copyBtn = document.getElementById('btn-copy-ai-answer');
+                if (copyBtn) {
+                    const orig = copyBtn.innerHTML;
+                    copyBtn.innerHTML = '<i class="fa-solid fa-check text-success"></i> Copied!';
+                    setTimeout(() => {
+                        copyBtn.innerHTML = orig;
+                    }, 2000);
+                }
+                showToast('Model answer copied to clipboard!', 'success');
+            }).catch(() => {
+                showToast('Clipboard access denied', 'error');
+            });
         }
 
         async function executeAITask() {
