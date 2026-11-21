@@ -2252,6 +2252,99 @@
                     </div>
                 </div>
 
+                
+                <!-- CARD 2: RAG GROUNDED INTELLIGENCE & RETRIEVAL BENCHMARK STUDIO -->
+                <div class="card" style="margin-top:20px; border:1px solid #bfdbfe; background:#ffffff;">
+                    <div class="card-header" style="border-bottom:1px solid #e2e8f0; padding-bottom:12px;">
+                        <div>
+                            <div class="card-title" style="font-size:1.1rem; font-weight:800; color:#0f172a; display:flex; align-items:center; gap:8px;">
+                                <i class="fa-solid fa-flask-vial text-primary"></i> RAG Grounded Intelligence &amp; Retrieval Studio
+                            </div>
+                            <div style="font-size:0.82rem; color:#64748b; margin-top:3px;">
+                                Test hybrid vector + keyword retrieval, inspect evidence chunks, verify clearance boundaries, and generate citations with the local LLM.
+                            </div>
+                        </div>
+                        <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap;">
+                            <span id="lab-active-user-role" class="badge badge-info"><i class="fa-solid fa-user-shield"></i> Active Role</span>
+                            <span id="lab-lbl-embed" class="badge badge-secondary"><i class="fa-solid fa-microchip"></i> Embedding</span>
+                            <span id="lab-lbl-docs" class="badge badge-success"><i class="fa-solid fa-database"></i> Catalog</span>
+                        </div>
+                    </div>
+
+                    <!-- Suggested Query Chips -->
+                    <div style="margin:14px 0 10px;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#475569; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                            <i class="fa-solid fa-lightbulb text-warning"></i> Quick Evaluation Queries:
+                        </span>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setLabQuery('What is the zero trust security architecture and network microsegmentation?')">Zero-Trust Spec</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setLabQuery('What was the root cause and remediation for the Redis cluster incident?')">Redis Postmortem</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setLabQuery('What are the enterprise VPN remote access and MFA standards?')">VPN Security Standard</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setLabQuery('Explain cloud infrastructure change governance and immutable audit trail requirements.')">Cloud Governance</button>
+                        </div>
+                    </div>
+
+                    <!-- Query Input and Parameters Bar -->
+                    <div style="display:grid; grid-template-columns: 1fr auto auto; gap:10px; align-items:flex-end; margin-bottom:14px;">
+                        <div>
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">Natural Language Grounded Question / Retrieval Query</label>
+                            <input type="text" id="rag-lab-query" class="form-control" placeholder="Ask anything about authorized organizational documents..." style="background:#fff; font-size:0.88rem; padding:8px 12px; width:100%; border:1px solid #94a3b8;" onkeydown="if(event.key==='Enter') runRAGLabGrounded()">
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">Top-K</label>
+                            <select id="rag-lab-topk" class="form-control" style="background:#fff; width:90px;">
+                                <option value="2">Top 2</option>
+                                <option value="4" selected>Top 4</option>
+                                <option value="6">Top 6</option>
+                                <option value="8">Top 8</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label style="display:block; font-size:0.75rem; font-weight:700; color:#334155; margin-bottom:4px;">Min Rel</label>
+                            <select id="rag-lab-minrel" class="form-control" style="background:#fff; width:100px;">
+                                <option value="0.10">0.10 (Broad)</option>
+                                <option value="0.25" selected>0.25 (Standard)</option>
+                                <option value="0.40">0.40 (Strict)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px;">
+                        <button id="btn-run-rag-grounded" class="btn btn-primary" onclick="runRAGLabGrounded()"><i class="fa-solid fa-play"></i> Test Grounded Answer (Full RAG)</button>
+                        <button id="btn-run-rag-retrieval" class="btn btn-secondary" onclick="runRAGLabRetrievalOnly()"><i class="fa-solid fa-magnifying-glass"></i> Test Retrieval Only (Inspect Passages)</button>
+                    </div>
+
+                    <!-- Execution Timeline Card -->
+                    <div id="rag-lab-timeline-card" style="display:none; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:14px;">
+                        <div style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase; margin-bottom:6px;"><i class="fa-solid fa-stopwatch text-primary"></i> Pipeline Execution Timeline</div>
+                        <div id="rag-lab-timeline-items" style="display:flex; flex-direction:column; gap:4px;"></div>
+                    </div>
+
+                    <!-- Grounded Answer Card -->
+                    <div id="rag-lab-answer-card" style="display:none; background:#ffffff; border:1px solid #bfdbfe; border-left:5px solid #0284c7; border-radius:6px; padding:18px; margin-bottom:14px; box-shadow:0 2px 8px rgba(2,132,199,0.06);">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
+                            <strong style="color:#0284c7; font-size:0.88rem;"><i class="fa-solid fa-brain"></i> Grounded Model Response</strong>
+                            <span id="lab-verification-badge" class="badge badge-success">Grounded &amp; Verified</span>
+                        </div>
+                        <div id="rag-lab-answer-text" class="markdown-rendered" style="font-size:0.88rem; line-height:1.6; color:#1e293b;"></div>
+                    </div>
+
+                    <!-- Citations Card -->
+                    <div id="rag-lab-citations-card" style="margin-bottom:14px;">
+                        <div id="rag-lab-citations-list" style="display:flex; flex-direction:column; gap:8px;"></div>
+                    </div>
+
+                    <!-- Retrieved Chunks Inspection Card -->
+                    <div id="rag-lab-chunks-card" style="display:none; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:14px; margin-bottom:14px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                            <strong style="font-size:0.85rem; color:#0f172a;"><i class="fa-solid fa-layer-group text-primary"></i> Retrieved Evidence Chunks (<span id="lab-chunks-count">0</span>)</strong>
+                            <span id="lab-retrieval-strategy" class="badge badge-secondary">Strategy</span>
+                        </div>
+                        <div id="rag-lab-chunks-list" style="display:flex; flex-direction:column; gap:10px;"></div>
+                    </div>
+                </div>
+
                 <!-- Document Chunk Preview Modal -->
                 <div id="doc-preview-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.45); z-index:100; align-items:center; justify-content:center; padding:20px;">
                     <div style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; max-width:800px; width:100%; max-height:85vh; display:flex; flex-direction:column; overflow:hidden;">
@@ -2285,6 +2378,18 @@
                     </div>
 
                     <!-- Input Form -->
+                                        <!-- Quick Starter Topic Chips -->
+                    <div style="margin-top:14px; margin-bottom:12px;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#475569; display:flex; align-items:center; gap:6px; margin-bottom:6px;">
+                            <i class="fa-solid fa-bolt text-warning"></i> Quick Enterprise Deliverable Topics:
+                        </span>
+                        <div style="display:flex; gap:6px; flex-wrap:wrap;">
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDocGenTopic('FinOps Cloud Infrastructure Cost Optimization & Governance')">FinOps Cloud Costs</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDocGenTopic('Zero-Trust Network Architecture & Hardware MFA Standard')">Zero-Trust Security</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDocGenTopic('Supply Chain Modernization & Lead Time Optimization')">Supply Chain Strategy</button>
+                            <button type="button" class="btn btn-secondary btn-sm" onclick="setDocGenTopic('Enterprise AI Adoption & Sovereign On-Premise Governance')">Enterprise AI Governance</button>
+                        </div>
+                    </div>
                     <div style="display:flex; flex-direction:column; gap:14px;">
                         <div>
                             <label style="display:block; font-size:0.8rem; font-weight:700; color:#475569; margin-bottom:4px;" id="docgen-topic-lbl">Presentation Topic / Headline *</label>
@@ -2458,9 +2563,12 @@
                                 <option value="">-- Active Sheet --</option>
                             </select>
                         </div>
-                        <div>
+                        <div style="display:flex; gap:6px;">
                             <button type="button" class="btn btn-secondary" onclick="loadSpreadsheetWorkspace()" title="Refresh spreadsheets list" style="height:38px; padding:0 14px;">
                                 <i class="fa-solid fa-arrows-rotate"></i>
+                            </button>
+                            <button type="button" class="btn btn-success" onclick="loadSampleEnterpriseSpreadsheet()" title="Instantly load pre-built Department Finances sample spreadsheet" style="height:38px; padding:0 14px; white-space:nowrap; font-size:0.8rem; font-weight:700;">
+                                <i class="fa-solid fa-file-excel"></i> Load Sample Data
                             </button>
                         </div>
                     </div>
@@ -4113,7 +4221,7 @@ ${data.answer}
                 if (cache) cache.ts = now;
                 if (panelId === 'manager-suite') loadManagerCockpit();
                 else if (panelId === 'users') loadUsers();
-                else if (panelId === 'rag') loadRAGDocs();
+                else if (panelId === 'rag') { loadRAGDocs(); loadRAGHealth(); }
                 else if (panelId === 'doc-gen') loadDocGenHistory();
                 else if (panelId === 'spreadsheets') loadSpreadsheetWorkspace();
                 else if (panelId === 'ai-run') { loadDashboardAuditLogs(); refreshAiDocList(); }
@@ -6730,8 +6838,18 @@ ${prompt}`;
 
                 if (res.ok && Array.isArray(res.data)) {
                     const sheets = res.data.filter(d => {
-                        const t = (d.title || d.filename || '').toLowerCase();
-                        return t.endsWith('.xlsx') || t.endsWith('.xls') || t.endsWith('.csv');
+                        const fn = (d.filename || '').toLowerCase();
+                        const title = (d.title || '').toLowerCase();
+                        const mime = (d.mime_type || '').toLowerCase();
+                        const cat = (d.category || '').toLowerCase();
+                        return fn.endsWith('.xlsx') || fn.endsWith('.xls') || fn.endsWith('.csv') ||
+                               title.endsWith('.xlsx') || title.endsWith('.xls') || title.endsWith('.csv') ||
+                               mime.includes('spreadsheet') || mime.includes('excel') || mime.includes('csv') ||
+                               cat.includes('spreadsheet') || cat.includes('finance') ||
+                               title.includes('finance') || title.includes('budget') ||
+                               title.includes('grade') || title.includes('sales') ||
+                               title.includes('expenditure') || title.includes('revenue') ||
+                               title.includes('data');
                     });
 
                     nlState.allDocs = sheets;
@@ -6752,6 +6870,85 @@ ${prompt}`;
                 }
             } catch (err) {
                 console.error('Error loading spreadsheet workspace:', err);
+            }
+        }
+
+        
+        function setDocGenTopic(t) {
+            const input = document.getElementById('docgen-topic');
+            if (input) {
+                input.value = t;
+                input.focus();
+            }
+        }
+
+        async function loadSampleEnterpriseSpreadsheet() {
+            if (!state.token) {
+                try {
+                    await quickSwitchRole('admin', false);
+                } catch (e) {
+                    console.warn('Auto-auth:', e);
+                }
+            }
+            showToast('Loading sample enterprise financial spreadsheet...', 'info');
+
+            let found = (nlState.allDocs || []).find(d => {
+                const t = (d.title || d.filename || '').toLowerCase();
+                return t.includes('department') || t.includes('finance') || t.includes('calculated_grades') || t.includes('.xlsx');
+            });
+
+            if (found) {
+                const docSelect = document.getElementById('nl-doc-select');
+                if (docSelect) {
+                    docSelect.value = found.id;
+                    await onSpreadsheetDocSelected();
+                    showToast(`Active Spreadsheet: ${found.title || found.filename}`, 'success');
+                    return;
+                }
+            }
+
+            await loadSpreadsheetWorkspace();
+            found = (nlState.allDocs || []).find(d => {
+                const t = (d.title || d.filename || '').toLowerCase();
+                return t.includes('department') || t.includes('finance') || t.includes('calculated_grades') || t.includes('.xlsx');
+            });
+
+            if (found) {
+                const docSelect = document.getElementById('nl-doc-select');
+                if (docSelect) {
+                    docSelect.value = found.id;
+                    await onSpreadsheetDocSelected();
+                    showToast(`Active Spreadsheet: ${found.title || found.filename}`, 'success');
+                    return;
+                }
+            }
+
+            try {
+                const sampleCsv = `Department,Budget,Actual_Spend,Headcount,Region,Quarter\nOperations,1200000,1250000,42,North America,Q3\nEngineering,2400000,2100000,85,North America,Q3\nMarketing,800000,845000,28,Europe,Q3\nSales,1500000,1420000,56,Asia-Pacific,Q3\nHuman Resources,450000,430000,15,North America,Q3\nSecurity & Compliance,600000,580000,18,Global,Q3\nCustomer Support,750000,790000,34,Europe,Q3`;
+
+                const blob = new Blob([sampleCsv], { type: 'text/csv' });
+                const file = new File([blob], 'department_finances_q3.csv', { type: 'text/csv' });
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('title', 'Department Finances Q3');
+                formData.append('classification', 'internal');
+
+                const uploadRes = await fetch('/api/v1/spreadsheets/upload', {
+                    method: 'POST',
+                    headers: state.token ? { 'Authorization': 'Bearer ' + state.token } : {},
+                    body: formData
+                });
+                const uploadData = await uploadRes.json();
+                if (uploadRes.ok && uploadData.document_id) {
+                    await loadSpreadsheetWorkspace();
+                    const docSelect = document.getElementById('nl-doc-select');
+                    if (docSelect) docSelect.value = uploadData.document_id;
+                    await onSpreadsheetDocSelected();
+                    showToast('Sample enterprise financials uploaded and loaded successfully!', 'success');
+                }
+            } catch (err) {
+                console.error('Failed to create sample spreadsheet:', err);
+                showToast('Failed to load sample: ' + err.message, 'error');
             }
         }
 
@@ -7031,9 +7228,7 @@ ${prompt}`;
             lastInsights: '',
         };
 
-        function loadSpreadsheetWorkspace() {
-            // Prepared for workspace initialization
-        }
+// Primary loadSpreadsheetWorkspace handles active workspace initialization
 
         function setPromptPreset(type) {
             const promptInput = document.getElementById('sheet-auto-prompt');
