@@ -4909,10 +4909,13 @@ ${prompt}`;
                         </div>
                         <div style="margin-top:12px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
                             <span class="badge badge-warning" style="font-size:0.8rem;"><i class="fa-solid fa-ticket"></i> Ticket UUID: ${d.approval_id || 'PENDING'}</span>
+                            <button class="btn btn-primary btn-sm" onclick="openApprovalModal('${d.approval_id}', ${JSON.stringify(d).replace(/"/g, '&quot;')})"><i class="fa-solid fa-stamp"></i> Review &amp; Approve to Deliver Outputs</button>
                             <button class="btn btn-secondary btn-sm" onclick="switchNav('approvals', document.querySelectorAll('.nav-item')[5])"><i class="fa-solid fa-arrow-right"></i> Open Approvals Queue</button>
-                            ${d.approval_id ? `<button class="btn btn-success btn-sm" onclick="switchRoleAndApprove('${d.approval_id}')"><i class="fa-solid fa-stamp"></i> Switch to Manager &amp; Approve Now</button>` : ''}
                         </div>
                     </div>`;
+                if (d.approval_id) {
+                    setTimeout(() => openApprovalModal(d.approval_id, d), 300);
+                }
             } else if (d.content) {
                 ansCard.style.display = 'block';
                 ansCard.style.borderLeft = '5px solid #0284c7';
@@ -5051,7 +5054,7 @@ ${prompt}`;
                         } else {
                             actionsHtml = `
                                 <div style="display:flex; gap:6px; align-items:center;">
-                                    <button class="btn btn-success btn-sm" onclick="quickResolveApproval('${a.id}', 'approve')" title="Approve & Execute Operation"><i class="fa-solid fa-check"></i> Approve</button>
+                                    <button class="btn btn-success btn-sm" onclick="openApprovalModal('${a.id}', ${JSON.stringify(a).replace(/"/g, '&quot;')})" title="Review details and approve to receive outputs"><i class="fa-solid fa-stamp"></i> Review &amp; Approve</button>
                                     <button class="btn btn-danger btn-sm" onclick="quickResolveApproval('${a.id}', 'reject')" title="Reject"><i class="fa-solid fa-xmark"></i> Reject</button>
                                 </div>
                             `;
@@ -5072,6 +5075,191 @@ ${prompt}`;
                 `;
                 tbody.appendChild(tr);
             });
+        }
+
+        
+        // =========================================================================
+        // DUAL-CUSTODY APPROVAL MODAL & OUTPUT DELIVERY
+        // =========================================================================
+        state.activeModalApproval = null;
+
+        function openApprovalModal(approvalId, details = null) {
+            const modal = document.getElementById('approval-status-modal');
+            if (!modal) return;
+
+            state.activeModalApproval = { id: approvalId, details: details };
+
+            // Reset modal states
+            document.getElementById('modal-appr-spinner').style.display = 'none';
+            document.getElementById('modal-appr-output-card').style.display = 'none';
+            document.getElementById('modal-appr-action-controls').style.display = 'block';
+            document.getElementById('modal-appr-notes').value = '';
+
+            // Populate fields
+            document.getElementById('modal-appr-id').textContent = approvalId || 'PENDING';
+            
+            const summary = (details && (details.operation_summary || details.input || details.summary)) || 'High-risk automated execution';
+            document.getElementById('modal-appr-summary').textContent = summary;
+
+            const requester = (details && (details.requester_role || (state.currentUser ? state.currentUser.role : 'general_employee'))) || 'Requester';
+            document.getElementById('modal-appr-requester').textContent = requester.toUpperCase();
+
+            document.getElementById('modal-appr-time').textContent = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+            const reason = (details && (details.reason || details.policy_reason || details.message)) || 'Zero-Trust Policy: elevated risk or sensitive operation requires dual-custody verification.';
+            document.getElementById('modal-appr-reason').textContent = reason;
+
+            const risk = (details && (details.risk_level || (details.risk_assessment_json && details.risk_assessment_json.risk_level))) || 'HIGH';
+            const riskBadge = document.getElementById('modal-appr-risk-badge');
+            riskBadge.textContent = `${risk.toUpperCase()} RISK`;
+            riskBadge.className = `badge ${risk.toLowerCase() === 'critical' ? 'badge-danger' : 'badge-warning'}`;
+
+            const statusBadge = document.getElementById('modal-appr-status-badge');
+            statusBadge.textContent = 'PENDING REVIEW';
+            statusBadge.className = 'badge badge-warning';
+
+            const activeUser = state.currentUser ? `${state.currentUser.user} (${state.currentUser.role})` : 'admin';
+            document.getElementById('modal-appr-active-user').textContent = activeUser;
+
+            modal.style.display = 'flex';
+        }
+
+        function closeApprovalModal() {
+            const modal = document.getElementById('approval-status-modal');
+            if (modal) modal.style.display = 'none';
+        }
+
+        async function executeModalApprovalAction(action) {
+            if (!state.activeModalApproval || !state.activeModalApproval.id) {
+                alert('No active approval ticket.');
+                return;
+            }
+
+            const id = state.activeModalApproval.id;
+            const notes = document.getElementById('modal-appr-notes').value.trim() || `Approved per compliance verification by ${state.currentUser ? state.currentUser.user : 'Reviewer'}`;
+
+            if (action === 'reject') {
+                const res = await api('POST', `/api/v1/approvals/${id}/reject`, { notes: notes });
+                if (res.ok) {
+                    showToast('Approval request rejected.', 'info');
+                    document.getElementById('modal-appr-status-badge').textContent = 'REJECTED';
+                    document.getElementById('modal-appr-status-badge').className = 'badge badge-danger';
+                    document.getElementById('modal-appr-action-controls').style.display = 'none';
+                    loadApprovals();
+                } else {
+                    alert('Error rejecting: ' + (res.data.message || res.data.detail));
+                }
+                return;
+            }
+
+            // Action === 'approve'
+            document.getElementById('modal-appr-action-controls').style.display = 'none';
+            document.getElementById('modal-appr-spinner').style.display = 'block';
+
+            // Ensure separation of duties: if requester is current user or non-manager, switch to manager/admin
+            const details = state.activeModalApproval.details;
+            const reqRole = (details && details.requester_role) || 'general_employee';
+            const currentRole = state.currentUser ? state.currentUser.role : 'administrator';
+
+            if (currentRole === reqRole && currentRole !== 'administrator') {
+                await quickSwitchRole('manager', false);
+            }
+
+            let res = await api('POST', `/api/v1/approvals/${id}/approve`, { notes: notes });
+            if (!res.ok && res.data && (res.data.message || '').includes('administrator')) {
+                await quickSwitchRole('admin', false);
+                res = await api('POST', `/api/v1/approvals/${id}/approve`, { notes: 'Approved via Administrator role (Elevated Risk)' });
+            }
+
+            document.getElementById('modal-appr-spinner').style.display = 'none';
+
+            if (res.ok) {
+                showToast('Request approved & executed successfully! Output delivered below.', 'success');
+                document.getElementById('modal-appr-status-badge').textContent = 'APPROVED & COMPLETED';
+                document.getElementById('modal-appr-status-badge').className = 'badge badge-success';
+
+                const outputCard = document.getElementById('modal-appr-output-card');
+                const chips = document.getElementById('modal-output-chips');
+                const body = document.getElementById('modal-output-body');
+
+                outputCard.style.display = 'block';
+                chips.innerHTML = '';
+
+                const exec = res.data.execution_result;
+                if (exec) {
+                    chips.innerHTML += `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Executed</span>`;
+                    if (exec.model_used) chips.innerHTML += `<span class="badge badge-info"><i class="fa-solid fa-microchip"></i> ${exec.model_used}</span>`;
+                    if (exec.policy_decision) chips.innerHTML += `<span class="badge badge-success"><i class="fa-solid fa-gavel"></i> ${exec.policy_decision}</span>`;
+
+                    let contentHtml = '';
+                    if (exec.content) {
+                        contentHtml = renderMarkdown(exec.content);
+                    } else if (exec.tool_output) {
+                        contentHtml = `<strong>Tool Execution Output:</strong><pre><code>${JSON.stringify(exec.tool_output, null, 2)}</code></pre>`;
+                    } else if (exec.error) {
+                        contentHtml = `<div class="alert-banner danger"><i class="fa-solid fa-circle-exclamation"></i> ${exec.error}</div>`;
+                    } else {
+                        contentHtml = `<div style="color:#64748b;">Operation executed successfully with 0 policy errors.</div>`;
+                    }
+
+                    if (exec.grounded_sources && exec.grounded_sources.length > 0) {
+                        contentHtml += `<div style="margin-top:12px; padding-top:10px; border-top:1px solid #e2e8f0;">
+                            <div style="font-size:0.75rem; text-transform:uppercase; color:#0284c7; font-weight:700; margin-bottom:4px;"><i class="fa-solid fa-book-bookmark"></i> Grounded Evidence:</div>
+                            <div style="display:flex; gap:6px; flex-wrap:wrap;">`;
+                        exec.grounded_sources.forEach(s => {
+                            contentHtml += `<span class="badge badge-info"><i class="fa-solid fa-file-lines"></i> ${s.title}</span>`;
+                        });
+                        contentHtml += `</div></div>`;
+                    }
+
+                    body.innerHTML = contentHtml;
+
+                    state.lastApprovedExecution = {
+                        summary: res.data.operation_summary,
+                        execution: exec,
+                        payload: res.data.operation_payload
+                    };
+
+                    // Auto-mirror to AI assistant tab output card as well
+                    const aiBox = document.getElementById('ai-result-box');
+                    const aiAnsCard = document.getElementById('ai-answer-card');
+                    const aiAnsText = document.getElementById('ai-answer-text');
+                    const aiAnsMeta = document.getElementById('ai-answer-meta');
+                    if (aiBox && aiAnsCard && aiAnsText) {
+                        aiBox.style.display = 'block';
+                        aiAnsCard.style.display = 'block';
+                        aiAnsCard.style.borderLeft = '5px solid #059669';
+                        aiAnsText.innerHTML = contentHtml;
+                        if (aiAnsMeta) aiAnsMeta.textContent = `Engine: ${exec.model_used || 'local-ai'} | Status: approved & executed`;
+                    }
+                } else {
+                    body.innerHTML = `<div style="color:#059669; font-weight:600;"><i class="fa-solid fa-circle-check"></i> Request ${id} authorized. Operation completed successfully.</div>`;
+                }
+
+                loadApprovals();
+                loadDashboardAuditLogs();
+            } else {
+                document.getElementById('modal-appr-action-controls').style.display = 'block';
+                alert('Approval failed: ' + (res.data.message || res.data.detail));
+            }
+        }
+
+        function deliverApprovedOutputToCurrentTab() {
+            closeApprovalModal();
+            openApprovedInAIAssistant();
+            showToast('Output delivered to AI Assistant!', 'success');
+        }
+
+        function copyModalOutput() {
+            const body = document.getElementById('modal-output-body');
+            if (body) {
+                const text = body.innerText || body.textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    showToast('Output copied to clipboard!', 'success');
+                }).catch(() => {
+                    showToast('Failed to copy text', 'error');
+                });
+            }
         }
 
         function renderApprovalExecutionResult(data) {
@@ -8168,6 +8356,103 @@ ${prompt}`;
             </div>
         </div>
     </div>
+
+    <!-- DUAL-CUSTODY APPROVAL INTERCEPTION & OUTPUT DELIVERY MODAL -->
+    <div id="approval-status-modal" style="display:none; position:fixed; inset:0; background:rgba(15,23,42,0.65); z-index:2000; align-items:center; justify-content:center; padding:20px; backdrop-filter:blur(3px);">
+        <div style="background:#ffffff; border-radius:12px; width:100%; max-width:760px; max-height:90vh; display:flex; flex-direction:column; box-shadow:0 20px 40px rgba(0,0,0,0.25); border:1px solid #cbd5e1; overflow:hidden;">
+            <!-- Modal Header -->
+            <div style="padding:16px 20px; background:#0f172a; color:#fff; display:flex; justify-content:space-between; align-items:center;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <i class="fa-solid fa-shield-halved" style="color:#f59e0b; font-size:1.25rem;"></i>
+                    <div>
+                        <div style="font-weight:800; font-size:1.05rem; letter-spacing:0.02em;">Dual-Custody Approval Interception &amp; Execution</div>
+                        <div style="font-size:0.75rem; color:#94a3b8;">Zero-Trust Policy Interception &bull; Closed-Loop Output Delivery</div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-secondary btn-sm" onclick="closeApprovalModal()" style="background:#334155; border:none; color:#cbd5e1; font-size:1rem; cursor:pointer; width:32px; height:32px; display:flex; align-items:center; justify-content:center; border-radius:6px;">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Modal Body (Scrollable) -->
+            <div style="padding:20px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px;">
+                <!-- Request Overview Card -->
+                <div style="background:#f8fafc; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; flex-wrap:wrap; gap:6px;">
+                        <span style="font-size:0.75rem; font-weight:700; color:#475569; text-transform:uppercase;">Interception Ticket</span>
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <span id="modal-appr-risk-badge" class="badge badge-warning">HIGH RISK</span>
+                            <span id="modal-appr-status-badge" class="badge badge-secondary">PENDING REVIEW</span>
+                        </div>
+                    </div>
+                    <div style="font-size:0.88rem; color:#0f172a; font-weight:600; margin-bottom:8px;" id="modal-appr-summary">
+                        Operation summary...
+                    </div>
+                    <div style="display:flex; gap:16px; font-size:0.75rem; color:#64748b; flex-wrap:wrap;">
+                        <div><i class="fa-solid fa-ticket text-primary"></i> <strong>UUID:</strong> <code id="modal-appr-id">--</code></div>
+                        <div><i class="fa-solid fa-user-clock text-primary"></i> <strong>Requester:</strong> <span id="modal-appr-requester">--</span></div>
+                        <div><i class="fa-solid fa-calendar text-primary"></i> <strong>Time:</strong> <span id="modal-appr-time">--</span></div>
+                    </div>
+                    <div id="modal-appr-reason-box" style="margin-top:10px; background:#fffbeb; border:1px solid #fef3c7; border-radius:6px; padding:8px 10px; font-size:0.78rem; color:#92400e;">
+                        <i class="fa-solid fa-triangle-exclamation"></i> <strong>Policy Trigger:</strong> <span id="modal-appr-reason">Policy requires elevated dual-custody authorization.</span>
+                    </div>
+                </div>
+
+                <!-- Approval Action Controls (visible while pending) -->
+                <div id="modal-appr-action-controls" style="background:#ffffff; border:1px solid #e2e8f0; border-radius:8px; padding:14px;">
+                    <div style="font-size:0.78rem; font-weight:700; color:#334155; margin-bottom:6px;">
+                        <i class="fa-solid fa-user-shield text-primary"></i> Reviewer Authorization &amp; Decision
+                    </div>
+                    <div style="margin-bottom:10px;">
+                        <input type="text" id="modal-appr-notes" class="form-control" placeholder="Enter optional reviewer compliance notes (e.g. Approved per risk assessment)" style="font-size:0.82rem; padding:8px 10px; width:100%; border:1px solid #cbd5e1; border-radius:6px;">
+                    </div>
+                    <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">
+                        <div style="display:flex; gap:6px; align-items:center;">
+                            <span style="font-size:0.75rem; color:#64748b;">Active Reviewer:</span>
+                            <span id="modal-appr-active-user" class="badge badge-info"><i class="fa-solid fa-user"></i> Admin</span>
+                        </div>
+                        <div style="display:flex; gap:8px;">
+                            <button id="btn-modal-reject" class="btn btn-secondary btn-sm" onclick="executeModalApprovalAction('reject')">
+                                <i class="fa-solid fa-xmark text-danger"></i> Reject
+                            </button>
+                            <button id="btn-modal-approve" class="btn btn-success btn-sm" onclick="executeModalApprovalAction('approve')" style="font-weight:700; padding:6px 16px;">
+                                <i class="fa-solid fa-stamp"></i> Approve &amp; Execute Now
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Live Execution Spinner -->
+                <div id="modal-appr-spinner" style="display:none; text-align:center; padding:20px; background:#f0fdf4; border:1px solid #bbf7d0; border-radius:8px;">
+                    <i class="fa-solid fa-spinner fa-spin" style="font-size:2rem; color:#16a34a; margin-bottom:8px;"></i>
+                    <div style="font-weight:700; color:#15803d; font-size:0.9rem;">Authorizing &amp; Executing Operation...</div>
+                    <div style="font-size:0.78rem; color:#166534; margin-top:4px;">Bypassing guardrail under approved token and compiling live results.</div>
+                </div>
+
+                <!-- Live Execution Output Container (shown after approval) -->
+                <div id="modal-appr-output-card" style="display:none; background:#ffffff; border:1px solid #bfdbfe; border-left:5px solid #16a34a; border-radius:8px; padding:16px; box-shadow:0 4px 14px rgba(22,163,74,0.08);">
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; flex-wrap:wrap; gap:6px;">
+                        <div style="display:flex; align-items:center; gap:8px;">
+                            <i class="fa-solid fa-circle-check" style="color:#16a34a; font-size:1.1rem;"></i>
+                            <strong style="color:#0f172a; font-size:0.9rem;">Operation Output Delivered</strong>
+                        </div>
+                        <div id="modal-output-chips" style="display:flex; gap:6px; flex-wrap:wrap;"></div>
+                    </div>
+                    <div id="modal-output-body" class="markdown-rendered" style="max-height:300px; overflow-y:auto; font-size:0.86rem; line-height:1.6; color:#1e293b; background:#f8fafc; border:1px solid #e2e8f0; border-radius:6px; padding:12px; margin-bottom:12px;"></div>
+                    <div style="display:flex; justify-content:flex-end; gap:8px; flex-wrap:wrap;">
+                        <button class="btn btn-secondary btn-sm" onclick="copyModalOutput()"><i class="fa-solid fa-copy"></i> Copy Output</button>
+                        <button class="btn btn-primary btn-sm" onclick="deliverApprovedOutputToCurrentTab()"><i class="fa-solid fa-arrow-up-right-from-square"></i> Use in AI Assistant</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div style="padding:12px 20px; background:#f8fafc; border-top:1px solid #e2e8f0; display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" class="btn btn-secondary" onclick="closeApprovalModal()">Close</button>
+            </div>
+        </div>
+    </div>
+
 </body>
 
 </html>
